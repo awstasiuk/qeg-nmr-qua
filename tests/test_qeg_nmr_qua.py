@@ -4,6 +4,10 @@ import json
 import tempfile
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")  # Use non-interactive backend for all tests
+
 import numpy as np
 import pytest
 
@@ -145,10 +149,6 @@ class TestLivePlotter:
 
     def test_create_subplot(self) -> None:
         """Test creating a subplot."""
-        import matplotlib
-
-        matplotlib.use("Agg")  # Use non-interactive backend for testing
-
         plotter = LivePlotter()
         plotter.create_subplot(
             name="main",
@@ -163,10 +163,6 @@ class TestLivePlotter:
 
     def test_add_and_update_line(self) -> None:
         """Test adding and updating a line."""
-        import matplotlib
-
-        matplotlib.use("Agg")
-
         plotter = LivePlotter()
         plotter.create_subplot("main")
         plotter.add_line("main", "signal", color="red", label="Signal")
@@ -185,10 +181,6 @@ class TestLivePlotter:
 
     def test_append_point(self) -> None:
         """Test appending points to a line."""
-        import matplotlib
-
-        matplotlib.use("Agg")
-
         plotter = LivePlotter()
         plotter.create_subplot("main")
         plotter.add_line("main", "data")
@@ -205,10 +197,6 @@ class TestLivePlotter:
 
     def test_clear_line(self) -> None:
         """Test clearing a line."""
-        import matplotlib
-
-        matplotlib.use("Agg")
-
         plotter = LivePlotter()
         plotter.create_subplot("main")
         plotter.add_line("main", "data")
@@ -224,10 +212,6 @@ class TestLivePlotter:
 
     def test_save_figure(self) -> None:
         """Test saving figure to file."""
-        import matplotlib
-
-        matplotlib.use("Agg")
-
         with tempfile.TemporaryDirectory() as tmpdir:
             plotter = LivePlotter()
             plotter.create_subplot("main")
@@ -253,10 +237,6 @@ class TestLivePlotter:
 
     def test_error_on_missing_line(self) -> None:
         """Test error when updating non-existent line."""
-        import matplotlib
-
-        matplotlib.use("Agg")
-
         plotter = LivePlotter()
         plotter.create_subplot("main")
 

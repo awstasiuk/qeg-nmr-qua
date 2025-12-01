@@ -72,7 +72,13 @@ class LivePlotter:
             try:
                 plt.style.use(self._style)
             except OSError:
-                pass  # Style not available, use default
+                import warnings
+
+                warnings.warn(
+                    f"Matplotlib style '{self._style}' not available, using default style.",
+                    UserWarning,
+                    stacklevel=2,
+                )
             self.fig = plt.figure(figsize=self.figsize)
             self.fig.suptitle(self.title)
 

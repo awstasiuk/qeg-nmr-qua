@@ -94,11 +94,15 @@ class DataSaver:
                 for key, value in metadata.items():
                     if isinstance(value, (str, int, float, bool)):
                         f.attrs[key] = value
+                    elif isinstance(value, np.ndarray):
+                        f.attrs[key] = value
+                    elif isinstance(value, datetime):
+                        f.attrs[key] = value.isoformat()
                     elif isinstance(value, (list, tuple)):
                         f.attrs[key] = np.array(value)
                     else:
                         # Convert complex objects to JSON string
-                        f.attrs[key] = json.dumps(value)
+                        f.attrs[key] = json.dumps(value, default=str)
 
             # Add standard metadata
             f.attrs["experiment_name"] = self.experiment_name
