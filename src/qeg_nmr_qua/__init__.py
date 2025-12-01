@@ -6,7 +6,7 @@ front-end module for solid state nuclear magnetic resonance experiments,
 particularly for fluorine spins.
 """
 
-from qeg_nmr_qua.config import OPXConfig
+from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.data_saver import DataSaver
 from qeg_nmr_qua.live_plotter import LivePlotter
 

@@ -1,11 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Any, Type, TypeVar, Literal
 from qeg_nmr_qua.config.integration import IntegrationWeightMapping
-from qeg_nmr_qua.config.waveform import PulseWaveforms
 
 
 @dataclass
-class ControlConfig:
+class ControlPulse:
     """
     Configuration for a control pulse. Does not currently support mixing waveforms.
     """
@@ -25,7 +24,7 @@ class ControlConfig:
 
 
 @dataclass
-class MeasConfig:
+class MeasPulse:
     """
     Configuration for a measurement. Does not support mixing waveforms.
     """
@@ -45,14 +44,12 @@ class MeasConfig:
 
 
 @dataclass
-class PulsesConfig:
+class PulseConfig:
     """
     Configuration for a pulse, which can be either a control pulse or a measurement.
     """
 
-    pulses: dict[str, ControlConfig | MeasConfig] = dataclass(
-        field(default_factory=dict)
-    )
+    pulses: dict[str, ControlPulse | MeasPulse] = dataclass(field(default_factory=dict))
 
     def add_control_pulse(
         self,
@@ -70,7 +67,7 @@ class PulsesConfig:
             waveform: Waveform name.
             digital_marker: Whether to set the digital marker during the pulse.
         """
-        self.pulses[name] = ControlConfig(
+        self.pulses[name] = ControlPulse(
             operation="control",
             length=length,
             waveforms=waveform,
@@ -93,7 +90,7 @@ class PulsesConfig:
             waveform: Waveform name.
             integration_weights: Integration weight mapping.
         """
-        self.pulses[name] = MeasConfig(
+        self.pulses[name] = MeasPulse(
             operation="measure",
             length=length,
             waveforms=waveform,
