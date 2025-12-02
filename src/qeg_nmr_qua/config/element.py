@@ -26,6 +26,9 @@ class digitalElementConfig:
             "buffer": self.buffer,
         }
 
+    def to_opx_config(self) -> dict[str, Any]:
+        return self.to_dict()
+
 
 @dataclass
 class Element:
@@ -37,22 +40,16 @@ class Element:
 
     name: str
     frequency: float  # in Hz
-
     # from OPX (controller_name, chasis_slot, port_number)
     analog_input: tuple[str, int, int]
-
     # to OPX (controller_name, chasis_slot, port_number)
     analog_output: tuple[str, int, int]
-
     # operation name with digitalElementConfig
     digital_inputs: dict[str, digitalElementConfig] = field(default_factory=dict)
-
     # operation name to pulse-config name mapping
     operations: dict[str, str] = field(default_factory=dict)
-
     # in nanoseconds, delay between output and input signals
     time_of_flight: float = 0.0
-
     # whether the element retains state between operations
     sticky: bool = False
 
@@ -69,7 +66,7 @@ class Element:
         Add a digital input configuration for a specific operation.
 
         Args:
-            operation: Name of the operation.
+            operation: Name of the digital operation (e.g "marker").
             controller_name: Name of the OPX controller.
             chasis_slot: Physical slot number in chassis.
             port_number: Digital port number on the OPX.
@@ -83,14 +80,15 @@ class Element:
             buffer=buffer,
         )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_opx_config(self) -> dict[str, Any]:
         """Convert the Element configuration to a dictionary."""
         dct = {
             "singleInput": {"port": self.analog_input},
             "intermediate_frequency": self.frequency,
             "outputs": {"out1": self.analog_output},
             "digitalInputs": {
-                name: input.to_dict() for name, input in self.digital_inputs.items()
+                name: input.to_opx_config()
+                for name, input in self.digital_inputs.items()
             },
             "operations": self.operations,
             "time_of_flight": self.time_of_flight,
@@ -98,6 +96,20 @@ class Element:
         if self.sticky:
             dct["sticky"] = {"analog": self.sticky, "digital": self.sticky}
         return dct
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "frequency": self.frequency,
+            "analog_input": self.analog_input,
+            "analog_output": self.analog_output,
+            "digital_inputs": {
+                name: input.to_dict() for name, input in self.digital_inputs.items()
+            },
+            "operations": self.operations,
+            "time_of_flight": self.time_of_flight,
+            "sticky": self.sticky,
+        }
 
 
 @dataclass
@@ -129,3 +141,9 @@ class ElementConfig:
     def to_dict(self) -> dict[str, Any]:
         """Convert the Element configurations to a dictionary."""
         return {name: element.to_dict() for name, element in self.elements.items()}
+
+    def to_opx_config(self) -> dict[str, Any]:
+        """Convert the Element configurations to OPX configuration format."""
+        return {
+            name: element.to_opx_config() for name, element in self.elements.items()
+        }

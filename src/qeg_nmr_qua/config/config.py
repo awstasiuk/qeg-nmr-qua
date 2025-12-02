@@ -54,12 +54,12 @@ class OPXConfig:
     def to_opx_config(self) -> dict[str, Any]:
         """Convert to OPX configuration format."""
         return {
-            "controllers": self.controllers.to_dict(),
-            "elements": self.elements.to_dict(),
-            "pulses": self.pulses.to_dict(),
-            "waveforms": self.waveforms.to_dict(),
-            "digital_waveforms": self.digital_waveforms.to_dict(),
-            "integration_weights": self.integration_weights.to_dict(),
+            "controllers": self.controllers.to_opx_config(),
+            "elements": self.elements.to_opx_config(),
+            "pulses": self.pulses.to_opx_config(),
+            "waveforms": self.waveforms.to_opx_config(),
+            "digital_waveforms": self.digital_waveforms.to_opx_config(),
+            "integration_weights": self.integration_weights.to_opx_config(),
         }
 
     def add_controller(self, controller_config: ControllerConfig):

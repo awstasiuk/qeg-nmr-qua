@@ -14,7 +14,7 @@ class AnalogOutput:
     """Configuration for an analog output channel."""
 
     offset: float = 0.0
-    sampling_rate: float = 1e9
+    sampling_rate: int = 1_000_000_000  # 1e9
     output_mode: str = "direct"
 
     def to_dict(self) -> dict[str, Any]:
@@ -23,6 +23,9 @@ class AnalogOutput:
             "sampling_rate": self.sampling_rate,
             "output_mode": self.output_mode,
         }
+
+    def to_opx_config(self) -> dict[str, Any]:
+        return self.to_dict()
 
 
 @dataclass
@@ -40,6 +43,9 @@ class AnalogInput:
             "sampling_rate": self.sampling_rate,
         }
 
+    def to_opx_config(self) -> dict[str, Any]:
+        return self.to_dict()
+
 
 @dataclass
 class DigitalIO:
@@ -49,8 +55,15 @@ class DigitalIO:
     direction: str = "output"  # 'input' or 'output'
     inverted: bool = False  # Default i/o state is 0 (not inverted)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_opx_config(self) -> dict[str, Any]:
         return {"inverted": self.inverted} if self.inverted else {}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "direction": self.direction,
+            "inverted": self.inverted,
+        }
 
 
 @dataclass
@@ -117,8 +130,26 @@ class FEModuleConfig:
             offset=offset, gain_db=gain_db, sampling_rate=sampling_rate
         )
 
+    def to_opx_config(self) -> dict[str, Any]:
+        return {
+            "type": self.fem_type,
+            "analog_outputs": {
+                port: ao.to_opx_config() for port, ao in self.analog_outputs.items()
+            },
+            "analog_inputs": {
+                port: ai.to_opx_config() for port, ai in self.analog_inputs.items()
+            },
+            "digital_outputs": {
+                port: do.to_opx_config() for port, do in self.digital_outputs.items()
+            },
+            # "digital_inputs": {
+            #     port: di.to_opx_config() for port, di in self.digital_inputs.items()
+            # },
+        }
+
     def to_dict(self) -> dict[str, Any]:
         return {
+            "slot": self.slot,
             "type": self.fem_type,
             "analog_outputs": {
                 port: ao.to_dict() for port, ao in self.analog_outputs.items()
@@ -149,12 +180,22 @@ class ControllerConfig:
         """Add a front-end module configuration."""
         self.modules[chasis_slot] = module
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_opx_config(self) -> dict[str, Any]:
         return {
             self.controller_name: {
                 "type": self.model,
                 "fems": {
-                    slot: module.to_dict() for slot, module in self.modules.items()
+                    slot: module.to_opx_config()
+                    for slot, module in self.modules.items()
                 },
             }
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "model": self.model,
+            "controller_name": self.controller_name,
+            "modules": {
+                slot: module.to_dict() for slot, module in self.modules.items()
+            },
         }

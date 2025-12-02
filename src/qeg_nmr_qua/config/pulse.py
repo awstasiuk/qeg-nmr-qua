@@ -15,11 +15,18 @@ class ControlPulse:
         "OFF"  # set digital marker during pulse
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_opx_config(self) -> Dict[str, Any]:
         return {
             "operation": "control",
             "length": self.length,
             "waveforms": {"single": self.waveforms},
+            "digital_marker": self.digital_marker,
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "length": self.length,
+            "waveforms": self.waveforms,
             "digital_marker": self.digital_marker,
         }
 
@@ -39,16 +46,24 @@ class MeasPulse:
         None  # set digital marker during pulse
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_opx_config(self) -> Dict[str, Any]:
         dct = {
             "operation": "measure",
             "length": self.length,
             "waveforms": {"single": self.waveforms},
-            "integration_weights": self.integration_weights.to_dict(),
+            "integration_weights": self.integration_weights.to_opx_config(),
         }
         if self.digital_marker is not None:
             dct["digital_marker"] = self.digital_marker
         return dct
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "length": self.length,
+            "waveforms": self.waveforms,
+            "integration_weights": self.integration_weights.to_dict(),
+            "digital_marker": self.digital_marker,
+        }
 
 
 @dataclass
@@ -121,3 +136,6 @@ class PulseConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: pulse.to_dict() for name, pulse in self.pulses.items()}
+
+    def to_opx_config(self) -> Dict[str, Any]:
+        return {name: pulse.to_opx_config() for name, pulse in self.pulses.items()}

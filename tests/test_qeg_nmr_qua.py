@@ -1,4 +1,9 @@
-"""Tests for the qeg_nmr_qua package."""
+"""Tests for the qeg_nmr_qua package (updated for the refactor).
+
+These tests exercise the new `OPXConfig` API and the DataSaver/LivePlotter
+behaviour. They are intentionally small and focus on surface behaviour rather
+than exhaustive validation of every helper class.
+"""
 
 import json
 import tempfile
@@ -6,71 +11,147 @@ from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("Agg")  # Use non-interactive backend for all tests
+# Set non-interactive backend early to avoid GUI issues when LivePlotter imports matplotlib
+matplotlib.use("Agg")
 
 import numpy as np
 import pytest
 
-from qeg_nmr_qua import DataSaver, LivePlotter, OPXConfig
+from qeg_nmr_qua import DataSaver, LivePlotter, OPXConfig, __version__
+
+"""Tests for the qeg_nmr_qua package (updated for the refactor).
+
+These tests exercise the new `OPXConfig` API and the DataSaver/LivePlotter
+behaviour. They are intentionally small and focus on surface behaviour rather
+than exhaustive validation of every helper class.
+"""
+
+import json
+import tempfile
+from pathlib import Path
+
+import matplotlib
+
+# Set non-interactive backend early to avoid GUI issues when LivePlotter imports matplotlib
+matplotlib.use("Agg")
+
+import numpy as np
+import pytest
+
+from qeg_nmr_qua import DataSaver, LivePlotter, OPXConfig, __version__
+from qeg_nmr_qua.config.element import Element
 
 
 class TestOPXConfig:
-    """Tests for OPXConfig class."""
+    def test_defaults_and_containers(self) -> None:
+        opx = OPXConfig()
+        assert opx.qop_ip == "192.168.88.253"
+        assert opx.cluster == "lex"
+        assert hasattr(opx, "controllers")
+        assert hasattr(opx, "elements")
+        assert hasattr(opx, "pulses")
+        assert hasattr(opx, "waveforms")
 
-    def test_default_config(self) -> None:
-        """Test default configuration values."""
-        config = OPXConfig()
-        assert config.host == "127.0.0.1"
-        assert config.port == 9510
-        assert config.controller_name == "con1"
-        assert config.fluorine_frequency == 376.5e6
+    def test_add_element_pulse_waveform_and_integration(self) -> None:
+        opx = OPXConfig()
 
-    def test_custom_config(self) -> None:
-        """Test custom configuration values."""
-        config = OPXConfig(
-            host="192.168.1.100",
-            port=8080,
-            controller_name="opx1",
-            fluorine_frequency=400e6,
+        elm = Element(
+            name="probe",
+            frequency=376.5e6,
+            analog_input=("con1", 1, 1),
+            analog_output=("con1", 1, 1),
         )
-        assert config.host == "192.168.1.100"
-        assert config.port == 8080
-        assert config.controller_name == "opx1"
-        assert config.fluorine_frequency == 400e6
+        opx.add_element("probe", elm)
 
-    def test_add_channel(self) -> None:
-        """Test adding channel configuration."""
-        config = OPXConfig()
-        config.add_channel("rf_out", port=1, offset=0.1, delay=10)
+        # use pulse helpers
+        opx.pulses.add_control_pulse("pi", length=1000, waveform="pi_wf")
 
-        assert "rf_out" in config.channels
-        assert config.channels["rf_out"].port == 1
-        assert config.channels["rf_out"].offset == 0.1
-        assert config.channels["rf_out"].delay == 10
+        # add waveforms and integration weights
+        opx.add_waveform("pi_wf", 0.5)
+        opx.add_digital_waveform("marker1", state=1, length=100)
+        opx.add_integration_weight("w1", length=1000, real_weight=1.0, imag_weight=0.0)
 
-    def test_add_pulse(self) -> None:
-        """Test adding pulse configuration."""
-        config = OPXConfig()
-        config.add_pulse("pi_pulse", length=1000, amplitude=0.5, waveform="gaussian")
+        cfg = opx.to_opx_config()
 
-        assert "pi_pulse" in config.pulses
-        assert config.pulses["pi_pulse"].length == 1000
-        assert config.pulses["pi_pulse"].amplitude == 0.5
-        assert config.pulses["pi_pulse"].waveform == "gaussian"
+        assert "probe" in cfg["elements"]
+        assert "pi" in cfg["pulses"]
+        assert "pi_wf" in cfg["waveforms"]
+        assert "marker1" in cfg["digital_waveforms"]
+        assert "w1" in cfg["integration_weights"]
 
-    def test_to_qua_config(self) -> None:
-        """Test conversion to QUA configuration format."""
-        config = OPXConfig()
-        config.add_channel("rf_out", port=1, offset=0.05)
-        config.add_pulse("test_pulse", length=500, amplitude=0.8)
 
-        qua_config = config.to_qua_config()
+class TestDataSaver:
+    def test_init_creates_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_path = Path(tmpdir) / "test_data"
+            saver = DataSaver(base_path=data_path)
+            assert data_path.exists()
+            assert saver.experiment_name == "nmr_experiment"
 
-        assert qua_config["version"] == 1
-        assert "con1" in qua_config["controllers"]
-        assert 1 in qua_config["controllers"]["con1"]["analog_outputs"]
-        assert "test_pulse" in qua_config["pulses"]
-        assert "test_pulse_wf" in qua_config["waveforms"]
+    def test_save_and_load_hdf5_roundtrip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            saver = DataSaver(base_path=tmpdir)
+
+            original_data = {
+                "x": np.array([1.0, 2.0, 3.0]),
+                "y": np.array([4.0, 5.0, 6.0]),
+            }
+            original_metadata = {"test_key": "test_value"}
+
+            filepath = saver.save_hdf5(
+                original_data, original_metadata, filename="test_file"
+            )
+
+            loaded_data, loaded_metadata = saver.load_hdf5(filepath)
+
+            np.testing.assert_array_equal(loaded_data["x"], original_data["x"])
+            np.testing.assert_array_equal(loaded_data["y"], original_data["y"])
+            assert loaded_metadata["test_key"] == "test_value"
+
+    def test_save_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            saver = DataSaver(base_path=tmpdir)
+            config_data = {"param1": 100, "param2": "test", "param3": [1, 2, 3]}
+            filepath = saver.save_json(config_data, filename="test_config")
+            assert filepath.exists()
+            with open(filepath) as f:
+                loaded = json.load(f)
+            assert loaded == config_data
+
+
+class TestLivePlotter:
+    def test_basic_plot_lifecycle(self) -> None:
+        plotter = LivePlotter(title="Test Plot", figsize=(6, 4))
+        plotter.create_subplot("main")
+        plotter.add_line("main", "data")
+
+        x = np.linspace(0, 2 * np.pi, 50)
+        y = np.sin(x)
+        plotter.update_line("data", x, y)
+
+        line = plotter.lines["data"]
+        np.testing.assert_array_equal(line.get_xdata(), x)
+        np.testing.assert_array_equal(line.get_ydata(), y)
+
+        # save figure
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = Path(tmpdir) / "fig.png"
+            plotter.save_figure(str(filepath))
+            assert filepath.exists()
+
+        plotter.close()
+
+
+class TestPackageImport:
+    def test_version(self) -> None:
+        assert __version__ == "0.1.0"
+
+    def test_exports_present(self) -> None:
+        import qeg_nmr_qua as qnmr
+
+        assert hasattr(qnmr, "OPXConfig")
+        assert hasattr(qnmr, "DataSaver")
+        assert hasattr(qnmr, "LivePlotter")
 
 
 class TestDataSaver:
@@ -111,7 +192,9 @@ class TestDataSaver:
             }
             original_metadata = {"test_key": "test_value"}
 
-            filepath = saver.save_hdf5(original_data, original_metadata, filename="test_file")
+            filepath = saver.save_hdf5(
+                original_data, original_metadata, filename="test_file"
+            )
 
             loaded_data, loaded_metadata = saver.load_hdf5(filepath)
 

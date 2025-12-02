@@ -28,6 +28,9 @@ class IntegrationWeightMapping:
             "opt_minus_sin": self.opt_minus_sin,
         }
 
+    def to_opx_config(self) -> Dict[str, str]:
+        return self.to_dict()
+
 
 @dataclass
 class IntegrationWeight:
@@ -39,10 +42,17 @@ class IntegrationWeight:
     real_weight: float = 1
     imag_weight: float = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_opx_config(self) -> Dict[str, Any]:
         return {
             "cosine": [(self.real_weight, self.length)],
             "sine": [(self.imag_weight, self.length)],
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "length": self.length,
+            "real_weight": self.real_weight,
+            "imag_weight": self.imag_weight,
         }
 
 
@@ -66,3 +76,6 @@ class IntegrationWeights:
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: weight.to_dict() for name, weight in self.weights.items()}
+
+    def to_opx_config(self) -> Dict[str, Any]:
+        return {name: weight.to_opx_config() for name, weight in self.weights.items()}

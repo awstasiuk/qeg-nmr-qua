@@ -14,10 +14,14 @@ class AnalogWaveform:
     )
 
     def to_dict(self) -> Dict[str, Any]:
+        """It may be better to link to a file when sample is an array."""
         return {
             "type": self.wf_type,
             "sample": self.sample,
         }
+
+    def to_opx_config(self) -> Dict[str, Any]:
+        return self.to_dict()
 
 
 @dataclass
@@ -32,6 +36,12 @@ class DigitalWaveform:
 
     def to_dict(self) -> Dict[str, str]:
         return {"samples": [(self.state, self.length)]}
+
+    def to_opx_config(self) -> Dict[str, str]:
+        return {
+            "state": self.state,
+            "length": self.length,
+        }
 
 
 @dataclass
@@ -59,6 +69,9 @@ class AnalogWaveformConfig:
     def to_dict(self) -> Dict[str, Any]:
         return {name: wf.to_dict() for name, wf in self.waveforms.items()}
 
+    def to_opx_config(self) -> Dict[str, Any]:
+        return {name: wf.to_opx_config() for name, wf in self.waveforms.items()}
+
 
 @dataclass
 class DigitalWaveformConfig:
@@ -73,3 +86,6 @@ class DigitalWaveformConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: wf.to_dict() for name, wf in self.waveforms.items()}
+
+    def to_opx_config(self) -> Dict[str, Any]:
+        return {name: wf.to_opx_config() for name, wf in self.waveforms.items()}
