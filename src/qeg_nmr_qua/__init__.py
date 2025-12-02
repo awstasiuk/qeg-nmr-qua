@@ -49,9 +49,9 @@ def __getattr__(name: str):
     `DataSaver` and `LivePlotter` as top-level attributes.
     """
     if name == "DataSaver":
-        return import_module("qeg_nmr_qua.data_saver").DataSaver
+        return import_module("qeg_nmr_qua.analysis.data_saver").DataSaver
     if name == "LivePlotter":
-        return import_module("qeg_nmr_qua.live_plotter").LivePlotter
+        return import_module("qeg_nmr_qua.plotting.live_plotter").LivePlotter
     if name == "OPXConfig":
         return OPXConfig
     raise AttributeError(f"module {__name__} has no attribute {name}")
