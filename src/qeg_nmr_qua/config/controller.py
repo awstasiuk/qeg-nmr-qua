@@ -24,8 +24,19 @@ class AnalogOutput:
             "output_mode": self.output_mode,
         }
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "AnalogOutput":
+        return cls(
+            offset=d.get("offset", 0.0),
+            sampling_rate=d.get("sampling_rate", 1_000_000_000),
+            output_mode=d.get("output_mode", "direct"),
+        )
+
     def to_opx_config(self) -> dict[str, Any]:
         return self.to_dict()
+
+    def __repr__(self) -> str:  # concise one-line description
+        return f"<AnalogOutput offset={self.offset} samp={self.sampling_rate} mode={self.output_mode}>"
 
 
 @dataclass
@@ -43,8 +54,19 @@ class AnalogInput:
             "sampling_rate": self.sampling_rate,
         }
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "AnalogInput":
+        return cls(
+            offset=d.get("offset", 0.0),
+            gain_db=d.get("gain_db", 0.0),
+            sampling_rate=d.get("sampling_rate", 1e9),
+        )
+
     def to_opx_config(self) -> dict[str, Any]:
         return self.to_dict()
+
+    def __repr__(self) -> str:
+        return f"<AnalogInput offset={self.offset} gain_db={self.gain_db} samp={self.sampling_rate}>"
 
 
 @dataclass
@@ -64,6 +86,17 @@ class DigitalIO:
             "direction": self.direction,
             "inverted": self.inverted,
         }
+
+    def __repr__(self) -> str:
+        return f"<DigitalIO {self.name} dir={self.direction} inv={self.inverted}>"
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "DigitalIO":
+        return cls(
+            name=d.get("name", "TTL"),
+            direction=d.get("direction", "output"),
+            inverted=d.get("inverted", False),
+        )
 
 
 @dataclass
@@ -165,6 +198,34 @@ class FEModuleConfig:
             # },
         }
 
+    def __repr__(self) -> str:
+        ao = len(self.analog_outputs)
+        ai = len(self.analog_inputs)
+        do = len(self.digital_outputs)
+        return (
+            f"<FEModule slot={self.slot} type={self.fem_type} AO={ao} AI={ai} DO={do}>"
+        )
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "FEModuleConfig":
+        fm = cls(slot=d.get("slot", 1), fem_type=d.get("type", "LF"))
+        for port, ao in (d.get("analog_outputs") or {}).items():
+            try:
+                fm.analog_outputs[int(port)] = AnalogOutput.from_dict(ao)
+            except Exception:
+                pass
+        for port, ai in (d.get("analog_inputs") or {}).items():
+            try:
+                fm.analog_inputs[int(port)] = AnalogInput.from_dict(ai)
+            except Exception:
+                pass
+        for port, do in (d.get("digital_outputs") or {}).items():
+            try:
+                fm.digital_outputs[int(port)] = DigitalIO.from_dict(do)
+            except Exception:
+                pass
+        return fm
+
 
 @dataclass
 class ControllerConfig:
@@ -199,3 +260,19 @@ class ControllerConfig:
                 slot: module.to_dict() for slot, module in self.modules.items()
             },
         }
+
+    def __repr__(self) -> str:
+        return f"<Controller {self.controller_name} model={self.model} modules={len(self.modules)}>"
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "ControllerConfig":
+        cc = cls(
+            model=d.get("model", "opx1000"),
+            controller_name=d.get("controller_name", "con1"),
+        )
+        for slot, md in (d.get("modules") or {}).items():
+            try:
+                cc.modules[int(slot)] = FEModuleConfig.from_dict(md)
+            except Exception:
+                pass
+        return cc

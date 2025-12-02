@@ -2,31 +2,41 @@
     "qop_ip": "192.168.88.253",
     "cluster": "lex",
     "controllers": {
-        "con1": {
-            "type": "opx1000",
-            "fems": {
-                "1": {
-                    "type": "LF",
-                    "analog_outputs": {
-                        "2": {
-                            "offset": 0.0,
-                            "sampling_rate": 1000000000,
-                            "output_mode": "direct"
-                        }
+        "model": "opx1000",
+        "controller_name": "con1",
+        "modules": {
+            "1": {
+                "slot": 1,
+                "type": "LF",
+                "analog_outputs": {
+                    "2": {
+                        "offset": 0.0,
+                        "sampling_rate": 1000000000,
+                        "output_mode": "direct"
+                    }
+                },
+                "analog_inputs": {
+                    "2": {
+                        "offset": 0.0,
+                        "gain_db": 16,
+                        "sampling_rate": 1000000000
+                    }
+                },
+                "digital_outputs": {
+                    "1": {
+                        "name": "receiver_switch",
+                        "direction": "output",
+                        "inverted": false
                     },
-                    "analog_inputs": {
-                        "2": {
-                            "offset": 0.0,
-                            "gain_db": 16,
-                            "sampling_rate": 1000000000
-                        }
+                    "2": {
+                        "name": "amplifier_blanking",
+                        "direction": "output",
+                        "inverted": true
                     },
-                    "digital_outputs": {
-                        "1": {},
-                        "2": {
-                            "inverted": true
-                        },
-                        "3": {}
+                    "3": {
+                        "name": "pulse_marker",
+                        "direction": "output",
+                        "inverted": false
                     }
                 }
             }
@@ -34,22 +44,19 @@
     },
     "elements": {
         "resonator": {
-            "singleInput": {
-                "port": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "intermediate_frequency": 282190100,
-            "outputs": {
-                "out1": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "digitalInputs": {
+            "name": "resonator",
+            "frequency": 282190100,
+            "analog_input": [
+                "con1",
+                1,
+                2
+            ],
+            "analog_output": [
+                "con1",
+                1,
+                2
+            ],
+            "digital_inputs": {
                 "marker": {
                     "port": [
                         "con1",
@@ -69,25 +76,23 @@
                 "pi_half": "pi_half_pulse",
                 "gaussian_pi_half": "gaussian_pi_half_pulse"
             },
-            "time_of_flight": 280
+            "time_of_flight": 280,
+            "sticky": false
         },
         "helper": {
-            "singleInput": {
-                "port": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "intermediate_frequency": 282190100,
-            "outputs": {
-                "out1": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "digitalInputs": {
+            "name": "helper",
+            "frequency": 282190100,
+            "analog_input": [
+                "con1",
+                1,
+                2
+            ],
+            "analog_output": [
+                "con1",
+                1,
+                2
+            ],
+            "digital_inputs": {
                 "marker": {
                     "port": [
                         "con1",
@@ -107,25 +112,23 @@
                 "pi_half": "pi_half_pulse",
                 "gaussian_pi_half": "gaussian_pi_half_pulse"
             },
-            "time_of_flight": 280
+            "time_of_flight": 280,
+            "sticky": false
         },
         "amplifier": {
-            "singleInput": {
-                "port": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "intermediate_frequency": 282190100,
-            "outputs": {
-                "out1": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "digitalInputs": {
+            "name": "amplifier",
+            "frequency": 282190100,
+            "analog_input": [
+                "con1",
+                1,
+                2
+            ],
+            "analog_output": [
+                "con1",
+                1,
+                2
+            ],
+            "digital_inputs": {
                 "marker": {
                     "port": [
                         "con1",
@@ -141,28 +144,22 @@
                 "voltage_off": "voltage_off_pulse"
             },
             "time_of_flight": 280,
-            "sticky": {
-                "analog": true,
-                "digital": true
-            }
+            "sticky": true
         },
         "switch": {
-            "singleInput": {
-                "port": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "intermediate_frequency": 282190100,
-            "outputs": {
-                "out1": [
-                    "con1",
-                    1,
-                    2
-                ]
-            },
-            "digitalInputs": {
+            "name": "switch",
+            "frequency": 282190100,
+            "analog_input": [
+                "con1",
+                1,
+                2
+            ],
+            "analog_output": [
+                "con1",
+                1,
+                2
+            ],
+            "digital_inputs": {
                 "marker": {
                     "port": [
                         "con1",
@@ -178,27 +175,20 @@
                 "voltage_off": "voltage_off_pulse"
             },
             "time_of_flight": 280,
-            "sticky": {
-                "analog": true,
-                "digital": true
-            }
+            "sticky": true
         }
     },
     "pulses": {
         "const_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 100,
-            "waveforms": {
-                "single": "const_waveform"
-            },
+            "waveforms": "const_waveform",
             "digital_marker": "OFF"
         },
         "readout_pulse": {
-            "operation": "measure",
+            "type": "measure",
             "length": 4000,
-            "waveforms": {
-                "single": "readout_wf"
-            },
+            "waveforms": "readout_wf",
             "integration_weights": {
                 "cos": "cosine_weights",
                 "sin": "sine_weights",
@@ -213,11 +203,9 @@
             "digital_marker": "ON"
         },
         "no_pulse_readout": {
-            "operation": "measure",
+            "type": "measure",
             "length": 4000,
-            "waveforms": {
-                "single": "zero_wf"
-            },
+            "waveforms": "zero_wf",
             "integration_weights": {
                 "cos": "cosine_weights",
                 "sin": "sine_weights",
@@ -232,51 +220,39 @@
             "digital_marker": "ON"
         },
         "excitation_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 5000,
-            "waveforms": {
-                "single": "excitation_wf"
-            },
+            "waveforms": "excitation_wf",
             "digital_marker": "ON"
         },
         "pi_half_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 1776,
-            "waveforms": {
-                "single": "square_pi_half_wf"
-            },
+            "waveforms": "square_pi_half_wf",
             "digital_marker": "ON"
         },
         "pi_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 3552,
-            "waveforms": {
-                "single": "square_pi_wf"
-            },
+            "waveforms": "square_pi_wf",
             "digital_marker": "ON"
         },
         "voltage_on_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 40,
-            "waveforms": {
-                "single": "zero_wf"
-            },
+            "waveforms": "zero_wf",
             "digital_marker": "ON"
         },
         "voltage_off_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 40,
-            "waveforms": {
-                "single": "zero_wf"
-            },
+            "waveforms": "zero_wf",
             "digital_marker": "OFF"
         },
         "gaussian_pi_half_pulse": {
-            "operation": "control",
+            "type": "control",
             "length": 1776,
-            "waveforms": {
-                "single": "gaussian_pi_half_wf"
-            },
+            "waveforms": "gaussian_pi_half_wf",
             "digital_marker": "ON"
         }
     },
@@ -2107,88 +2083,34 @@
     },
     "integration_weights": {
         "cosine_weights": {
-            "cosine": [
-                [
-                    1.0,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    0.0,
-                    4000
-                ]
-            ]
+            "length": 4000,
+            "real_weight": 1.0,
+            "imag_weight": 0.0
         },
         "sine_weights": {
-            "cosine": [
-                [
-                    0.0,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    1.0,
-                    4000
-                ]
-            ]
+            "length": 4000,
+            "real_weight": 0.0,
+            "imag_weight": 1.0
         },
         "minus_sine_weights": {
-            "cosine": [
-                [
-                    0.0,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    -1.0,
-                    4000
-                ]
-            ]
+            "length": 4000,
+            "real_weight": 0.0,
+            "imag_weight": -1.0
         },
         "rotated_cosine_weights": {
-            "cosine": [
-                [
-                    -0.30901699437494756,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    -0.9510565162951535,
-                    4000
-                ]
-            ]
+            "length": 4000,
+            "real_weight": -0.30901699437494756,
+            "imag_weight": -0.9510565162951535
         },
         "rotated_sine_weights": {
-            "cosine": [
-                [
-                    0.9510565162951535,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    -0.30901699437494756,
-                    4000
-                ]
-            ]
+            "length": 4000,
+            "real_weight": 0.9510565162951535,
+            "imag_weight": -0.30901699437494756
         },
         "rotated_minus_sine_weights": {
-            "cosine": [
-                [
-                    -0.9510565162951535,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    0.30901699437494756,
-                    4000
-                ]
-            ]
+            "length": 4000,
+            "real_weight": -0.9510565162951535,
+            "imag_weight": 0.30901699437494756
         }
     }
 }

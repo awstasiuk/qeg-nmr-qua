@@ -51,6 +51,47 @@ class OPXConfig:
             "integration_weights": self.integration_weights.to_dict(),
         }
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "OPXConfig":
+        # Import here to avoid circular imports at module import time
+        controllers = ControllerConfig.from_dict(d.get("controllers", {}))
+        elements = ElementConfig.from_dict(d.get("elements", {}))
+        pulses = PulseConfig.from_dict(d.get("pulses", {}))
+        waveforms = AnalogWaveformConfig.from_dict(d.get("waveforms", {}))
+        digital_waveforms = DigitalWaveformConfig.from_dict(
+            d.get("digital_waveforms", {})
+        )
+        integration_weights = IntegrationWeights.from_dict(
+            d.get("integration_weights", {})
+        )
+
+        return cls(
+            qop_ip=d.get("qop_ip", "192.168.88.253"),
+            cluster=d.get("cluster", "lex"),
+            controllers=controllers,
+            elements=elements,
+            pulses=pulses,
+            waveforms=waveforms,
+            digital_waveforms=digital_waveforms,
+            integration_weights=integration_weights,
+        )
+
+    def save_to_file(self, filepath: str) -> None:
+        """Save the OPXConfig to a JSON file at `filepath`."""
+        import json
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+    @classmethod
+    def load_from_file(cls, filepath: str) -> "OPXConfig":
+        """Load an OPXConfig from a JSON file at `filepath`."""
+        import json
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            d = json.load(f)
+        return cls.from_dict(d)
+
     def to_opx_config(self) -> dict[str, Any]:
         """Convert to OPX configuration format."""
         return {
@@ -89,3 +130,6 @@ class OPXConfig:
         self.integration_weights.add_weight(
             name, length, real_weight=real_weight, imag_weight=imag_weight
         )
+
+    def __repr__(self) -> str:
+        return f"OPXConfig(qop_ip={self.qop_ip}, cluster='{self.cluster}', num_modules={len(self.controllers.modules.keys())}, num_elements={len(self.elements.elements)})"

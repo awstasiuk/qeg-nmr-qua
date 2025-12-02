@@ -25,10 +25,22 @@ class ControlPulse:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "type": "control",
             "length": self.length,
             "waveforms": self.waveforms,
             "digital_marker": self.digital_marker,
         }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "ControlPulse":
+        return cls(
+            length=d.get("length", 0),
+            waveforms=d.get("waveforms", "zero_wf"),
+            digital_marker=d.get("digital_marker", "OFF"),
+        )
+
+    def __repr__(self) -> str:
+        return f"<ControlPulse len={self.length} wf={self.waveforms} marker={self.digital_marker}>"
 
 
 @dataclass
@@ -59,11 +71,44 @@ class MeasPulse:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "type": "measure",
             "length": self.length,
             "waveforms": self.waveforms,
             "integration_weights": self.integration_weights.to_dict(),
             "digital_marker": self.digital_marker,
         }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "MeasPulse":
+        from qeg_nmr_qua.config.integration import IntegrationWeightMapping
+
+        iw = IntegrationWeightMapping()
+        if isinstance(d.get("integration_weights"), dict):
+            vals = d.get("integration_weights", {})
+            iw = IntegrationWeightMapping()
+            for k, v in vals.items():
+                if hasattr(iw, k):
+                    setattr(iw, k, v)
+
+        return cls(
+            length=d.get("length", 1000),
+            waveforms=d.get("waveforms", "readout_wf"),
+            integration_weights=iw,
+            digital_marker=d.get("digital_marker"),
+        )
+
+    def __repr__(self) -> str:
+        # integration_weights may be an IntegrationWeights (has .weights) or a
+        # IntegrationWeightMapping (has .to_dict()). Be robust.
+        try:
+            n = len(self.integration_weights.weights)
+        except Exception:
+            try:
+                n = len(self.integration_weights.to_dict())
+            except Exception:
+                n = 0
+        iw_summary = f"weights={n}"
+        return f"<MeasPulse len={self.length} wf={self.waveforms} {iw_summary} marker={self.digital_marker}>"
 
 
 @dataclass
@@ -136,6 +181,25 @@ class PulseConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: pulse.to_dict() for name, pulse in self.pulses.items()}
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "PulseConfig":
+        pc = cls()
+        for name, pd in d.items():
+            if not isinstance(pd, dict):
+                continue
+            ptype = pd.get("type")
+            if ptype == "control":
+                pulse = ControlPulse.from_dict(pd)
+            elif ptype == "measure" or ptype == "measurement":
+                pulse = MeasPulse.from_dict(pd)
+            else:
+                pulse = ControlPulse.from_dict(pd)
+            pc.pulses[name] = pulse
+        return pc
+
+    def __repr__(self) -> str:
+        return f"<PulseConfig pulses={len(self.pulses)}>"
 
     def to_opx_config(self) -> Dict[str, Any]:
         return {name: pulse.to_opx_config() for name, pulse in self.pulses.items()}

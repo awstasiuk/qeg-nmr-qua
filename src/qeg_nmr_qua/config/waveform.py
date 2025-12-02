@@ -23,6 +23,18 @@ class AnalogWaveform:
     def to_opx_config(self) -> Dict[str, Any]:
         return self.to_dict()
 
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "AnalogWaveform":
+        return cls(wf_type=d.get("type", "constant"), sample=d.get("sample", 0.0))
+
+    def __repr__(self) -> str:
+        sample_desc = (
+            f"awg_len={len(self.sample)}"
+            if isinstance(self.sample, (list, tuple))
+            else f"amp={self.sample} V"
+        )
+        return f"<AnalogWaveform type={self.wf_type} {sample_desc}>"
+
 
 @dataclass
 class DigitalWaveform:
@@ -42,6 +54,20 @@ class DigitalWaveform:
             "state": self.state,
             "length": self.length,
         }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "DigitalWaveform":
+        # Accept either {'samples': [(state,length)]} or {'state':..., 'length':...}
+        if isinstance(d, dict) and "samples" in d:
+            try:
+                s, l = d["samples"][0]
+                return cls(state=int(s), length=int(l))
+            except Exception:
+                return cls()
+        return cls(state=int(d.get("state", 0)), length=int(d.get("length", 0)))
+
+    def __repr__(self) -> str:
+        return f"<DigitalWaveform state={self.state} length={self.length}>"
 
 
 @dataclass
@@ -72,6 +98,17 @@ class AnalogWaveformConfig:
     def to_opx_config(self) -> Dict[str, Any]:
         return {name: wf.to_opx_config() for name, wf in self.waveforms.items()}
 
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "AnalogWaveformConfig":
+        awc = cls()
+        for name, wd in (d or {}).items():
+            if isinstance(wd, dict):
+                awc.waveforms[name] = AnalogWaveform.from_dict(wd)
+        return awc
+
+    def __repr__(self) -> str:
+        return f"<AnalogWaveformConfig waveforms={len(self.waveforms)}>"
+
 
 @dataclass
 class DigitalWaveformConfig:
@@ -89,3 +126,14 @@ class DigitalWaveformConfig:
 
     def to_opx_config(self) -> Dict[str, Any]:
         return {name: wf.to_opx_config() for name, wf in self.waveforms.items()}
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "DigitalWaveformConfig":
+        dwc = cls()
+        for name, wd in (d or {}).items():
+            if isinstance(wd, dict):
+                dwc.waveforms[name] = DigitalWaveform.from_dict(wd)
+        return dwc
+
+    def __repr__(self) -> str:
+        return f"<DigitalWaveformConfig waveforms={len(self.waveforms)}>"

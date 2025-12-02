@@ -29,6 +29,19 @@ class digitalElementConfig:
     def to_opx_config(self) -> dict[str, Any]:
         return self.to_dict()
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "digitalElementConfig":
+        return cls(
+            port=tuple(d.get("port", ("con1", 1, 1))),
+            delay=d.get("delay", 0),
+            buffer=d.get("buffer", 0),
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"<digitalElement port={self.port} delay={self.delay} buffer={self.buffer}>"
+        )
+
 
 @dataclass
 class Element:
@@ -111,6 +124,25 @@ class Element:
             "sticky": self.sticky,
         }
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "Element":
+        el = cls(
+            name=d.get("name", ""),
+            frequency=d.get("frequency", 0.0),
+            analog_input=tuple(d.get("analog_input", ("con1", 1, 1))),
+            analog_output=tuple(d.get("analog_output", ("con1", 1, 1))),
+        )
+        for name, dd in (d.get("digital_inputs") or {}).items():
+            if isinstance(dd, dict):
+                el.digital_inputs[name] = digitalElementConfig.from_dict(dd)
+        el.operations = dict(d.get("operations") or {})
+        el.time_of_flight = d.get("time_of_flight", 0.0)
+        el.sticky = d.get("sticky", False)
+        return el
+
+    def __repr__(self) -> str:
+        return f"<Element {self.name} freq={self.frequency} in={self.analog_input} out={self.analog_output}>"
+
 
 @dataclass
 class ElementConfig:
@@ -147,3 +179,14 @@ class ElementConfig:
         return {
             name: element.to_opx_config() for name, element in self.elements.items()
         }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "ElementConfig":
+        ec = cls()
+        for name, ed in (d or {}).items():
+            if isinstance(ed, dict):
+                ec.elements[name] = Element.from_dict(ed)
+        return ec
+
+    def __repr__(self) -> str:
+        return f"<ElementConfig elements={len(self.elements)}>"
