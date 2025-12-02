@@ -16,7 +16,7 @@ pip install -e .
 
 ## Requirements
 
-- Python >= 3.9
+- 3.13 > Python >= 3.9
 - qm-qua >= 1.1.0
 - numpy >= 1.20.0
 - matplotlib >= 3.5.0
