@@ -85,7 +85,7 @@ class Element:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the Element configuration to a dictionary."""
-        return {
+        dct = {
             "singleInput": {"port": self.analog_input},
             "intermediate_frequency": self.frequency,
             "outputs": {"out1": self.analog_output},
@@ -94,8 +94,10 @@ class Element:
             },
             "operations": self.operations,
             "time_of_flight": self.time_of_flight,
-            "sticky": {"analog": self.sticky, "digital": self.sticky},
         }
+        if self.sticky:
+            dct["sticky"] = {"analog": self.sticky, "digital": self.sticky}
+        return dct
 
 
 @dataclass
@@ -109,11 +111,7 @@ class ElementConfig:
     def add_element(
         self,
         name: str,
-        frequency: float,
-        analog_input: tuple[str, int, int],
-        analog_output: tuple[str, int, int],
-        time_of_flight: float = 0.0,
-        sticky: bool = False,
+        element: Element,
     ) -> None:
         """
         Add an element configuration.
@@ -126,14 +124,7 @@ class ElementConfig:
             time_of_flight: Delay between output and input signals in nanoseconds.
             sticky: Whether the element retains state between operations.
         """
-        self.elements[name] = Element(
-            name=name,
-            frequency=frequency,
-            analog_input=analog_input,
-            analog_output=analog_output,
-            time_of_flight=time_of_flight,
-            sticky=sticky,
-        )
+        self.elements[name] = element
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the Element configurations to a dictionary."""

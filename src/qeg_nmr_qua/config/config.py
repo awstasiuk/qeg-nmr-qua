@@ -7,9 +7,11 @@ for solid state NMR experiments.
 
 from dataclasses import dataclass, field
 from typing import Any
+from collections.abc import Iterable
+
 from qeg_nmr_qua.config.controller import ControllerConfig
-from qeg_nmr_qua.config.element import ElementConfig
-from qeg_nmr_qua.config.pulse import PulseConfig
+from qeg_nmr_qua.config.element import ElementConfig, Element
+from qeg_nmr_qua.config.pulse import PulseConfig, ControlPulse, MeasPulse
 from qeg_nmr_qua.config.waveform import AnalogWaveformConfig, DigitalWaveformConfig
 from qeg_nmr_qua.config.integration import IntegrationWeights
 
@@ -59,3 +61,31 @@ class OPXConfig:
             "digital_waveforms": self.digital_waveforms.to_dict(),
             "integration_weights": self.integration_weights.to_dict(),
         }
+
+    def add_controller(self, controller_config: ControllerConfig):
+        """Add a controller configuration."""
+        self.controllers = controller_config
+
+    def add_element(self, name: str, element: Element):
+        self.elements.add_element(name, element)
+
+    def add_pulse(self, name: str, pulse: ControlPulse | MeasPulse):
+        """Add a pulse configuration."""
+        self.pulses.add_pulse(name, pulse)
+
+    def add_waveform(self, name: str, waveform: float | list[float]):
+        """Add an analog waveform configuration."""
+        wf_type = "arbitrary" if isinstance(waveform, Iterable) else "constant"
+        self.waveforms.add_waveform(name, wf_type=wf_type, sample=waveform)
+
+    def add_digital_waveform(self, name: str, state: int = 0, length: int = 0):
+        """Add a digital waveform (marker) configuration."""
+        self.digital_waveforms.add_waveform(name, state=state, length=length)
+
+    def add_integration_weight(
+        self, name: str, length: int, real_weight: float = 1, imag_weight: float = 0
+    ):
+        """Add an integration weight configuration."""
+        self.integration_weights.add_weight(
+            name, length, real_weight=real_weight, imag_weight=imag_weight
+        )

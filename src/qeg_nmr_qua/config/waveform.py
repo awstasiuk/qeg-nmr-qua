@@ -43,18 +43,18 @@ class AnalogWaveformConfig:
 
     waveforms: Dict[str, AnalogWaveform] = field(default_factory=dict)
 
-    def add_analog_waveform(
+    def add_waveform(
         self,
-        wf_name: str,
+        name: str,
         wf_type: Literal["constant", "arbitrary"] = "constant",
-        sample: float | list = 0.0,
+        sample: float | list[float] = 0.0,
     ) -> None:
         """
         Add a waveform to the configuration for defining multiple pulse-types. Pulses are either constant amplitude
         or arbitrary waveforms. If constant, `sample` is a float amplitude value. If arbitrary, `sample` is a list of amplitude values
         which define the waveform shape, between -1 and 1.
         """
-        self.waveforms[wf_name] = AnalogWaveform(wf_type=wf_type, sample=sample)
+        self.waveforms[name] = AnalogWaveform(wf_type=wf_type, sample=sample)
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: wf.to_dict() for name, wf in self.waveforms.items()}
@@ -64,14 +64,12 @@ class AnalogWaveformConfig:
 class DigitalWaveformConfig:
     waveforms: Dict[str, DigitalWaveform] = field(default_factory=dict)
 
-    def add_digital_waveform(
-        self, wf_name: str, state: int = 0, length: int = 0
-    ) -> None:
+    def add_waveform(self, name: str, state: int = 0, length: int = 0) -> None:
         """
         Add a digital waveform (marker) to the configuration. A length of 0 means the marker will hold its state
         for the duration of the pulse it is associated with. If the pulse ends, the marker returns to 0.
         """
-        self.waveforms[wf_name] = DigitalWaveform(state=state, length=length)
+        self.waveforms[name] = DigitalWaveform(state=state, length=length)
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: wf.to_dict() for name, wf in self.waveforms.items()}

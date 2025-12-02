@@ -45,6 +45,7 @@ class AnalogInput:
 class DigitalIO:
     """Configuration for digital input/output."""
 
+    name: str = "TTL"
     direction: str = "output"  # 'input' or 'output'
     inverted: bool = False  # Default i/o state is 0 (not inverted)
 
@@ -66,7 +67,9 @@ class FEModuleConfig:
     #     default_factory=dict
     # )  # not used currently
 
-    def add_digital_output(self, port: int, inverted: bool = False) -> None:
+    def add_digital_output(
+        self, port: int, name: str = "TTL", inverted: bool = False
+    ) -> None:
         """Add a digital output channel configuration."""
 
         assert 1 <= port <= 8, "Digital output port must be between 1 and 8."
@@ -74,7 +77,9 @@ class FEModuleConfig:
             raise Warning(
                 f"Digital output port {port} is already configured. Overwriting."
             )
-        self.digital_outputs[port] = DigitalIO(direction="output", inverted=inverted)
+        self.digital_outputs[port] = DigitalIO(
+            name=name, direction="output", inverted=inverted
+        )
 
     def add_analog_output(
         self,

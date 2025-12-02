@@ -54,5 +54,15 @@ class IntegrationWeights:
 
     weights: dict[str, IntegrationWeight] = field(default_factory=dict)
 
+    def add_weight(
+        self, name: str, length: int, real_weight: float = 1, imag_weight: float = 0
+    ) -> None:
+        """
+        Add an integration weight set to the configuration.
+        """
+        self.weights[name] = IntegrationWeight(
+            length=length, real_weight=real_weight, imag_weight=imag_weight
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         return {name: weight.to_dict() for name, weight in self.weights.items()}

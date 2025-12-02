@@ -9,14 +9,15 @@ class ControlPulse:
     Configuration for a control pulse. Does not currently support mixing waveforms.
     """
 
-    operation: Literal["control", "measure"] = "control"
     length: int = 0  # in nanoseconds
     waveforms: str = "zero_wf"  # waveform name
-    digital_marker: Literal["ON", "OFF"] = "OFF"  # set digital marker during pulse
+    digital_marker: Literal["ON", "OFF"] | None = (
+        "OFF"  # set digital marker during pulse
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "operation": self.operation,
+            "operation": "control",
             "length": self.length,
             "waveforms": {"single": self.waveforms},
             "digital_marker": self.digital_marker,
@@ -29,20 +30,25 @@ class MeasPulse:
     Configuration for a measurement. Does not support mixing waveforms.
     """
 
-    operation: Literal["control", "measure"] = "measure"
     length: int = 1000  # in nanoseconds
     waveforms: str = "readout_wf"  # waveform name
     integration_weights: IntegrationWeightMapping = field(
         default_factory=IntegrationWeightMapping
     )
+    digital_marker: Literal["ON", "OFF"] | None = (
+        None  # set digital marker during pulse
+    )
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
-            "operation": self.operation,
+        dct = {
+            "operation": "measure",
             "length": self.length,
             "waveforms": {"single": self.waveforms},
             "integration_weights": self.integration_weights.to_dict(),
         }
+        if self.digital_marker is not None:
+            dct["digital_marker"] = self.digital_marker
+        return dct
 
 
 @dataclass
@@ -53,12 +59,26 @@ class PulseConfig:
 
     pulses: dict[str, ControlPulse | MeasPulse] = field(default_factory=dict)
 
+    def add_pulse(
+        self,
+        name: str,
+        pulse: ControlPulse | MeasPulse,
+    ) -> None:
+        """
+        Add a pulse configuration from one of the pulse types.
+
+        Args:
+            name: Name of the pulse.
+            pulse: ControlPulse or MeasPulse instance.
+        """
+        self.pulses[name] = pulse
+
     def add_control_pulse(
         self,
         name: str,
         length: int,
         waveform: str = "const",
-        digital_marker: Literal["ON", "OFF"] = "OFF",
+        digital_marker: Literal["ON", "OFF"] | None = "OFF",
     ) -> None:
         """
         Add a control pulse configuration.
@@ -70,7 +90,6 @@ class PulseConfig:
             digital_marker: Whether to set the digital marker during the pulse.
         """
         self.pulses[name] = ControlPulse(
-            operation="control",
             length=length,
             waveforms=waveform,
             digital_marker=digital_marker,
@@ -81,6 +100,7 @@ class PulseConfig:
         name: str,
         length: int,
         waveform: str = "readout_wf",
+        digital_marker: Literal["ON", "OFF"] | None = None,
         integration_weights: IntegrationWeightMapping = IntegrationWeightMapping(),
     ) -> None:
         """
@@ -93,10 +113,10 @@ class PulseConfig:
             integration_weights: Integration weight mapping.
         """
         self.pulses[name] = MeasPulse(
-            operation="measure",
             length=length,
             waveforms=waveform,
             integration_weights=integration_weights,
+            digital_marker=digital_marker,
         )
 
     def to_dict(self) -> Dict[str, Any]:
