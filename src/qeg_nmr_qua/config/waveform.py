@@ -41,7 +41,7 @@ class AnalogWaveformConfig:
     Keeps the mapping opaque so other parts of the code can use arbitrary keys.
     """
 
-    waveforms: Dict[str, AnalogWaveform] = dataclass(field(default_factory=dict))
+    waveforms: Dict[str, AnalogWaveform] = field(default_factory=dict)
 
     def add_analog_waveform(
         self,
@@ -62,7 +62,7 @@ class AnalogWaveformConfig:
 
 @dataclass
 class DigitalWaveformConfig:
-    waveforms: Dict[str, DigitalWaveform] = dataclass(field(default_factory=dict))
+    waveforms: Dict[str, DigitalWaveform] = field(default_factory=dict)
 
     def add_digital_waveform(
         self, wf_name: str, state: int = 0, length: int = 0

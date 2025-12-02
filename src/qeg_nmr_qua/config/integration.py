@@ -1,4 +1,4 @@
-from attr import dataclass, field
+from dataclasses import dataclass, field
 
 from typing import Any, Dict, Optional, Type, TypeVar
 
@@ -36,8 +36,8 @@ class IntegrationWeight:
     """
 
     length: int = 0  # in nanoseconds
-    real_weight: float
-    imag_weight: float
+    real_weight: float = 1
+    imag_weight: float = 0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -52,7 +52,7 @@ class IntegrationWeights:
     Configuration for integration weights used in measurements.
     """
 
-    weights: dict[str, IntegrationWeight] = dataclass(field(default_factory=dict))
+    weights: dict[str, IntegrationWeight] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: weight.to_dict() for name, weight in self.weights.items()}

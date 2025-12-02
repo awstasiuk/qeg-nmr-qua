@@ -7,11 +7,11 @@ for solid state NMR experiments.
 
 from dataclasses import dataclass, field
 from typing import Any
-from config.controller import ControllerConfig
-from config.element import ElementConfig
-from config.pulse import PulseConfig
-from config.waveform import AnalogWaveformConfig, DigitalWaveformConfig
-from config.integration import IntegrationWeights
+from qeg_nmr_qua.config.controller import ControllerConfig
+from qeg_nmr_qua.config.element import ElementConfig
+from qeg_nmr_qua.config.pulse import PulseConfig
+from qeg_nmr_qua.config.waveform import AnalogWaveformConfig, DigitalWaveformConfig
+from qeg_nmr_qua.config.integration import IntegrationWeights
 
 
 @dataclass
@@ -27,18 +27,14 @@ class OPXConfig:
     qop_ip: str = "192.168.88.253"
     cluster: str = "lex"
 
-    controllers: ControllerConfig = dataclass(field(default_factory=ControllerConfig))
-    elements: ElementConfig = dataclass(field(default_factory=ElementConfig))
-    pulses: PulseConfig = dataclass(field(default_factory=PulseConfig))
-    waveforms: AnalogWaveformConfig = dataclass(
-        field(default_factory=AnalogWaveformConfig)
+    controllers: ControllerConfig = field(default_factory=ControllerConfig)
+    elements: ElementConfig = field(default_factory=ElementConfig)
+    pulses: PulseConfig = field(default_factory=PulseConfig)
+    waveforms: AnalogWaveformConfig = field(default_factory=AnalogWaveformConfig)
+    digital_waveforms: DigitalWaveformConfig = field(
+        default_factory=DigitalWaveformConfig
     )
-    digital_waveforms: DigitalWaveformConfig = dataclass(
-        field(default_factory=DigitalWaveformConfig)
-    )
-    integration_weights: IntegrationWeights = dataclass(
-        field(default_factory=IntegrationWeights)
-    )
+    integration_weights: IntegrationWeights = field(default_factory=IntegrationWeights)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the OPX configuration to a dictionary."""

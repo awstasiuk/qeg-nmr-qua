@@ -30,9 +30,11 @@ class MeasPulse:
     """
 
     operation: Literal["control", "measure"] = "measure"
-    length: int  # in nanoseconds
+    length: int = 1000  # in nanoseconds
     waveforms: str = "readout_wf"  # waveform name
-    integration_weights: IntegrationWeightMapping = IntegrationWeightMapping()
+    integration_weights: IntegrationWeightMapping = field(
+        default_factory=IntegrationWeightMapping
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -49,7 +51,7 @@ class PulseConfig:
     Configuration for a pulse, which can be either a control pulse or a measurement.
     """
 
-    pulses: dict[str, ControlPulse | MeasPulse] = dataclass(field(default_factory=dict))
+    pulses: dict[str, ControlPulse | MeasPulse] = field(default_factory=dict)
 
     def add_control_pulse(
         self,
@@ -98,4 +100,4 @@ class PulseConfig:
         )
 
     def to_dict(self) -> Dict[str, Any]:
-        return {self.name: self.config.to_dict()}
+        return {name: pulse.to_dict() for name, pulse in self.pulses.items()}
