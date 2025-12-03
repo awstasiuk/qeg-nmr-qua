@@ -10,7 +10,7 @@ class ControlPulse:
     """
 
     length: int = 0  # in nanoseconds
-    waveforms: str = "zero_wf"  # waveform name
+    waveform: str = "zero_wf"  # waveform name
     digital_marker: Literal["ON", "OFF"] | None = (
         "OFF"  # set digital marker during pulse
     )
@@ -19,7 +19,7 @@ class ControlPulse:
         return {
             "operation": "control",
             "length": self.length,
-            "waveforms": {"single": self.waveforms},
+            "waveforms": {"single": self.waveform},
             "digital_marker": self.digital_marker,
         }
 
@@ -27,7 +27,7 @@ class ControlPulse:
         return {
             "type": "control",
             "length": self.length,
-            "waveforms": self.waveforms,
+            "waveform": self.waveform,
             "digital_marker": self.digital_marker,
         }
 
@@ -35,12 +35,12 @@ class ControlPulse:
     def from_dict(cls, d: Dict[str, Any]) -> "ControlPulse":
         return cls(
             length=d.get("length", 0),
-            waveforms=d.get("waveforms", "zero_wf"),
+            waveform=d.get("waveform", "zero_wf"),
             digital_marker=d.get("digital_marker", "OFF"),
         )
 
     def __repr__(self) -> str:
-        return f"<ControlPulse len={self.length} wf={self.waveforms} marker={self.digital_marker}>"
+        return f"<ControlPulse len={self.length} wf={self.waveform} marker={self.digital_marker}>"
 
 
 @dataclass
@@ -50,7 +50,7 @@ class MeasPulse:
     """
 
     length: int = 1000  # in nanoseconds
-    waveforms: str = "readout_wf"  # waveform name
+    waveform: str = "readout_wf"  # waveform name
     integration_weights: IntegrationWeightMapping = field(
         default_factory=IntegrationWeightMapping
     )
@@ -62,7 +62,7 @@ class MeasPulse:
         dct = {
             "operation": "measure",
             "length": self.length,
-            "waveforms": {"single": self.waveforms},
+            "waveforms": {"single": self.waveform},
             "integration_weights": self.integration_weights.to_opx_config(),
         }
         if self.digital_marker is not None:
@@ -73,7 +73,7 @@ class MeasPulse:
         return {
             "type": "measure",
             "length": self.length,
-            "waveforms": self.waveforms,
+            "waveform": self.waveform,
             "integration_weights": self.integration_weights.to_dict(),
             "digital_marker": self.digital_marker,
         }
