@@ -19,6 +19,7 @@ from qeg_nmr_qua.config.controller import (
 from qeg_nmr_qua.config.element import ElementConfig, Element
 from qeg_nmr_qua.config.integration import IntegrationWeights
 from qeg_nmr_qua.config.pulse import PulseConfig
+from qeg_nmr_qua.config.settings import ExperimentSettings
 from qeg_nmr_qua.config.waveform import AnalogWaveformConfig, DigitalWaveformConfig
 
 __version__ = "0.1.0"
@@ -32,6 +33,7 @@ __all__ = [
     "ControllerConfig",
     "Element",
     "ElementConfig",
+    "ExperimentSettings",
     "IntegrationWeights",
     "PulseConfig",
     "AnalogWaveformConfig",
