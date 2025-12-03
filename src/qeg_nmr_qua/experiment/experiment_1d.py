@@ -1,5 +1,7 @@
 # src/qeg_nmr_qua/experiment/experiment.py
 from qeg_nmr_qua.config.config import OPXConfig
+from qeg_nmr_qua.config.settings import ExperimentSettings
+from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
 from qeg_nmr_qua.experiment.macros import readout_mode, safe_mode, drive_mode
 
 import numpy as np
@@ -31,36 +33,39 @@ u = unit(coerce_to_integer=True)
 
 
 class Experiment1D:
-    def __init__(self, config: OPXConfig = None):
+    def __init__(self, settings: ExperimentSettings, config: OPXConfig = None):
         """
         Initializes the base experiment class with default configurations and containers for commands, results,
         plotting data, and experimental delays. This class serves as a foundational structure for conducting
         experiments.
         Args:
             config (, optional): A configuration object for the experiment. If not provided, a default
-                                         `OPXConfig` object is created.
+                            `OPXConfig` object is created.
 
         """
-        self.config = config if config is not None else OPXConfig()
-
+        self.config = config if config is not None else cfg_from_settings(settings)
+        self.settings = settings
+        # ---- Experiment parameters ---- #
         self.n_avg = 4
-        self.pi_half_pulse = "pi_half"
+        self.pi_half_pulse = settings.pi_half_key
 
-        self.probe_key = "resonator"
-        self.helper_key = "helper"
-        self.amplifier_key = "amplifier"
-        self.rx_switch_key = "switch"
+        self.probe_key = settings.res_key
+        self.helper_key = settings.helper_key
+        self.amplifier_key = settings.amp_key
+        self.rx_switch_key = settings.sw_key
 
-        readout_len = self.config.pulses.pulses["readout_pulse"].length
-        tau_min = 0 * u.us
-        tau_max = 256 * u.us
-        measure_sequence_len = (tau_max - tau_min) // readout_len
+        self.readout_len = settings.dwell_time
+        self.tau_min = settings.readout_start
+        self.tau_max = settings.readout_end
+        self.measure_sequence_len = (self.tau_max - self.tau_min) // self.readout_len
         self.tau_sweep = np.arange(
-            0.5 * readout_len, (measure_sequence_len + 0.5) * readout_len, readout_len
+            0.5 * self.readout_len,
+            (self.measure_sequence_len + 0.5) * self.readout_len,
+            self.readout_len,
         )
-        self.loop_wait_cycles = readout_len // 4
+        self.loop_wait_cycles = self.readout_len // 4  # to clock cycles
 
-        self.thermal_reset = 4 * u.s  # 5 T1
+        self.wait_between_scans = settings.thermal_reset  # 5 T1
 
         self.qmm = QuantumMachinesManager(
             self.config.qop_ip, cluster_name=self.config.cluster

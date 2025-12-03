@@ -8,6 +8,8 @@ from qeg_nmr_qua.config.settings import ExperimentSettings
 
 from qualang_tools.units import unit
 import numpy as np
+import json
+from pathlib import Path
 
 u = unit(coerce_to_integer=True)
 
@@ -144,7 +146,7 @@ cfg.add_element("switch", rx_switch)
 settings.update(
     res_key="resonator",
     amp_key="amplifier",
-    help_key="helper",
+    helper_key="helper",
     sw_key="switch",
 )
 
@@ -206,20 +208,16 @@ cfg.add_pulse("voltage_on_pulse", voltage_on)
 cfg.add_pulse("voltage_off_pulse", voltage_off)
 
 # define the waveforms used in the pulses above
-cfg.add_waveform("const_wf", wf_type="constant", waveform=settings.const_amp)
-cfg.add_waveform("zero_wf", wf_type="constant", waveform=0.0)
-cfg.add_waveform("readout_wf", wf_type="constant", waveform=settings.readout_amp)
-cfg.add_waveform(
-    "square_pi_half_wf", wf_type="constant", waveform=settings.pulse_amplitude
-)
-cfg.add_waveform("square_pi_wf", wf_type="constant", waveform=settings.pulse_amplitude)
+cfg.add_waveform("const_wf", waveform=settings.const_amp)
+cfg.add_waveform("zero_wf", waveform=0.0)
+cfg.add_waveform("readout_wf", waveform=settings.readout_amp)
+cfg.add_waveform("square_pi_half_wf", waveform=settings.pulse_amplitude)
+cfg.add_waveform("square_pi_wf", waveform=settings.pulse_amplitude)
 # Gaussian waveform samples for shaped pi/2 pulse
 gauss_awg = settings.pulse_amplitude * np.exp(
     -0.5 * (np.linspace(-3, 3, settings.pulse_length) ** 2)
 )
-cfg.add_waveform(
-    "gaussian_pi_half_wf", wf_type="arbitrary", waveform=gauss_awg.tolist()
-)
+cfg.add_waveform("gaussian_pi_half_wf", waveform=gauss_awg.tolist())
 
 # define digital waveforms (markers)
 cfg.add_digital_waveform("ON", state=1, length=0)
@@ -263,4 +261,19 @@ cfg.add_integration_weight(
     imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
 )
 
-cfg.save_to_file("nmr_opx_default.json")
+# cfg.save_to_file("nmr_opx_default.json")
+opx_cfg = cfg.to_opx_config()
+filename = "opx_config_EXAMPLE.json"
+
+# save the config into the same directory as this script
+script_dir = Path(__file__).resolve().parent
+output_path = script_dir / filename
+
+try:
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(opx_cfg, f, indent=2)
+except TypeError:
+    # fallback for non-JSON-serializable objects
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(opx_cfg, f, indent=2, default=str)
+        json.dump(opx_cfg, f, indent=2, default=str)

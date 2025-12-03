@@ -45,7 +45,7 @@ class AnalogInput:
 
     offset: float = 0.0
     gain_db: float = 0.0
-    sampling_rate: float = 1e9
+    sampling_rate: int = int(1e9)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -131,7 +131,7 @@ class FEModuleConfig:
         self,
         port: int,
         offset: float = 0.0,
-        sampling_rate: float = 1e9,
+        sampling_rate: int = int(1e9),
         output_mode: str = "direct",
     ) -> None:
         """Add an analog output channel configuration."""
@@ -150,7 +150,7 @@ class FEModuleConfig:
         port: int,
         offset: float = 0.0,
         gain_db: float = 0.0,
-        sampling_rate: float = 1e9,
+        sampling_rate: int = int(1e9),
     ) -> None:
         """Add an analog input channel configuration."""
 

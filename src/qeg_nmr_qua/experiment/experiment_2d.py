@@ -34,13 +34,8 @@ u = unit(coerce_to_integer=True)
 class Experiment2D:
     def __init__(self, config: OPXConfig = None):
         """
-        Initializes the base experiment class with default configurations and containers for commands, results,
-        plotting data, and experimental delays. This class serves as a foundational structure for conducting
-        experiments.
-        Args:
-            config (, optional): A configuration object for the experiment. If not provided, a default
-                                         `OPXConfig` object is created.
-
+        This class does not work yet.
+        Need to add looping and such
         """
         self.config = config if config is not None else OPXConfig()
 

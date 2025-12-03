@@ -1,6 +1,5 @@
-from dataclasses import dataclass, field, asdict, replace
+from dataclasses import dataclass, field
 from typing import Callable, Dict, Any, List, Optional
-import threading
 
 from qualang_tools.units import unit
 
@@ -52,12 +51,9 @@ class ExperimentSettings:
     sw_key: str = "switch"
     pi_half_key: str = "pi_half"
 
-    # Internal: callbacks and lock for thread-safe updates
+    # Internal: callbacks (no thread locking - updates are not synchronized)
     _callbacks: List[UpdateCallback] = field(
         default_factory=list, init=False, repr=False
-    )
-    _lock: threading.Lock = field(
-        default_factory=threading.Lock, init=False, repr=False
     )
 
     def validate(self) -> None:
@@ -93,38 +89,41 @@ class ExperimentSettings:
         if not kwargs:
             return {}
 
-        with self._lock:
-            # Create a tentative copy and apply updates for validation
-            tentative = replace(self)
-            for k, v in kwargs.items():
-                if not hasattr(tentative, k):
-                    raise AttributeError(f"Unknown setting: {k}")
-                setattr(tentative, k, v)
+        # Create a tentative, serializable copy and apply updates for validation.
+        # We do not perform thread synchronization here — callers must ensure
+        # they coordinate access if concurrent updates are possible in their
+        # environment.
+        tentative = self.from_dict(self.to_dict())
+        for k, v in kwargs.items():
+            if not hasattr(tentative, k):
+                raise AttributeError(f"Unknown setting: {k}")
+            setattr(tentative, k, v)
 
-            # Validate tentative values (this may normalize e.g. rotation_angle)
-            tentative.validate()
+        # Validate tentative values (this may normalize e.g. rotation_angle)
+        tentative.validate()
 
-            # Determine which fields changed and apply to self
-            changes: Dict[str, Any] = {}
-            for field_name, new_value in asdict(tentative).items():
-                # skip internal fields
-                if field_name in ("_callbacks", "_lock"):
-                    continue
-                old_value = getattr(self, field_name)
-                if old_value != new_value:
-                    setattr(self, field_name, new_value)
-                    changes[field_name] = new_value
+        # Determine which fields changed and apply to self
+        changes: Dict[str, Any] = {}
+        for field_name, new_value in tentative.to_dict().items():
+            old_value = getattr(self, field_name)
+            if old_value != new_value:
+                setattr(self, field_name, new_value)
+                changes[field_name] = new_value
 
-            # Notify callbacks outside of lock to prevent deadlocks
         if changes:
             self._notify_update(changes)
         return changes
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a serializable dict of user-facing settings (no internals)."""
-        data = asdict(self)
-        data.pop("_callbacks", None)
-        data.pop("_lock", None)
+        # Build the dict directly from dataclass fields to avoid deep-copying
+        # internal/unpicklable objects (e.g. threading.Lock) which `asdict`
+        # may attempt to deepcopy and therefore fail.
+        data: Dict[str, Any] = {}
+        for name, f in self.__dataclass_fields__.items():
+            if name in ("_callbacks", "_lock"):
+                continue
+            data[name] = getattr(self, name)
         return data
 
     @classmethod
@@ -141,15 +140,13 @@ class ExperimentSettings:
         """Register a callback called on changes: fn(self, changes_dict)."""
         if not callable(fn):
             raise TypeError("callback must be callable")
-        with self._lock:
-            if fn not in self._callbacks:
-                self._callbacks.append(fn)
+        if fn not in self._callbacks:
+            self._callbacks.append(fn)
 
     def unregister_update_callback(self, fn: UpdateCallback) -> None:
         """Unregister a previously registered callback."""
-        with self._lock:
-            if fn in self._callbacks:
-                self._callbacks.remove(fn)
+        if fn in self._callbacks:
+            self._callbacks.remove(fn)
 
     def _notify_update(self, changes: Dict[str, Any]) -> None:
         """Call registered callbacks with the changes. Exceptions are not propagated."""
