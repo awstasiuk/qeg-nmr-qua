@@ -44,7 +44,7 @@ class AnalogInput:
     """Configuration for an analog input channel."""
 
     offset: float = 0.0
-    gain_db: float = 0.0
+    gain_db: int = 0
     sampling_rate: int = int(1e9)
 
     def to_dict(self) -> dict[str, Any]:
@@ -58,8 +58,8 @@ class AnalogInput:
     def from_dict(cls, d: dict[str, Any]) -> "AnalogInput":
         return cls(
             offset=d.get("offset", 0.0),
-            gain_db=d.get("gain_db", 0.0),
-            sampling_rate=d.get("sampling_rate", 1e9),
+            gain_db=d.get("gain_db", 0),
+            sampling_rate=d.get("sampling_rate", int(1e9)),
         )
 
     def to_opx_config(self) -> dict[str, Any]:
@@ -149,7 +149,7 @@ class FEModuleConfig:
         self,
         port: int,
         offset: float = 0.0,
-        gain_db: float = 0.0,
+        gain_db: int = 0,
         sampling_rate: int = int(1e9),
     ) -> None:
         """Add an analog input channel configuration."""
