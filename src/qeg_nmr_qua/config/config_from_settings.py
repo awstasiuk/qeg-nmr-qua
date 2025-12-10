@@ -252,3 +252,5 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         real_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
         imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
     )
+
+    return cfg

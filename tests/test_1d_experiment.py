@@ -1,0 +1,36 @@
+import qeg_nmr_qua as qnmr
+
+from qualang_tools.units import unit
+import numpy as np
+import json
+from pathlib import Path
+
+u = unit(coerce_to_integer=True)
+
+# create base settings object for experiments
+settings = qnmr.ExperimentSettings(
+    n_avg=4,
+    pulse_length=1.1 * u.us,
+    pulse_amplitude=0.42,  # amplitude is 0.5*Vpp
+    rotation_angle=250.0,  # degrees
+    thermal_reset=4 * u.s,
+    center_freq=282.1901 * u.MHz,
+    offset_freq=1500 * u.Hz,
+    readout_delay=20 * u.us,
+    dwell_time=4 * u.us,
+    readout_start=0 * u.us,
+    readout_end=256 * u.us,
+)
+
+cfg = qnmr.cfg_from_settings(settings)
+
+# write an experiment which measures a basic FID signal
+expt = qnmr.Experiment1D(
+    config=cfg,
+    settings=settings,
+)
+
+expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+
+# simulate to check everything is working
+expt.simulate_experiment()

@@ -35,6 +35,7 @@ from qm.qua import (
     demod,
     frame_rotation_2pi,
     align,
+    amp,
 )
 
 u = unit(coerce_to_integer=True)
@@ -117,9 +118,9 @@ class Experiment1D:
             amplitude (float): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
             length (int | None): Length of the pulse in nanoseconds. This overrides the waveform's defined length.
         """
-        if element not in self.config.elements:
+        if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
-        if name not in self.config.elements[element].operations:
+        if name not in self.config.elements.elements[element].operations.keys():
             raise ValueError(f"Operation {name} not defined for element {element}.")
         length = length // 4 if length is not None else None  # convert to clock cycles
 
@@ -176,9 +177,8 @@ class Experiment1D:
         if command["type"] == "pulse":
             frame_rotation_2pi(command["phase"] / 360, command["element"])
             play(
-                command["name"],
+                command["name"]*amp(command["amplitude"]),
                 command["element"],
-                amplitude=command["amplitude"],
             )
             frame_rotation_2pi(-command["phase"] / 360, command["element"])
         elif command["type"] == "delay":
@@ -225,7 +225,7 @@ class Experiment1D:
 
                 # wait for ringdown to decay, blank amplifier, set to receive mode
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                wait(self.readout)
+                wait(self.pre_scan_delay, self.probe_key)
                 readout_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 # measure the FID signal via resonator and helper elements
@@ -280,11 +280,8 @@ class Experiment1D:
         Raises:
             ValueError: Throws an error if insufficient details about the experiment are defined.
         """
-        if len(self.commands) == 0:
+        if len(self._commands) == 0:
             raise ValueError("No commands have been added to the experiment.")
-        if self.var_vec is None:
-            raise ValueError("No inner loop has been defined, invalid sweep.")
-
         expt = self.create_experiment()
         simulation_config = SimulationConfig(
             duration=sim_length // 4
@@ -313,10 +310,8 @@ class Experiment1D:
         Raises:
             ValueError: Throws an error if insufficient details about the experiment are defined.
         """
-        if len(self.commands) == 0:
+        if len(self._commands) == 0:
             raise ValueError("No commands have been added to the experiment.")
-        if self.var_vec is None:
-            raise ValueError("No inner loop has been defined, invalid sweep.")
 
         expt = self.create_experiment()
         qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
