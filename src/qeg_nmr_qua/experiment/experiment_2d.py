@@ -35,7 +35,7 @@ class Experiment2D:
     def __init__(self, config: OPXConfig = None):
         """
         This class does not work yet.
-        Need to add looping and such
+        Need to add looping and such.
         """
         self.config = config if config is not None else OPXConfig()
 
