@@ -37,6 +37,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         fem_type="LF",
     )
     lf_fem.add_analog_output(port=2)
+    lf_fem.add_analog_input(port=1, gain_db=0)
     lf_fem.add_analog_input(port=2, gain_db=16)
     lf_fem.add_digital_output(port=1, name="readout_switch")
     lf_fem.add_digital_output(port=2, name="amplifier_blank", inverted=True)

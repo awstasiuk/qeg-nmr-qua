@@ -202,6 +202,12 @@
       },
       "digital_marker": "ON"
     },
+    "excitation_pulse": {
+      "type": "control",
+      "length": 5000,
+      "waveform": "excitation_wf",
+      "digital_marker": "ON"
+    },
     "no_pulse_readout": {
       "type": "measurement",
       "length": 4000,
@@ -259,6 +265,9 @@
     },
     "readout_wf": {
       "sample": 0.01
+    },
+    "excitation_wf": {
+      "sample": 0.03
     },
     "square_pi_half_wf": {
       "sample": 0.42
