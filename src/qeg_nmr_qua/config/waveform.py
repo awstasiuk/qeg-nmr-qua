@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from collections.abc import Iterable
 from typing import Dict, Optional, Any, Type, TypeVar, Literal
 
 
@@ -8,7 +9,6 @@ class AnalogWaveform:
     Configuration for a single waveform.
     """
 
-    wf_type: Literal["constant", "arbitrary"] = "constant"
     sample: float | list = (
         0.0  # amplitude value(s); float for constant, list for arbitrary
     )
@@ -16,7 +16,6 @@ class AnalogWaveform:
     def to_dict(self) -> Dict[str, Any]:
         """It may be better to link to a file when sample is an array."""
         return {
-            "type": self.wf_type,
             "sample": self.sample,
         }
 
@@ -37,6 +36,30 @@ class AnalogWaveform:
 
 
 @dataclass
+class ArbitraryWaveform:
+    """
+    Configuration for an arbitrary waveform.
+    """
+
+    samples: list[float] = field(default_factory=list)  # list of amplitude values
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "samples": self.samples,
+        }
+
+    def to_opx_config(self) -> Dict[str, Any]:
+        return self.to_dict()
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "ArbitraryWaveform":
+        return cls(samples=d.get("samples", []))
+
+    def __repr__(self) -> str:
+        return f"<ArbitraryWaveform len={len(self.samples)}>"
+
+
+@dataclass
 class DigitalWaveform:
     """
     Configuration for a digital waveform (marker). A length of 0 means the marker will hold its state
@@ -46,10 +69,10 @@ class DigitalWaveform:
     state: int = 0  # 0 or 1
     length: int = 0  # in nanoseconds
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_opx_config(self) -> Dict[str, str]:
         return {"samples": [(self.state, self.length)]}
 
-    def to_opx_config(self) -> Dict[str, str]:
+    def to_dict(self) -> Dict[str, str]:
         return {
             "state": self.state,
             "length": self.length,
@@ -57,14 +80,7 @@ class DigitalWaveform:
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "DigitalWaveform":
-        # Accept either {'samples': [(state,length)]} or {'state':..., 'length':...}
-        if isinstance(d, dict) and "samples" in d:
-            try:
-                s, l = d["samples"][0]
-                return cls(state=int(s), length=int(l))
-            except Exception:
-                return cls()
-        return cls(state=int(d.get("state", 0)), length=int(d.get("length", 0)))
+        return cls(state=d.get("state", 0), length=d.get("length", 0))
 
     def __repr__(self) -> str:
         return f"<DigitalWaveform state={self.state} length={self.length}>"
@@ -82,7 +98,6 @@ class AnalogWaveformConfig:
     def add_waveform(
         self,
         name: str,
-        wf_type: Literal["constant", "arbitrary"] = "constant",
         sample: float | list[float] = 0.0,
     ) -> None:
         """
@@ -90,7 +105,10 @@ class AnalogWaveformConfig:
         or arbitrary waveforms. If constant, `sample` is a float amplitude value. If arbitrary, `sample` is a list of amplitude values
         which define the waveform shape, between -1 and 1.
         """
-        self.waveforms[name] = AnalogWaveform(wf_type=wf_type, sample=sample)
+        if isinstance(sample, Iterable):
+            self.waveforms[name] = ArbitraryWaveform(samples=sample)
+        else:
+            self.waveforms[name] = AnalogWaveform(sample=sample)
 
     def to_dict(self) -> Dict[str, Any]:
         return {name: wf.to_dict() for name, wf in self.waveforms.items()}
