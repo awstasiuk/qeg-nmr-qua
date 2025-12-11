@@ -20,7 +20,7 @@ class AnalogWaveform:
         }
 
     def to_opx_config(self) -> Dict[str, Any]:
-        return self.to_dict()
+        return {"type": "constant", "sample": self.sample}
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "AnalogWaveform":
@@ -49,7 +49,7 @@ class ArbitraryWaveform:
         }
 
     def to_opx_config(self) -> Dict[str, Any]:
-        return self.to_dict()
+        return {"type": "arbitrary", "samples": self.samples}
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "ArbitraryWaveform":
