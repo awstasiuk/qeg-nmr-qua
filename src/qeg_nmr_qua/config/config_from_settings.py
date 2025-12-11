@@ -153,6 +153,12 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         waveform="readout_wf",
         digital_marker="ON",
     )
+    # needed for reasons that currently elude me
+    excitation = ControlPulse(
+        length=settings.excitation_len,
+        waveform="excitation_wf",
+        digital_marker="ON",
+    )
     # used for FID measurements
     no_pulse_readout = MeasPulse(
         length=settings.dwell_time,
@@ -192,6 +198,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
 
     cfg.add_pulse("const_pulse", cw)
     cfg.add_pulse("readout_pulse", readout)
+    cfg.add_pulse("excitation_pulse", excitation)
     cfg.add_pulse("no_pulse_readout", no_pulse_readout)
     cfg.add_pulse("pi_half_pulse", sqr_pi_half)
     cfg.add_pulse("pi_pulse", sqr_pi)
@@ -203,6 +210,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     cfg.add_waveform("const_wf", waveform=settings.const_amp)
     cfg.add_waveform("zero_wf", waveform=0.0)
     cfg.add_waveform("readout_wf", waveform=settings.readout_amp)
+    cfg.add_waveform("excitation_wf", waveform=settings.excitation_amp)
     cfg.add_waveform("square_pi_half_wf", waveform=settings.pulse_amplitude)
     cfg.add_waveform("square_pi_wf", waveform=settings.pulse_amplitude)
     # Gaussian waveform samples for shaped pi/2 pulse

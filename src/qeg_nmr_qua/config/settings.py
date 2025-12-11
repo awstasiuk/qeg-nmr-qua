@@ -44,6 +44,10 @@ class ExperimentSettings:
     readout_start: int = 0 * u.us
     readout_end: int = 256 * u.us
 
+    # resonator excitation
+    excitation_len = 5 * u.us
+    excitation_amp = 0.03
+
     # config element keys
     res_key: str = "resonator"
     amp_key: str = "amplifier"
