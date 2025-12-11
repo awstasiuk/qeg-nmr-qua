@@ -24,7 +24,7 @@ class AnalogWaveform:
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "AnalogWaveform":
-        return cls(wf_type=d.get("type", "constant"), sample=d.get("sample", 0.0))
+        return cls(sample=d.get("sample", 0.0))
 
     def __repr__(self) -> str:
         sample_desc = (
@@ -32,7 +32,7 @@ class AnalogWaveform:
             if isinstance(self.sample, (list, tuple))
             else f"amp={self.sample} V"
         )
-        return f"<AnalogWaveform type={self.wf_type} {sample_desc}>"
+        return f"<AnalogWaveform {sample_desc}>"
 
 
 @dataclass

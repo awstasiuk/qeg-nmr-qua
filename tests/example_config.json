@@ -18,7 +18,7 @@
         "analog_inputs": {
           "2": {
             "offset": 0.0,
-            "gain_db": 0.0,
+            "gain_db": 16,
             "sampling_rate": 1000000000
           }
         },
@@ -252,28 +252,22 @@
   },
   "waveforms": {
     "const_wf": {
-      "type": "constant",
       "sample": 0.03
     },
     "zero_wf": {
-      "type": "constant",
       "sample": 0.0
     },
     "readout_wf": {
-      "type": "constant",
       "sample": 0.01
     },
     "square_pi_half_wf": {
-      "type": "constant",
       "sample": 0.42
     },
     "square_pi_wf": {
-      "type": "constant",
       "sample": 0.42
     },
     "gaussian_pi_half_wf": {
-      "type": "arbitrary",
-      "sample": [
+      "samples": [
         0.0046657785460617685,
         0.004742755681069705,
         0.004820859109538944,
@@ -1379,20 +1373,12 @@
   },
   "digital_waveforms": {
     "ON": {
-      "samples": [
-        [
-          1,
-          0
-        ]
-      ]
+      "state": 1,
+      "length": 0
     },
     "OFF": {
-      "samples": [
-        [
-          0,
-          0
-        ]
-      ]
+      "state": 0,
+      "length": 0
     }
   },
   "integration_weights": {

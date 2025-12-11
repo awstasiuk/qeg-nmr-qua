@@ -116,8 +116,7 @@ class OPXConfig:
 
     def add_waveform(self, name: str, waveform: float | list[float]):
         """Add an analog waveform configuration."""
-        wf_type = "arbitrary" if isinstance(waveform, Iterable) else "constant"
-        self.waveforms.add_waveform(name, wf_type=wf_type, sample=waveform)
+        self.waveforms.add_waveform(name, sample=waveform)
 
     def add_digital_waveform(self, name: str, state: int = 0, length: int = 0):
         """Add a digital waveform (marker) configuration."""
