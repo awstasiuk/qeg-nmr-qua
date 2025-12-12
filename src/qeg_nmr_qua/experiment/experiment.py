@@ -4,9 +4,6 @@ from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
 from qeg_nmr_qua.experiment.macros import (
-    readout_mode,
-    safe_mode,
-    drive_mode,
     AMPLIFIER_BLANKING_TIME,
     RX_SWITCH_DELAY,
 )
@@ -16,11 +13,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from scipy import signal
 
-from qm import QuantumMachinesManager
-from qm import SimulationConfig
-from qualang_tools.results import fetching_tool, progress_counter
-from qualang_tools.plot import interrupt_on_close
-from qualang_tools.results.data_handler import DataHandler
+from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
+from qm.jobs.running_qm_job import RunningQmJob
 from qualang_tools.units import unit
 from qm.qua import (
     play,
@@ -325,7 +319,7 @@ class Experiment:
         job = qm.execute(expt)
         self.live_plot(qm, job)
 
-    def live_plot(self, qm, job):
+    def live_plot(self, qm: QuantumMachine, job: RunningQmJob):
         """
         Live plots the results of the experiment as it is being executed.
         """
