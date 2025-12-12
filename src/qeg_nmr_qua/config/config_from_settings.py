@@ -226,37 +226,56 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
 
     # finally, define integration weights for measurement pulses
     cfg.add_integration_weight(
-        name="cosine_weight",
+        name="cosine_weights",
         length=settings.dwell_time,
         real_weight=1.0,
         imag_weight=0.0,
     )
     cfg.add_integration_weight(
-        name="sine_weight",
+        name="sine_weights",
         length=settings.dwell_time,
         real_weight=0.0,
         imag_weight=1.0,
     )
     cfg.add_integration_weight(
-        name="minus_sine_weight",
+        name="minus_sine_weights",
         length=settings.dwell_time,
         real_weight=0.0,
         imag_weight=-1.0,
     )
     cfg.add_integration_weight(
-        name="rotated_cosine_weight",
+        name="rotated_cosine_weights",
         length=settings.dwell_time,
         real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
         imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
     )
     cfg.add_integration_weight(
-        name="rotated_sine_weight",
+        name="rotated_sine_weights",
         length=settings.dwell_time,
         real_weight=-np.sin(np.pi * (settings.rotation_angle / 180)),
         imag_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
     )
     cfg.add_integration_weight(
-        name="rotated_minus_sine_weight",
+        name="rotated_minus_sine_weights",
+        length=settings.dwell_time,
+        real_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
+    )
+    # these are placeholder for potential future loaded optimizations? seems not useful
+    cfg.add_integration_weight(
+        name="opt_cosine_weights",
+        length=settings.dwell_time,
+        real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
+    )
+    cfg.add_integration_weight(
+        name="sine_weights",
+        length=settings.dwell_time,
+        real_weight=-np.sin(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
+    )
+    cfg.add_integration_weight(
+        name="opt_minus_sine_weights",
         length=settings.dwell_time,
         real_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
         imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
