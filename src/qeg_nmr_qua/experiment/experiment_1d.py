@@ -1,28 +1,20 @@
-# src/qeg_nmr_qua/experiment/experiment.py
-from qeg_nmr_qua.config.config import OPXConfig
-from qeg_nmr_qua.config.settings import ExperimentSettings
-from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
 from qeg_nmr_qua.experiment.macros import (
     readout_mode,
     safe_mode,
     drive_mode,
-    AMPLIFIER_BLANKING_TIME,
-    RX_SWITCH_DELAY,
 )
+from qeg_nmr_qua.experiment.experiment import Experiment
 
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from scipy import signal
 
-from qm import QuantumMachinesManager
-from qm import SimulationConfig
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results.data_handler import DataHandler
 from qualang_tools.units import unit
 from qm.qua import (
-    play,
     wait,
     measure,
     save,
@@ -33,160 +25,12 @@ from qm.qua import (
     for_,
     fixed,
     demod,
-    frame_rotation_2pi,
-    align,
-    amp,
 )
 
 u = unit(coerce_to_integer=True)
 
 
-class Experiment1D:
-    def __init__(self, settings: ExperimentSettings, config: OPXConfig = None):
-        """
-        Initializes the base experiment class with default configurations and containers for commands, results,
-        plotting data, and experimental delays. This class serves as a foundational structure for conducting
-        experiments.
-        Args:
-            config (, optional): A configuration object for the experiment. If not provided, a default
-                            `OPXConfig` object is created.
-
-        """
-        self.settings = settings
-
-        # check if a config is provided, else create from settings.
-        # in the future this should verify the config matches the settings.
-        self.config = config if config is not None else cfg_from_settings(settings)
-
-        # ---- Experiment parameters ---- #
-        self.n_avg = settings.n_avg
-        self.pi_half_pulse = settings.pi_half_key
-
-        self.probe_key = settings.res_key
-        self.helper_key = settings.helper_key
-        self.amplifier_key = settings.amp_key
-        self.rx_switch_key = settings.sw_key
-
-        self.pre_scan_delay = (
-            settings.readout_delay // 4 - 2 * AMPLIFIER_BLANKING_TIME - RX_SWITCH_DELAY
-        )
-        if self.pre_scan_delay < 16:
-            raise ValueError("Readout delay too short to accommodate switching times.")
-
-        self.readout_len = settings.dwell_time
-        self.tau_min = settings.readout_start
-        self.tau_max = settings.readout_end
-        self.measure_sequence_len = (self.tau_max - self.tau_min) // self.readout_len
-        self.tau_sweep = np.arange(
-            0.5 * self.readout_len,
-            (self.measure_sequence_len + 0.5) * self.readout_len,
-            self.readout_len,
-        )
-        self.loop_wait_cycles = self.readout_len // 4  # to clock cycles
-
-        self.wait_between_scans = settings.thermal_reset // 4  # 5 T1 in clock cycles
-
-        self.qmm = QuantumMachinesManager(
-            self.config.qop_ip, cluster_name=self.config.cluster
-        )
-
-        self._commands = []  # list of commands to build the experiment, FIFO
-
-        # ---- Data to save ---- #
-        self.save_data_dict = {
-            "n_avg": self.n_avg,
-            "config": config,
-        }
-        self.save_dir = Path(__file__).resolve().parent / "data"
-
-    def add_pulse(
-        self,
-        name: str,
-        element: str,
-        phase: float = 0.0,
-        amplitude: float = 1.0,
-        length: int | None = None,
-    ):
-        """
-        Adds a pulse command to the experiment. Stores the data to control the pulse in the experiment's command list,
-        and ensures the command is well defined
-
-        Args:
-            name (str): Name of the pulse operation, must be defined in the element's config.
-            element (str): Element to which the pulse is applied. Must be defined in the config.
-            phase (float): Phase of the pulse in degrees.
-            amplitude (float): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
-            length (int | None): Length of the pulse in nanoseconds. This overrides the waveform's defined length.
-        """
-        if element not in self.config.elements.elements.keys():
-            raise ValueError(f"Element {element} not defined in config.")
-        if name not in self.config.elements.elements[element].operations.keys():
-            raise ValueError(f"Operation {name} not defined for element {element}.")
-        length = length // 4 if length is not None else None  # convert to clock cycles
-
-        command = {
-            "type": "pulse",
-            "name": name,
-            "element": element,
-            "phase": phase,
-            "amplitude": amplitude,
-            "length": length,
-        }
-        self._commands.append(command)
-
-    def add_delay(self, duration: int):
-        """
-        Adds a delay command to the experiment. Stores the data to control the delay in the experiment's command list.
-
-        Args:
-            duration (int): Duration of the delay in nanoseconds.
-        """
-        command = {
-            "type": "delay",
-            "duration": duration // 4,  # convert to clock cycles
-        }
-        self._commands.append(command)
-
-    def add_align(self, elements: list[str] | None = None):
-        """
-        Adds an align command to the experiment. Stores the data to control the alignment in the experiment's command list.
-
-        Args:
-            elements (list[str]): List of elements to align.
-        """
-        if elements is not None:
-            for el in elements:
-                if el not in self.config.elements:
-                    raise ValueError(f"Element {el} not defined in config.")
-        command = {
-            "type": "align",
-            "elements": elements,
-        }
-        self._commands.append(command)
-
-    def translate_command(self, command: dict):
-        """
-        Translates a command dictionary into QUA code.
-
-        Args:
-            command (dict): Command dictionary to translate.
-
-        Raises:
-            ValueError: If the command type is unknown.
-        """
-        if command["type"] == "pulse":
-            frame_rotation_2pi(command["phase"] / 360, command["element"])
-            play(
-                command["name"]*amp(command["amplitude"]),
-                command["element"],
-            )
-            frame_rotation_2pi(-command["phase"] / 360, command["element"])
-        elif command["type"] == "delay":
-            wait(command["duration"])
-        elif command["type"] == "align":
-            align(*command["elements"]) if command["elements"] is not None else align()
-        else:
-            raise ValueError(f"Unknown command type: {command['type']}")
+class Experiment1D(Experiment):
 
     def create_experiment(self):
         """
@@ -197,6 +41,10 @@ class Experiment1D:
         Returns:
             program: The QUA program for the experiment defined by this class's commands.
         """
+        if self.var_vec is not None:
+            raise ValueError(
+                "Experiment1D does not support variable vectors. Use Experiment2D instead."
+            )
 
         with program() as experiment:
 
@@ -212,16 +60,14 @@ class Experiment1D:
             t1 = declare(int)
             t2 = declare(int)
 
-            wait(self.wait_between_scans, self.probe_key)
+            if self.start_with_wait:
+                wait(self.wait_between_scans, self.probe_key)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 for command in self._commands:
                     self.translate_command(command)
-
-                # final measurement excitation pulse
-                play(self.pi_half_pulse, self.probe_key)
 
                 # wait for ringdown to decay, blank amplifier, set to receive mode
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
@@ -265,58 +111,7 @@ class Experiment1D:
 
         return experiment
 
-    def simulate_experiment(self, sim_length=10_000):
-        """
-        Simulates the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The simulation returns the generated waveforms
-        of the experiment up to the duration `sim_length` in ns. Useful for checking the timings before running
-        on hardware.
-
-        Parameters:
-            sim_length (int, optional): The duration of the simulation in ns. Defaults to 10_000.
-            n_avg (int, optional): The number of averages per point. Defaults to 100_000.
-            measure_contrast (bool): If True, only the |0> state is measured, if False, both |0> and |1> are measured.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
-        """
-        if len(self._commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
-        expt = self.create_experiment()
-        simulation_config = SimulationConfig(
-            duration=sim_length // 4
-        )  # Simulate blocks python until the simulation is done
-        job = self.qmm.simulate(self.config.to_opx_config(), expt, simulation_config)
-        # Get the simulated samples
-        samples = job.get_simulated_samples()
-        # Plot the simulated samples
-        samples.con1.plot()
-        # Get the waveform report object
-        waveform_report = job.get_simulated_waveform_report()
-        # Cast the waveform report to a python dictionary
-        waveform_dict = waveform_report.to_dict()
-        # Visualize and save the waveform report
-        waveform_report.create_plot(
-            samples, plot=True, save_path=str(Path(__file__).resolve())
-        )
-        return job
-
-    def execute_experiment(self):
-        """
-        Executes the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The method handles the execution on hardware,
-        data fetching, and basic plotting of results.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
-        """
-        if len(self._commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
-
-        expt = self.create_experiment()
-        qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
-        job = qm.execute(expt)
-
+    def live_plot(self, qm, job):
         # Fetching tool
         results = fetching_tool(
             job,
