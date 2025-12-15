@@ -347,13 +347,17 @@ class Experiment:
         """
         try:
             # Save results
-            script_name = Path(__file__).name
             data_handler = DataHandler(root_data_folder=self.save_dir)
-            # data_handler.additional_files = {script_name: script_name, **default_additional_files} ???
+            files = list(self.save_dir.glob("*"))
+            if len(files) == 0:
+                name = "1"
+            else:
+                numbers = [int(f.name) for f in files if f.name.isdigit()]
+                name = str(max(numbers) + 1) if numbers else "1"
 
             data_handler.save_data(
                 data=self.save_data_dict,
-                name="_".join(script_name.split("_")[1:]).split(".")[0],
+                name=name,
             )
             print(f"Data saved in: {data_handler.data_folder}")
         except Exception as e:
