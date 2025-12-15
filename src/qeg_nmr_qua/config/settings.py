@@ -46,7 +46,7 @@ class ExperimentSettings:
     readout_end: int = 256 * u.us
 
     # resonator excitation
-    excitation_len = 5 * u.us
+    excitation_length: int = 5 * u.us
     excitation_amp = 0.03
 
     # Data saving
