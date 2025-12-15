@@ -217,3 +217,104 @@ class TestDataSaver:
         # Path should be serialized as a string (platform-independent comparison)
         assert isinstance(loaded["data"]["path"], str)
         assert "some" in loaded["data"]["path"] and "data" in loaded["data"]["path"]
+
+    def test_matplotlib_figure_handling(self, temp_dir):
+        """Test that matplotlib figures are saved as PNG files."""
+        pytest.importorskip("matplotlib")
+        import matplotlib.pyplot as plt
+
+        saver = DataSaver(temp_dir)
+
+        # Create a simple figure
+        fig, ax = plt.subplots()
+        ax.plot([1, 2, 3], [1, 4, 9])
+        ax.set_title("Test Plot")
+
+        data_with_figure = {
+            "result": [1, 2, 3],
+            "my_plot": fig,
+            "description": "test experiment",
+        }
+
+        saver.save_experiment(
+            experiment_name="figure_test",
+            config={},
+            settings={},
+            commands=[],
+            data=data_with_figure,
+        )
+
+        plt.close(fig)
+
+        # Check that figure was saved
+        figure_path = temp_dir / "figure_test" / "figure_my_plot.png"
+        assert figure_path.exists()
+
+        # Check that data.json has reference instead of figure
+        loaded = saver.load_experiment("figure_test")
+        assert "my_plot" in loaded["data"]
+        assert "figure saved as" in loaded["data"]["my_plot"]
+        assert loaded["data"]["result"] == [1, 2, 3]
+        assert loaded["data"]["description"] == "test experiment"
+
+    def test_non_serializable_data_handling(self, temp_dir):
+        """Test that non-serializable data is handled gracefully."""
+        saver = DataSaver(temp_dir)
+
+        # Create data with a non-serializable object
+        class CustomClass:
+            def __init__(self, value):
+                self.value = value
+
+        data_with_nonserialization = {
+            "good_data": [1, 2, 3],
+            "bad_data": CustomClass(42),
+            "more_good_data": "test",
+        }
+
+        # This should not raise an exception
+        with pytest.warns(UserWarning, match="Could not serialize"):
+            saver.save_experiment(
+                experiment_name="mixed_test",
+                config={},
+                settings={},
+                commands=[],
+                data=data_with_nonserialization,
+            )
+
+        # Check that good data was saved
+        loaded = saver.load_experiment("mixed_test")
+        assert loaded["data"]["good_data"] == [1, 2, 3]
+        assert loaded["data"]["more_good_data"] == "test"
+        assert "non-serializable" in loaded["data"]["bad_data"]
+        assert "_failed_keys" in loaded["data"]
+        assert "bad_data" in loaded["data"]["_failed_keys"]
+
+    def test_partial_save_resilience(self, temp_dir):
+        """Test that partial failures don't prevent other data from being saved."""
+        saver = DataSaver(temp_dir)
+
+        # Mix of good and problematic data
+        mixed_data = {
+            "array": np.array([1, 2, 3]),
+            "string": "hello",
+            "number": 42,
+            "lambda_func": lambda x: x + 1,  # Non-serializable
+        }
+
+        with pytest.warns(UserWarning):
+            result_path = saver.save_experiment(
+                experiment_name="partial_test",
+                config={},
+                settings={},
+                commands=[],
+                data=mixed_data,
+            )
+
+        assert result_path.exists()
+
+        # Verify the good data was saved
+        loaded = saver.load_experiment("partial_test")
+        assert loaded["data"]["array"] == [1, 2, 3]
+        assert loaded["data"]["string"] == "hello"
+        assert loaded["data"]["number"] == 42

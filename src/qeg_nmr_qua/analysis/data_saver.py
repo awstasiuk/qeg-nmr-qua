@@ -6,6 +6,7 @@ from NMR experiments using the OPX-1000.
 """
 
 import json
+import warnings
 from pathlib import Path
 from typing import Any
 import numpy as np
@@ -92,8 +93,17 @@ class DataSaver:
             # Save commands
             self._save_json(experiment_folder / "commands.json", commands)
 
-            # Save data
-            self._save_json(experiment_folder / "data.json", data)
+            # Process and save data (extract figures, handle failures gracefully)
+            cleaned_data, figure_map = self._process_data_payload(
+                data, experiment_folder
+            )
+
+            # Save the cleaned data (without figures)
+            self._save_json(experiment_folder / "data.json", cleaned_data)
+
+            # Save a mapping of figure keys to their filenames
+            if figure_map:
+                self._save_json(experiment_folder / "figures.json", figure_map)
 
             return experiment_folder
 
@@ -114,7 +124,8 @@ class DataSaver:
             experiment_name (str): Name of the experiment folder to load
 
         Returns:
-            dict: Dictionary containing 'config', 'settings', 'commands', and 'data' keys
+            dict: Dictionary containing 'config', 'settings', 'commands', and 'data' keys.
+                  If figures were saved, also includes 'figures' key with mapping info.
 
         Raises:
             FileNotFoundError: If the experiment folder or required files don't exist
@@ -138,6 +149,11 @@ class DataSaver:
                 )
             key = filename.replace(".json", "")
             result[key] = self._load_json(filepath)
+
+        # Load figure mapping if it exists
+        figures_file = experiment_folder / "figures.json"
+        if figures_file.exists():
+            result["figures"] = self._load_json(figures_file)
 
         return result
 
@@ -167,6 +183,98 @@ class DataSaver:
         """
         with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
+
+    def _process_data_payload(
+        self, data: dict[str, Any], experiment_folder: Path
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        """
+        Process the data payload to extract matplotlib figures and handle serialization failures.
+
+        Args:
+            data (dict): The data payload that may contain figures and other objects
+            experiment_folder (Path): Folder where figures will be saved
+
+        Returns:
+            tuple: (cleaned_data, figure_map) where cleaned_data has figures removed/replaced
+                   and figure_map is a dict mapping keys to saved figure filenames
+        """
+        cleaned_data = {}
+        figure_map = {}
+        failed_keys = []
+
+        for key, value in data.items():
+            try:
+                # Check if value is a matplotlib figure
+                if self._is_matplotlib_figure(value):
+                    # Save figure as PNG
+                    figure_filename = f"figure_{key}.png"
+                    figure_path = experiment_folder / figure_filename
+                    self._save_figure(value, figure_path)
+                    figure_map[key] = figure_filename
+                    # Replace with a reference string in the data
+                    cleaned_data[key] = f"<figure saved as {figure_filename}>"
+                else:
+                    # Try to serialize the value
+                    try:
+                        # Test if it's JSON serializable
+                        json.dumps(value, cls=_NumpyEncoder)
+                        cleaned_data[key] = value
+                    except (TypeError, ValueError) as e:
+                        # If serialization fails, save as string representation
+                        warnings.warn(
+                            f"Could not serialize data['{key}'] as JSON: {e}. "
+                            f"Saving as string representation instead.",
+                            UserWarning,
+                        )
+                        cleaned_data[key] = (
+                            f"<non-serializable: {type(value).__name__}>"
+                        )
+                        failed_keys.append(key)
+            except Exception as e:
+                # If anything goes wrong, log and continue
+                warnings.warn(
+                    f"Failed to process data['{key}']: {e}. Skipping this field.",
+                    UserWarning,
+                )
+                failed_keys.append(key)
+                continue
+
+        if failed_keys:
+            cleaned_data["_failed_keys"] = failed_keys
+
+        return cleaned_data, figure_map
+
+    @staticmethod
+    def _is_matplotlib_figure(obj: Any) -> bool:
+        """
+        Check if an object is a matplotlib Figure.
+
+        Args:
+            obj: Object to check
+
+        Returns:
+            bool: True if obj is a matplotlib Figure
+        """
+        try:
+            import matplotlib.figure
+
+            return isinstance(obj, matplotlib.figure.Figure)
+        except ImportError:
+            return False
+
+    @staticmethod
+    def _save_figure(fig: Any, filepath: Path) -> None:
+        """
+        Save a matplotlib figure to a file.
+
+        Args:
+            fig: Matplotlib Figure object
+            filepath (Path): Path where the figure should be saved
+        """
+        try:
+            fig.savefig(filepath, dpi=300, bbox_inches="tight")
+        except Exception as e:
+            warnings.warn(f"Failed to save figure to {filepath}: {e}", UserWarning)
 
     def list_experiments(self) -> list[str]:
         """

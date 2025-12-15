@@ -370,7 +370,7 @@ class Experiment:
             # Save the experiment using DataSaver
             experiment_folder = self.data_saver.save_experiment(
                 experiment_name=experiment_name,
-                config=self.config.to_opx_config(),
+                config=self.config.to_dict(),
                 settings=self.settings.to_dict(),
                 commands=self._commands,
                 data=data_payload,
