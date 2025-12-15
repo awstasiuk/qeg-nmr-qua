@@ -20,6 +20,7 @@ settings = qnmr.ExperimentSettings(
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
+    save_dir=Path(__file__).parent / "test_results",
 )
 
 cfg = qnmr.cfg_from_settings(settings)
