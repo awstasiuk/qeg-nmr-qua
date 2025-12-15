@@ -82,8 +82,6 @@ class Experiment:
         # ---- Data to save ---- #
         self.save_data_dict = {
             "n_avg": self.n_avg,
-            "config": self.config.to_opx_config(),
-            "settings": self.settings.to_dict(),
         }
         self.save_dir = (
             Path(__file__).resolve().parent / "data"
