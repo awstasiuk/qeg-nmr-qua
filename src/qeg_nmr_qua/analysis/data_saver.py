@@ -188,19 +188,22 @@ class DataSaver:
 
 class _NumpyEncoder(json.JSONEncoder):
     """
-    Custom JSON encoder to handle numpy types.
+    Custom JSON encoder to handle numpy types and Path objects.
 
     Converts:
     - numpy arrays to lists
     - numpy scalars to Python native types
+    - Path objects to strings
     """
 
     def default(self, obj):
-        """Encode numpy types as JSON-serializable Python types."""
+        """Encode numpy types and Path objects as JSON-serializable Python types."""
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         elif isinstance(obj, (np.integer, np.floating)):
             return obj.item()
         elif isinstance(obj, np.bool_):
             return bool(obj)
+        elif isinstance(obj, Path):
+            return str(obj)
         return super().default(obj)

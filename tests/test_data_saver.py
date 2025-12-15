@@ -196,6 +196,7 @@ class TestDataSaver:
             "scalar_float": np.float64(3.14),
             "scalar_int": np.int32(42),
             "scalar_bool": np.bool_(True),
+            "path": Path("/some/data/path"),
         }
 
         saver.save_experiment(
@@ -213,3 +214,6 @@ class TestDataSaver:
         assert isinstance(loaded["data"]["scalar_float"], float)
         assert isinstance(loaded["data"]["scalar_int"], int)
         assert isinstance(loaded["data"]["scalar_bool"], bool)
+        # Path should be serialized as a string (platform-independent comparison)
+        assert isinstance(loaded["data"]["path"], str)
+        assert "some" in loaded["data"]["path"] and "data" in loaded["data"]["path"]
