@@ -4,6 +4,8 @@ from qm.qua import align, play, wait
 RX_SWITCH_DELAY = 230  # clock cycles
 AMPLIFIER_UNBLANKING_TIME = 500  # clock cycles
 AMPLIFIER_BLANKING_TIME = 500  # clock cycles
+# Readout mode uses a shorter delay than the full blanking time
+RX_MODE_AMPLIFIER_DELAY = 480  # clock cycles
 
 
 def drive_mode(switch, amplifier):
@@ -27,12 +29,12 @@ def readout_mode(switch, amplifier):
     """
     Configures the hardware such that the receiver switch allows signal
     to pass through, and the amplifier off (blanked) for reading out the
-    resonator. This adds 4 align() calls and 730 clock cycles of wait time.
+    resonator. This adds 4 align() calls and 710 clock cycles of wait time.
     """
     align()
     play("voltage_off", amplifier)  # Ensure Amplifier is off
     align()
-    wait(AMPLIFIER_BLANKING_TIME)
+    wait(RX_MODE_AMPLIFIER_DELAY)
     play("voltage_on", switch)  # Close the switch
     align()
     wait(RX_SWITCH_DELAY)

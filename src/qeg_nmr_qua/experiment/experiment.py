@@ -7,6 +7,7 @@ from qeg_nmr_qua.analysis.data_saver import DataSaver
 from qeg_nmr_qua.experiment.macros import (
     AMPLIFIER_BLANKING_TIME,
     RX_SWITCH_DELAY,
+    RX_MODE_AMPLIFIER_DELAY,
 )
 
 import numpy as np
@@ -51,7 +52,10 @@ class Experiment:
         self.rx_switch_key = settings.sw_key
 
         self.pre_scan_delay = (
-            settings.readout_delay // 4 - 2 * AMPLIFIER_BLANKING_TIME - RX_SWITCH_DELAY
+            settings.readout_delay // 4
+            - AMPLIFIER_BLANKING_TIME  # safe_mode wait time
+            - RX_MODE_AMPLIFIER_DELAY  # readout_mode first wait
+            - RX_SWITCH_DELAY  # readout_mode second wait
         )
         if self.pre_scan_delay < 16:
             raise ValueError("Readout delay too short to accommodate switching times.")
