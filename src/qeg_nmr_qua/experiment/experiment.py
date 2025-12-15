@@ -1,5 +1,7 @@
 # src/qeg_nmr_qua/experiment/experiment.py
 from collections.abc import Iterable
+
+from pyparsing import Any
 from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
@@ -105,7 +107,7 @@ class Experiment:
         Args:
             name (str): Name of the pulse operation, must be defined in the element's config.
             element (str): Element to which the pulse is applied. Must be defined in the config.
-            phase (float | Iterable): Phase of the pulse in degrees.
+            phase (float | Iterable): Phase of the pulse in degrees. Saves as a fraction of 2pi.
             amplitude (float | Iterable): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
             length (int | Iterable): Length of the pulse in nanoseconds. This overrides the waveform's defined length.
         """
@@ -119,13 +121,26 @@ class Experiment:
             "name": name,
             "element": element,
         }
+        length = (
+            length // 4
+            if length is not None
+            else self.config.elements.elements[element].operations[name].length // 4
+        )
         if isinstance(phase, Iterable):
-            command["length"] = length // 4 if length is not None else None
+            command["length"] = (
+                length // 4
+                if length is not None
+                else self.config.elements.elements[element].operations[name].length // 4
+            )
             command["amplitude"] = amplitude
             self.update_loop((np.array(phase) / 360) % 1)
             self.use_fixed = True
         elif isinstance(amplitude, Iterable):
-            command["length"] = length // 4 if length is not None else None
+            command["length"] = (
+                length // 4
+                if length is not None
+                else self.config.elements.elements[element].operations[name].length // 4
+            )
             command["phase"] = (phase / 360) % 1
             self.update_loop(np.array(amplitude))
             self.use_fixed = True
@@ -137,11 +152,15 @@ class Experiment:
         else:
             command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
-            command["length"] = length // 4 if length is not None else None
+            command["length"] = (
+                length // 4
+                if length is not None
+                else self.config.elements.elements[element].operations[name].length // 4
+            )
 
         self._commands.append(command)
 
-    def add_delay(self, duration: int):
+    def add_delay(self, duration: int | Iterable):
         """
         Adds a delay command to the experiment. Stores the data to control the delay in the experiment's command list.
 
@@ -228,7 +247,7 @@ class Experiment:
 
         raise ValueError("Inconsistent loop variables.")
 
-    def translate_command(self, command: dict):
+    def translate_command(self, command: dict, var: Any = None):
         """
         Translates a command dictionary into QUA code.
 
@@ -239,15 +258,24 @@ class Experiment:
             ValueError: If the command type is unknown.
         """
         if command["type"] == "pulse":
-            frame_rotation_2pi(command["phase"] / 360, command["element"])
+            phase = command.get("phase", var)
+            amplitude = command.get("amplitude", var)
+            length = command.get("length", var)
+
+            frame_rotation_2pi(phase, command["element"])
             play(
-                command["name"] * amp(command["amplitude"]),
+                command["name"] * amp(amplitude),
                 command["element"],
+                duration=length,
             )
-            frame_rotation_2pi(-command["phase"] / 360, command["element"])
+            frame_rotation_2pi(-phase, command["element"])
+
         elif command["type"] == "delay":
-            wait(command["duration"])
+            duration = command.get("duration", var)
+
+            wait(duration)
         elif command["type"] == "align":
+
             align(*command["elements"]) if command["elements"] is not None else align()
         else:
             raise ValueError(f"Unknown command type: {command['type']}")
@@ -299,11 +327,9 @@ class Experiment:
         samples.con1.plot()
         # Get the waveform report object
         waveform_report = job.get_simulated_waveform_report()
-        # Cast the waveform report to a python dictionary
-        waveform_dict = waveform_report.to_dict()
         # Visualize and save the waveform report
         waveform_report.create_plot(
-            samples, plot=True, save_path=str(Path(__file__).resolve())
+            samples, plot=True, save_path=str(Path(__file__).resolve().parent)
         )
         return job
 

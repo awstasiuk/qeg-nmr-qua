@@ -183,7 +183,7 @@ class Experiment2D(Experiment):
                     ax2._colorbar.update_normal(im2)
 
                 ax3.cla()
-                im3 = ax3.plot(self.var_vec, I.T[0] * 1e6, label="I")
+                ax3.plot(self.var_vec, I.T[0] * 1e6, label="I")
                 ax3.set_xlabel("Swept Variable")
                 ax3.set_ylabel("I (µV)")
                 ax3.set_title("Primary signal")

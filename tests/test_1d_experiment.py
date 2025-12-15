@@ -1,8 +1,6 @@
 import qeg_nmr_qua as qnmr
 
 from qualang_tools.units import unit
-import numpy as np
-import json
 from pathlib import Path
 
 u = unit(coerce_to_integer=True)
