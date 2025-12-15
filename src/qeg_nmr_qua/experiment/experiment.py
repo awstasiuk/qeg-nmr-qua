@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
+from qeg_nmr_qua.analysis.data_saver import DataSaver
 from qeg_nmr_qua.experiment.macros import (
     AMPLIFIER_BLANKING_TIME,
     RX_SWITCH_DELAY,
@@ -12,7 +13,6 @@ import numpy as np
 from pathlib import Path
 from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
-from qualang_tools.results.data_handler import DataHandler
 from qualang_tools.units import unit
 from qm.qua import (
     play,
@@ -90,6 +90,7 @@ class Experiment:
             if settings.save_dir is None
             else settings.save_dir
         )
+        self.data_saver = DataSaver(self.save_dir)
 
     def add_pulse(
         self,
@@ -341,26 +342,40 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
-    def save_data(self):
+    def save_data(self, experiment_name: str = "experiment_001"):
         """
-        Saves the experiment data to the specified directory. Each experiment subclass
-        can customize the data to be saved by modifying the `save_data_dict` attribute.
+        Saves the experiment data to the specified directory using the DataSaver.
 
-        By default, this method saves the number of averages and configuration settings
-        used in the experiment, for reproducibility.
+        Creates a folder with the given experiment_name containing:
+        - config.json: OPX configuration
+        - settings.json: Experiment settings
+        - commands.json: List of commands executed
+        - data.json: Experimental results and metadata
+
+        Each experiment is saved in a newly created folder with a simple naming structure
+        for easy loading elsewhere.
+
+        Args:
+            experiment_name (str): Name for the experiment folder. Defaults to "experiment_001".
+                Should be a simple name without path separators (e.g., "experiment_001", "test_run").
+
+        Raises:
+            FileExistsError: If the experiment folder already exists.
+            ValueError: If experiment_name contains path separators or is invalid.
         """
         try:
-            # Save results
-            data_handler = DataHandler(root_data_folder=self.save_dir)
-            script_name = Path(__file__).name
-            data_handler.additional_files = {
-                script_name: script_name,
-            }
+            # Prepare the data payload: include both metadata and results
+            data_payload = self.save_data_dict.copy()
 
-            data_handler.save_data(
-                data=self.save_data_dict,
-                name="test 1",
+            # Save the experiment using DataSaver
+            experiment_folder = self.data_saver.save_experiment(
+                experiment_name=experiment_name,
+                config=self.config.to_opx_config(),
+                settings=self.settings.to_dict(),
+                commands=self._commands,
+                data=data_payload,
             )
-            print(f"Data saved successfully in folder: {self.save_dir / 'test 1'}")
+
+            print(f"Data saved successfully to folder: {experiment_folder}")
         except Exception as e:
             print(f"Failed to save data: {e}")
