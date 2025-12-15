@@ -1,22 +1,15 @@
-# src/qeg_nmr_qua/experiment/experiment.py
-from qeg_nmr_qua.config.config import OPXConfig
-from qeg_nmr_qua.config.settings import ExperimentSettings
-from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
-from qeg_nmr_qua.experiment.macros import readout_mode, safe_mode, drive_mode
+from qeg_nmr_qua.experiment.macros import (
+    readout_mode,
+    safe_mode,
+    drive_mode,
+)
+from qeg_nmr_qua.experiment.experiment import Experiment
 
-import numpy as np
-from pathlib import Path
 import matplotlib.pyplot as plt
-from scipy import signal
-
-from qm import QuantumMachinesManager
-from qm import SimulationConfig
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
-from qualang_tools.results.data_handler import DataHandler
 from qualang_tools.units import unit
 from qm.qua import (
-    play,
     wait,
     measure,
     save,
@@ -32,50 +25,21 @@ from qm.qua import (
 u = unit(coerce_to_integer=True)
 
 
-class Experiment1D:
-    def __init__(self, settings: ExperimentSettings, config: OPXConfig = None):
+class Experiment1D(Experiment):
+
+    def validate_experiment(self):
         """
-        Initializes the base experiment class with default configurations and containers for commands, results,
-        plotting data, and experimental delays. This class serves as a foundational structure for conducting
-        experiments.
-        Args:
-            config (, optional): A configuration object for the experiment. If not provided, a default
-                            `OPXConfig` object is created.
+        Checks to make sure that the experiment contains no variable operations,
+        since it is a 1D experiment. Variable operations require looping which is not
+        supported in 1D experiments.
 
+        Raises:
+            ValueError: A looping operation was found in the experiment commands.
         """
-        self.config = config if config is not None else cfg_from_settings(settings)
-        self.settings = settings
-        # ---- Experiment parameters ---- #
-        self.n_avg = 4
-        self.pi_half_pulse = settings.pi_half_key
-
-        self.probe_key = settings.res_key
-        self.helper_key = settings.helper_key
-        self.amplifier_key = settings.amp_key
-        self.rx_switch_key = settings.sw_key
-
-        self.readout_len = settings.dwell_time
-        self.tau_min = settings.readout_start
-        self.tau_max = settings.readout_end
-        self.measure_sequence_len = (self.tau_max - self.tau_min) // self.readout_len
-        self.tau_sweep = np.arange(
-            0.5 * self.readout_len,
-            (self.measure_sequence_len + 0.5) * self.readout_len,
-            self.readout_len,
-        )
-        self.loop_wait_cycles = self.readout_len // 4  # to clock cycles
-
-        self.wait_between_scans = settings.thermal_reset  # 5 T1
-
-        self.qmm = QuantumMachinesManager(
-            self.config.qop_ip, cluster_name=self.config.cluster
-        )
-        # ---- Data to save ---- #
-        self.save_data_dict = {
-            "n_avg": self.n_avg,
-            "config": config,
-        }
-        self.save_dir = Path(__file__).resolve().parent / "data"
+        if self.var_vec is not None:
+            raise ValueError(
+                "Experiment1D does not support variable vectors. Use Experiment2D, or similar, instead."
+            )
 
     def create_experiment(self):
         """
@@ -86,6 +50,8 @@ class Experiment1D:
         Returns:
             program: The QUA program for the experiment defined by this class's commands.
         """
+
+        self.validate_experiment()
 
         with program() as experiment:
 
@@ -101,13 +67,18 @@ class Experiment1D:
             t1 = declare(int)
             t2 = declare(int)
 
+            if self.start_with_wait:
+                wait(self.wait_between_scans, self.probe_key)
+
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-                # final measurement excitation pulse
-                play(self.pi_half_pulse, self.probe_key)
+                drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+
+                for command in self._commands:
+                    self.translate_command(command)
 
                 # wait for ringdown to decay, blank amplifier, set to receive mode
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                wait(self.readout)
+                wait(self.pre_scan_delay, self.probe_key)
                 readout_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 # measure the FID signal via resonator and helper elements
@@ -134,9 +105,11 @@ class Experiment1D:
                     save(I2, I_st)
                     save(Q2, Q_st)
                     wait(self.loop_wait_cycles, self.helper_key)
+
+                # set to safe mode and allow system to relax
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                wait(self.spin_relax, self.res_key)
                 save(n, n_st)
+                wait(self.wait_between_scans, self.probe_key)
 
             with stream_processing():
                 n_st.save("iteration")
@@ -145,63 +118,7 @@ class Experiment1D:
 
         return experiment
 
-    def simulate_experiment(self, sim_length=10_000):
-        """
-        Simulates the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The simulation returns the generated waveforms
-        of the experiment up to the duration `sim_length` in ns. Useful for checking the timings before running
-        on hardware.
-
-        Parameters:
-            sim_length (int, optional): The duration of the simulation in ns. Defaults to 10_000.
-            n_avg (int, optional): The number of averages per point. Defaults to 100_000.
-            measure_contrast (bool): If True, only the |0> state is measured, if False, both |0> and |1> are measured.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
-        """
-        if len(self.commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
-        if self.var_vec is None:
-            raise ValueError("No inner loop has been defined, invalid sweep.")
-
-        expt = self.create_experiment()
-        simulation_config = SimulationConfig(
-            duration=sim_length // 4
-        )  # Simulate blocks python until the simulation is done
-        job = self.qmm.simulate(self.config.to_opx_config(), expt, simulation_config)
-        # Get the simulated samples
-        samples = job.get_simulated_samples()
-        # Plot the simulated samples
-        samples.con1.plot()
-        # Get the waveform report object
-        waveform_report = job.get_simulated_waveform_report()
-        # Cast the waveform report to a python dictionary
-        waveform_dict = waveform_report.to_dict()
-        # Visualize and save the waveform report
-        waveform_report.create_plot(
-            samples, plot=True, save_path=str(Path(__file__).resolve())
-        )
-        return job
-
-    def execute_experiment(self):
-        """
-        Executes the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The method handles the execution on hardware,
-        data fetching, and basic plotting of results.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
-        """
-        if len(self.commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
-        if self.var_vec is None:
-            raise ValueError("No inner loop has been defined, invalid sweep.")
-
-        expt = self.create_experiment()
-        qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
-        job = qm.execute(expt)
-
+    def live_data_processing(self, qm, job):
         # Fetching tool
         results = fetching_tool(
             job,
@@ -243,19 +160,28 @@ class Experiment1D:
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
 
-        print("Experiment finished.")
+        # Keep the interactive plot open after acquisition until the user closes it
+        message = "Acquisition finished. Close the plot window to continue."
+        print(message)
+        try:
+            # Add a centered text box on the figure (figure coordinates)
+            fig_live.text(
+                0.04,
+                0.02,
+                message,
+                ha="left",
+                va="bottom",
+                fontsize=8,
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+            )
+            fig_live.canvas.draw_idle()
+        except Exception as e:
+            print(e)
+        while plt.fignum_exists(fig_live.number):
+            plt.pause(0.5)
 
-        # Save results
-        script_name = Path(__file__).name
-        data_handler = DataHandler(root_data_folder=self.save_dir)
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
         self.save_data_dict.update({"fig_live": fig_live})
-        # data_handler.additional_files = {script_name: script_name, **default_additional_files} ???
 
-        data_handler.save_data(
-            data=self.save_data_dict,
-            name="_".join(script_name.split("_")[1:]).split(".")[0],
-        )
-        print(f"Data saved in: {data_handler.data_folder}")
-        qm.close()
+        self.save_data()

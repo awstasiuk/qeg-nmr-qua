@@ -16,12 +16,12 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = ExperimentSettings(
     n_avg=4,
-    pulse_length=1.776 * u.us,
-    pulse_amplitude=0.25,  # amplitude is 0.5*Vpp
+    pulse_length=1.100 * u.us,
+    pulse_amplitude=0.425,  # amplitude is 0.5*Vpp
     rotation_angle=90.0,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=750 * u.Hz,
+    offset_freq=1500 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -45,7 +45,7 @@ lf_fem = FEModuleConfig(
     fem_type="LF",
 )
 lf_fem.add_analog_output(port=2)
-lf_fem.add_analog_input(port=2)
+lf_fem.add_analog_input(port=2, gain_db=16)
 lf_fem.add_digital_output(port=1, name="readout_switch")
 lf_fem.add_digital_output(port=2, name="amplifier_blank", inverted=True)
 lf_fem.add_digital_output(port=3, name="debug_marker")

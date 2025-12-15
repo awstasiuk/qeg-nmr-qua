@@ -21,6 +21,8 @@ from qeg_nmr_qua.config.integration import IntegrationWeights
 from qeg_nmr_qua.config.pulse import PulseConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 from qeg_nmr_qua.config.waveform import AnalogWaveformConfig, DigitalWaveformConfig
+from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
+from qeg_nmr_qua.experiment.experiment_1d import Experiment1D
 
 __version__ = "0.1.0"
 
@@ -40,6 +42,8 @@ __all__ = [
     "DigitalWaveformConfig",
     "DataSaver",
     "LivePlotter",
+    "cfg_from_settings",
+    "Experiment1D",
     "__version__",
 ]
 

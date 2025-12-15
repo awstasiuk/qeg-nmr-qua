@@ -1,21 +1,17 @@
-# src/qeg_nmr_qua/experiment/experiment.py
-from qeg_nmr_qua.config.config import OPXConfig
-from qeg_nmr_qua.experiment.macros import readout_mode, safe_mode, drive_mode
+from qeg_nmr_qua.experiment.macros import (
+    readout_mode,
+    safe_mode,
+    drive_mode,
+)
+from qeg_nmr_qua.experiment.experiment import Experiment
 
-import numpy as np
-from pathlib import Path
+
 import matplotlib.pyplot as plt
-from scipy import signal
-
-from qm import QuantumMachinesManager
-from qm import SimulationConfig
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
-from qualang_tools.results.data_handler import DataHandler
 from qualang_tools.units import unit
 from qualang_tools.loops import from_array
 from qm.qua import (
-    play,
     wait,
     measure,
     save,
@@ -31,42 +27,21 @@ from qm.qua import (
 u = unit(coerce_to_integer=True)
 
 
-class Experiment2D:
-    def __init__(self, config: OPXConfig = None):
+class Experiment2D(Experiment):
+
+    def validate_experiment(self):
         """
-        This class does not work yet.
-        Need to add looping and such
+        Checks to make sure that the experiment contains variable operations,
+        since it is a 2D experiment. Variable operations require looping which is
+        supported in 2D experiments.
+
+        Raises:
+            ValueError: No variable vector was found in the experiment commands.
         """
-        self.config = config if config is not None else OPXConfig()
-
-        self.n_avg = 4
-        self.pi_half_pulse = "pi_half"
-
-        self.probe_key = "resonator"
-        self.helper_key = "helper"
-        self.amplifier_key = "amplifier"
-        self.rx_switch_key = "switch"
-
-        readout_len = self.config.pulses.pulses["readout_pulse"].length
-        tau_min = 0 * u.us
-        tau_max = 256 * u.us
-        measure_sequence_len = (tau_max - tau_min) // readout_len
-        self.tau_sweep = np.arange(
-            0.5 * readout_len, (measure_sequence_len + 0.5) * readout_len, readout_len
-        )
-        self.loop_wait_cycles = readout_len // 4
-
-        self.thermal_reset = 4 * u.s  # 5 T1
-
-        self.qmm = QuantumMachinesManager(
-            self.config.qop_ip, cluster_name=self.config.cluster
-        )
-        # ---- Data to save ---- #
-        self.save_data_dict = {
-            "n_avg": self.n_avg,
-            "config": config,
-        }
-        self.save_dir = Path(__file__).resolve().parent / "data"
+        if self.var_vec is None:
+            raise ValueError(
+                "Experiment2D requires variable vectors. Use Experiment1D, or similar, instead."
+            )
 
     def create_experiment(self):
         """
@@ -77,6 +52,7 @@ class Experiment2D:
         Returns:
             program: The QUA program for the experiment defined by this class's commands.
         """
+        self.validate_experiment()
 
         with program() as experiment:
 
@@ -93,22 +69,18 @@ class Experiment2D:
             t2 = declare(int)
             var = declare(fixed)
 
+            if self.start_with_wait:
+                wait(self.wait_between_scans, self.probe_key)
+
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
+
                 with for_(
                     *from_array(var, self.var_vec)
                 ):  # inner loop over variable vector
-
-                    drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    for command in self.commands:
-                        self._translate_command(command, var)
-
-                    # t1 filter to kill off transients
-                    safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    wait(250_000)
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
-                    # final measurement excitation pulse
-                    play(self.pi_half_pulse, self.probe_key)
+                    for command in self._commands:
+                        self.translate_command(command, var)
 
                     # wait for ringdown to decay, blank amplifier, set to receive mode
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
@@ -142,72 +114,22 @@ class Experiment2D:
                         save(Q2, Q_st)
                         wait(self.loop_wait_cycles, self.helper_key)
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    wait(self.spin_relax, self.res_key)
+                    wait(self.wait_between_scans, self.probe_key)
 
                 save(n, n_st)
 
             with stream_processing():
                 n_st.save("iteration")
-                I_st.buffer(self.measure_sequence_len).average().save("I")
-                Q_st.buffer(self.measure_sequence_len).average().save("Q")
+                I_st.buffer(self.measure_sequence_len).buffer(
+                    len(self.var_vec)
+                ).average().save("I")
+                Q_st.buffer(self.measure_sequence_len).buffer(
+                    len(self.var_vec)
+                ).average().save("Q")
 
         return experiment
 
-    def simulate_experiment(self, sim_length=10_000):
-        """
-        Simulates the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The simulation returns the generated waveforms
-        of the experiment up to the duration `sim_length` in ns. Useful for checking the timings before running
-        on hardware.
-
-        Parameters:
-            sim_length (int, optional): The duration of the simulation in ns. Defaults to 10_000.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
-        """
-        if len(self.commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
-        if self.var_vec is None:
-            raise ValueError("No inner loop has been defined, invalid sweep.")
-
-        expt = self.create_experiment()
-        simulation_config = SimulationConfig(
-            duration=sim_length // 4
-        )  # Simulate blocks python until the simulation is done
-        job = self.qmm.simulate(self.config.to_opx_config(), expt, simulation_config)
-        # Get the simulated samples
-        samples = job.get_simulated_samples()
-        # Plot the simulated samples
-        samples.con1.plot()
-        # Get the waveform report object
-        waveform_report = job.get_simulated_waveform_report()
-        # Cast the waveform report to a python dictionary
-        waveform_dict = waveform_report.to_dict()
-        # Visualize and save the waveform report
-        waveform_report.create_plot(
-            samples, plot=True, save_path=str(Path(__file__).resolve())
-        )
-        return job
-
-    def execute_experiment(self):
-        """
-        Executes the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The method handles the execution on hardware,
-        data fetching, and basic plotting of results.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
-        """
-        if len(self.commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
-        if self.var_vec is None:
-            raise ValueError("No inner loop has been defined, invalid sweep.")
-
-        expt = self.create_experiment()
-        qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
-        job = qm.execute(expt)
-
+    def live_data_processing(self, qm, job):
         # Fetching tool
         results = fetching_tool(
             job,
@@ -215,8 +137,7 @@ class Experiment2D:
             mode="live",
         )
 
-        fig_live, (ax1, ax2) = plt.subplots(2, 1, sharex=True, height_ratios=[0, 1])
-        ax1.set_visible(False)
+        fig_live, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex=False, figsize=(12, 4))
         interrupt_on_close(fig_live, job)
         try:
             while results.is_processing():
@@ -227,41 +148,72 @@ class Experiment2D:
                 I = u.demod2volts(I, self.readout_len)
                 Q = u.demod2volts(Q, self.readout_len)
 
+                # 2D color plot: pulse amplitude vs I
+                ax1.cla()
+                im1 = ax1.pcolormesh(
+                    self.var_vec,
+                    self.tau_sweep / u.us,
+                    I.T * 1e6,
+                    shading="auto",
+                    cmap="viridis",
+                )
+                ax1.set_ylabel("Delay (µs)")
+                ax1.set_xlabel("Swept Variable")
+                ax1.set_title("I")
+                if not hasattr(ax1, "_colorbar"):
+                    ax1._colorbar = plt.colorbar(im1, ax=ax1, label="I (V)")
+                else:
+                    ax1._colorbar.update_normal(im1)
+
+                # 2D color plot: pulse amplitude vs tau for Q
                 ax2.cla()
-                fig_live.suptitle(f"Good title, scan {iteration+1}/{self.n_avg}")
-                ax2.plot(
-                    (self.tau_sweep) / u.us,
-                    I * 1e6,
-                    label=f"I Resonator {self.probe_key}",
+                im2 = ax2.pcolormesh(
+                    self.var_vec,
+                    self.tau_sweep / u.us,
+                    Q.T * 1e6,
+                    shading="auto",
+                    cmap="viridis",
                 )
-                ax2.plot(
-                    (self.tau_sweep) / u.us,
-                    Q * 1e6,
-                    label=f"Q Resonator {self.probe_key}",
-                )
-                ax2.set_ylabel("I&Q (µV)")
-                ax2.set_xlabel("Acquisition time (µs)")
-                ax2.legend()
-                fig_live.tight_layout()
-                fig_live.canvas.draw_idle()
-                plt.pause(0.25)
+                ax2.set_ylabel("Delay (µs)")
+                ax2.set_xlabel("Swept Variable")
+                ax2.set_title("Q")
+                if not hasattr(ax2, "_colorbar"):
+                    ax2._colorbar = plt.colorbar(im2, ax=ax2, label="Q (µV)")
+                else:
+                    ax2._colorbar.update_normal(im2)
+
+                ax3.cla()
+                ax3.plot(self.var_vec, I.T[0] * 1e6, label="I")
+                ax3.set_xlabel("Swept Variable")
+                ax3.set_ylabel("I (µV)")
+                ax3.set_title("Primary signal")
+                ax3.legend()
 
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
 
-        print("Experiment finished.")
+        # Keep the interactive plot open after acquisition until the user closes it
+        message = "Acquisition finished. Close the plot window to continue."
+        print(message)
+        try:
+            # Add a centered text box on the figure (figure coordinates)
+            fig_live.text(
+                0.04,
+                0.02,
+                message,
+                ha="left",
+                va="bottom",
+                fontsize=8,
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+            )
+            fig_live.canvas.draw_idle()
+        except Exception as e:
+            print(e)
+        while plt.fignum_exists(fig_live.number):
+            plt.pause(0.5)
 
-        # Save results
-        script_name = Path(__file__).name
-        data_handler = DataHandler(root_data_folder=self.save_dir)
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
         self.save_data_dict.update({"fig_live": fig_live})
-        # data_handler.additional_files = {script_name: script_name, **default_additional_files} ???
 
-        data_handler.save_data(
-            data=self.save_data_dict,
-            name="_".join(script_name.split("_")[1:]).split(".")[0],
-        )
-        print(f"Data saved in: {data_handler.data_folder}")
-        qm.close()
+        self.save_data()

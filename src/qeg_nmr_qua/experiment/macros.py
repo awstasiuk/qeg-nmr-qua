@@ -1,6 +1,11 @@
 from qm.qua import align, play, wait
 
 
+RX_SWITCH_DELAY = 230  # clock cycles
+AMPLIFIER_UNBLANKING_TIME = 500  # clock cycles
+AMPLIFIER_BLANKING_TIME = 500  # clock cycles
+
+
 def drive_mode(switch, amplifier):
     """
     Configures the hardware such that the receiver switch does not
@@ -11,10 +16,10 @@ def drive_mode(switch, amplifier):
     align()
     play("voltage_off", switch)  # Open the switch
     align()
-    wait(230)  # Switching time
+    wait(RX_SWITCH_DELAY)  # Switching time
     play("voltage_on", amplifier)  # Turn on the amplifier
     align()
-    wait(500)  # Max characteristic unblanking time
+    wait(AMPLIFIER_UNBLANKING_TIME)  # Max characteristic unblanking time
     align()
 
 
@@ -22,27 +27,28 @@ def readout_mode(switch, amplifier):
     """
     Configures the hardware such that the receiver switch allows signal
     to pass through, and the amplifier off (blanked) for reading out the
-    resonator. This adds 4 align() calls and 710 clock cycles of wait time.
+    resonator. This adds 4 align() calls and 730 clock cycles of wait time.
     """
     align()
-    play("voltage_off", amplifier)  # Turn off the amplifier
+    play("voltage_off", amplifier)  # Ensure Amplifier is off
     align()
-    wait(230)
+    wait(AMPLIFIER_BLANKING_TIME)
     play("voltage_on", switch)  # Close the switch
     align()
-    wait(480)
+    wait(RX_SWITCH_DELAY)
     align()
 
 
 def safe_mode(switch, amplifier):
     """
     Turns off the amplifier and opens the switch to ensure that no signal
-    can pass through. This adds 3 align() calls and 240 clock cycles
+    can pass through. This adds 3 align() calls and 500 clock cycles
     of wait time.
     """
     align()
-    play("voltage_off", switch)  # Open the switch
+    play("voltage_off", switch)  # Ensure Switch is open
+    align()
     play("voltage_off", amplifier)  # Turn off the amplifier
     align()
-    wait(240)
+    wait(AMPLIFIER_BLANKING_TIME)
     align()

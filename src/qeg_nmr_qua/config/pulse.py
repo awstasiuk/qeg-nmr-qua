@@ -60,7 +60,7 @@ class MeasPulse:
 
     def to_opx_config(self) -> Dict[str, Any]:
         dct = {
-            "operation": "measure",
+            "operation": "measurement",
             "length": self.length,
             "waveforms": {"single": self.waveform},
             "integration_weights": self.integration_weights.to_opx_config(),
@@ -71,7 +71,7 @@ class MeasPulse:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "type": "measure",
+            "type": "measurement",
             "length": self.length,
             "waveform": self.waveform,
             "integration_weights": self.integration_weights.to_dict(),
@@ -92,7 +92,7 @@ class MeasPulse:
 
         return cls(
             length=d.get("length", 1000),
-            waveforms=d.get("waveforms", "readout_wf"),
+            waveform=d.get("waveform", "readout_wf"),
             integration_weights=iw,
             digital_marker=d.get("digital_marker"),
         )
@@ -151,7 +151,7 @@ class PulseConfig:
         """
         self.pulses[name] = ControlPulse(
             length=length,
-            waveforms=waveform,
+            waveform=waveform,
             digital_marker=digital_marker,
         )
 
@@ -174,7 +174,7 @@ class PulseConfig:
         """
         self.pulses[name] = MeasPulse(
             length=length,
-            waveforms=waveform,
+            waveform=waveform,
             integration_weights=integration_weights,
             digital_marker=digital_marker,
         )
@@ -191,7 +191,7 @@ class PulseConfig:
             ptype = pd.get("type")
             if ptype == "control":
                 pulse = ControlPulse.from_dict(pd)
-            elif ptype == "measure" or ptype == "measurement":
+            elif ptype == "measurement":
                 pulse = MeasPulse.from_dict(pd)
             else:
                 pulse = ControlPulse.from_dict(pd)

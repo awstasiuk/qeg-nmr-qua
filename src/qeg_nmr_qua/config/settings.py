@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Dict, Any, List, Optional
 
 from qualang_tools.units import unit
@@ -22,7 +23,7 @@ class ExperimentSettings:
 
     # Core experiment parameters
     n_avg: int = 4
-    pulse_length: int = 1.776 * u.us  # nanoseconds
+    pulse_length: int = 1.100 * u.us  # nanoseconds
     pulse_amplitude: float = 0.25  # 0.5*Vpp
     rotation_angle: float = 90.0  # degrees
 
@@ -43,6 +44,13 @@ class ExperimentSettings:
     dwell_time: int = 4 * u.us
     readout_start: int = 0 * u.us
     readout_end: int = 256 * u.us
+
+    # resonator excitation
+    excitation_length: int = 5 * u.us
+    excitation_amp = 0.03
+
+    # Data saving
+    save_dir: Optional[Path | str] = None
 
     # config element keys
     res_key: str = "resonator"
