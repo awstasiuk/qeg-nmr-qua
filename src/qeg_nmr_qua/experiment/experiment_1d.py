@@ -5,11 +5,7 @@ from qeg_nmr_qua.experiment.macros import (
 )
 from qeg_nmr_qua.experiment.experiment import Experiment
 
-import numpy as np
-from pathlib import Path
 import matplotlib.pyplot as plt
-from scipy import signal
-
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.results.data_handler import DataHandler
@@ -32,6 +28,20 @@ u = unit(coerce_to_integer=True)
 
 class Experiment1D(Experiment):
 
+    def validate_experiment(self):
+        """
+        Checks to make sure that the experiment contains no variable operations,
+        since it is a 1D experiment. Variable operations require looping which is not
+        supported in 1D experiments.
+
+        Raises:
+            ValueError: A looping operation was found in the experiment commands.
+        """
+        if self.var_vec is not None:
+            raise ValueError(
+                "Experiment1D does not support variable vectors. Use Experiment2D, or similar, instead."
+            )
+
     def create_experiment(self):
         """
         Creates the Quantum Machine program for the experiment, and returns the
@@ -41,10 +51,8 @@ class Experiment1D(Experiment):
         Returns:
             program: The QUA program for the experiment defined by this class's commands.
         """
-        if self.var_vec is not None:
-            raise ValueError(
-                "Experiment1D does not support variable vectors. Use Experiment2D instead."
-            )
+
+        self.validate_experiment()
 
         with program() as experiment:
 
@@ -111,7 +119,7 @@ class Experiment1D(Experiment):
 
         return experiment
 
-    def live_plot(self, qm, job):
+    def live_data_processing(self, qm, job):
         # Fetching tool
         results = fetching_tool(
             job,
@@ -155,17 +163,8 @@ class Experiment1D(Experiment):
 
         print("Experiment finished.")
 
-        # Save results
-        script_name = Path(__file__).name
-        data_handler = DataHandler(root_data_folder=self.save_dir)
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
         self.save_data_dict.update({"fig_live": fig_live})
-        # data_handler.additional_files = {script_name: script_name, **default_additional_files} ???
 
-        data_handler.save_data(
-            data=self.save_data_dict,
-            name="_".join(script_name.split("_")[1:]).split(".")[0],
-        )
-        print(f"Data saved in: {data_handler.data_folder}")
-        qm.close()
+        self.save_data()

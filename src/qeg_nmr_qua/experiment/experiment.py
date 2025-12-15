@@ -10,24 +10,13 @@ from qeg_nmr_qua.experiment.macros import (
 
 import numpy as np
 from pathlib import Path
-import matplotlib.pyplot as plt
-from scipy import signal
-
 from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
+from qualang_tools.results.data_handler import DataHandler
 from qualang_tools.units import unit
 from qm.qua import (
     play,
     wait,
-    measure,
-    save,
-    program,
-    declare,
-    stream_processing,
-    declare_stream,
-    for_,
-    fixed,
-    demod,
     frame_rotation_2pi,
     align,
     amp,
@@ -93,7 +82,8 @@ class Experiment:
         # ---- Data to save ---- #
         self.save_data_dict = {
             "n_avg": self.n_avg,
-            "config": config,
+            "config": self.config.to_opx_config(),
+            "settings": self.settings.to_dict(),
         }
         self.save_dir = Path(__file__).resolve().parent / "data"
 
@@ -184,13 +174,17 @@ class Experiment:
         }
         self._commands.append(command)
 
-    def remove_initial_delay(self):
+    def remove_initial_delay(self, remove: bool = True):
         """
         Removes the 5 T1 delay from the start of the sequence. Useful for testing with the
         simulator, but should be generally used to ensure proper thermalization between
-        experiments.
+        experiments. By default, the delay is included. The delay can be re-added by calling
+        this method with `remove` set to False.
+
+        Args:
+            remove (bool): By default, is True, removes the initial delay. If False, the delay is re-added.
         """
-        self.start_with_wait = False
+        self.start_with_wait = not remove
 
     def update_loop(self, var_vec):
         """
@@ -266,6 +260,14 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
+    def validate_experiment(self):
+        """
+        Function to be implemented by subclasses to validate that the commands and settings for
+        the experiment are consistent and valid. Running this function should return helpful error messages
+        if the experiment is not properly defined.
+        """
+        pass  # to be implemented by subclasses
+
     def simulate_experiment(self, sim_length=10_000):
         """
         Simulates the experiment using the configured experiment defined by this class based on the current
@@ -317,10 +319,42 @@ class Experiment:
         expt = self.create_experiment()
         qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
         job = qm.execute(expt)
-        self.live_plot(qm, job)
+        self.live_data_processing(qm, job)
+        qm.close()
 
-    def live_plot(self, qm: QuantumMachine, job: RunningQmJob):
+    def live_data_processing(self, qm: QuantumMachine, job: RunningQmJob):
         """
-        Live plots the results of the experiment as it is being executed.
+        Grabs the results of the experiment as it is being executed. This method must be
+        implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
+        The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
+        this method can (and should) update the `save_data_dict` attribute with relevant raw data for saving to
+        disk after the experiment completes.
+
+
+        Args:
+            qm (QuantumMachine): The quantum machine executing the experiment.
+            job (RunningQmJob): The job running the experiment.
         """
         pass  # to be implemented by subclasses
+
+    def save_data(self):
+        """
+        Saves the experiment data to the specified directory. Each experiment subclass
+        can customize the data to be saved by modifying the `save_data_dict` attribute.
+
+        By default, this method saves the number of averages and configuration settings
+        used in the experiment, for reproducibility.
+        """
+        try:
+            # Save results
+            script_name = Path(__file__).name
+            data_handler = DataHandler(root_data_folder=self.save_dir)
+            # data_handler.additional_files = {script_name: script_name, **default_additional_files} ???
+
+            data_handler.save_data(
+                data=self.save_data_dict,
+                name="_".join(script_name.split("_")[1:]).split(".")[0],
+            )
+            print(f"Data saved in: {data_handler.data_folder}")
+        except Exception as e:
+            print(f"Failed to save data: {e}")

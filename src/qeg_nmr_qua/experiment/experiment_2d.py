@@ -5,12 +5,10 @@ from qeg_nmr_qua.experiment.macros import (
 )
 from qeg_nmr_qua.experiment.experiment import Experiment
 
-from pathlib import Path
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
-from qualang_tools.results.data_handler import DataHandler
 from qualang_tools.units import unit
 from qualang_tools.loops import from_array
 from qm.qua import (
@@ -30,6 +28,21 @@ u = unit(coerce_to_integer=True)
 
 
 class Experiment2D(Experiment):
+
+    def validate_experiment(self):
+        """
+        Checks to make sure that the experiment contains variable operations,
+        since it is a 2D experiment. Variable operations require looping which is
+        supported in 2D experiments.
+
+        Raises:
+            ValueError: No variable vector was found in the experiment commands.
+        """
+        if self.var_vec is None:
+            raise ValueError(
+                "Experiment2D requires variable vectors. Use Experiment1D, or similar, instead."
+            )
+
     def create_experiment(self):
         """
         Creates the Quantum Machine program for the experiment, and returns the
@@ -39,6 +52,7 @@ class Experiment2D(Experiment):
         Returns:
             program: The QUA program for the experiment defined by this class's commands.
         """
+        self.validate_experiment()
 
         with program() as experiment:
 
@@ -115,7 +129,7 @@ class Experiment2D(Experiment):
 
         return experiment
 
-    def live_plot(self, qm, job):
+    def live_data_processing(self, qm, job):
         # Fetching tool
         results = fetching_tool(
             job,
@@ -170,7 +184,6 @@ class Experiment2D(Experiment):
 
                 ax3.cla()
                 im3 = ax3.plot(self.var_vec, I.T[0] * 1e6, label="I")
-                # im3 = ax3.plot(pulse_amps*square_pi_half_amp, R.T[0], label='R')
                 ax3.set_xlabel("Swept Variable")
                 ax3.set_ylabel("I (µV)")
                 ax3.set_title("Primary signal")
@@ -181,17 +194,8 @@ class Experiment2D(Experiment):
 
         print("Experiment finished.")
 
-        # Save results
-        script_name = Path(__file__).name
-        data_handler = DataHandler(root_data_folder=self.save_dir)
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
         self.save_data_dict.update({"fig_live": fig_live})
-        # data_handler.additional_files = {script_name: script_name, **default_additional_files} ???
 
-        data_handler.save_data(
-            data=self.save_data_dict,
-            name="_".join(script_name.split("_")[1:]).split(".")[0],
-        )
-        print(f"Data saved in: {data_handler.data_folder}")
-        qm.close()
+        self.save_data()

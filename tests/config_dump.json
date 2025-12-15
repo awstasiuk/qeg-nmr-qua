@@ -13,6 +13,11 @@
                         }
                     },
                     "analog_inputs": {
+                        "1": {
+                            "offset": 0.0,
+                            "gain_db": 0,
+                            "sampling_rate": 1000000000
+                        },
                         "2": {
                             "offset": 0.0,
                             "gain_db": 16,
@@ -1428,7 +1433,7 @@
         }
     },
     "integration_weights": {
-        "cosine_weight": {
+        "cosine_weights": {
             "cosine": [
                 [
                     1.0,
@@ -1442,49 +1447,7 @@
                 ]
             ]
         },
-        "sine_weight": {
-            "cosine": [
-                [
-                    0.0,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    1.0,
-                    4000
-                ]
-            ]
-        },
-        "minus_sine_weight": {
-            "cosine": [
-                [
-                    0.0,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    -1.0,
-                    4000
-                ]
-            ]
-        },
-        "rotated_cosine_weight": {
-            "cosine": [
-                [
-                    -0.3420201433256694,
-                    4000
-                ]
-            ],
-            "sine": [
-                [
-                    -0.9396926207859082,
-                    4000
-                ]
-            ]
-        },
-        "rotated_sine_weight": {
+        "sine_weights": {
             "cosine": [
                 [
                     0.9396926207859082,
@@ -1498,7 +1461,77 @@
                 ]
             ]
         },
-        "rotated_minus_sine_weight": {
+        "minus_sine_weights": {
+            "cosine": [
+                [
+                    0.0,
+                    4000
+                ]
+            ],
+            "sine": [
+                [
+                    -1.0,
+                    4000
+                ]
+            ]
+        },
+        "rotated_cosine_weights": {
+            "cosine": [
+                [
+                    -0.3420201433256694,
+                    4000
+                ]
+            ],
+            "sine": [
+                [
+                    -0.9396926207859082,
+                    4000
+                ]
+            ]
+        },
+        "rotated_sine_weights": {
+            "cosine": [
+                [
+                    0.9396926207859082,
+                    4000
+                ]
+            ],
+            "sine": [
+                [
+                    -0.3420201433256694,
+                    4000
+                ]
+            ]
+        },
+        "rotated_minus_sine_weights": {
+            "cosine": [
+                [
+                    -0.9396926207859082,
+                    4000
+                ]
+            ],
+            "sine": [
+                [
+                    0.3420201433256694,
+                    4000
+                ]
+            ]
+        },
+        "opt_cosine_weights": {
+            "cosine": [
+                [
+                    -0.3420201433256694,
+                    4000
+                ]
+            ],
+            "sine": [
+                [
+                    -0.9396926207859082,
+                    4000
+                ]
+            ]
+        },
+        "opt_minus_sine_weights": {
             "cosine": [
                 [
                     -0.9396926207859082,

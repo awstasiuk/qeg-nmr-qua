@@ -16,6 +16,11 @@
           }
         },
         "analog_inputs": {
+          "1": {
+            "offset": 0.0,
+            "gain_db": 0,
+            "sampling_rate": 1000000000
+          },
           "2": {
             "offset": 0.0,
             "gain_db": 16,
@@ -1391,32 +1396,42 @@
     }
   },
   "integration_weights": {
-    "cosine_weight": {
+    "cosine_weights": {
       "length": 4000,
       "real_weight": 1.0,
       "imag_weight": 0.0
     },
-    "sine_weight": {
-      "length": 4000,
-      "real_weight": 0.0,
-      "imag_weight": 1.0
-    },
-    "minus_sine_weight": {
-      "length": 4000,
-      "real_weight": 0.0,
-      "imag_weight": -1.0
-    },
-    "rotated_cosine_weight": {
-      "length": 4000,
-      "real_weight": -0.3420201433256694,
-      "imag_weight": -0.9396926207859082
-    },
-    "rotated_sine_weight": {
+    "sine_weights": {
       "length": 4000,
       "real_weight": 0.9396926207859082,
       "imag_weight": -0.3420201433256694
     },
-    "rotated_minus_sine_weight": {
+    "minus_sine_weights": {
+      "length": 4000,
+      "real_weight": 0.0,
+      "imag_weight": -1.0
+    },
+    "rotated_cosine_weights": {
+      "length": 4000,
+      "real_weight": -0.3420201433256694,
+      "imag_weight": -0.9396926207859082
+    },
+    "rotated_sine_weights": {
+      "length": 4000,
+      "real_weight": 0.9396926207859082,
+      "imag_weight": -0.3420201433256694
+    },
+    "rotated_minus_sine_weights": {
+      "length": 4000,
+      "real_weight": -0.9396926207859082,
+      "imag_weight": 0.3420201433256694
+    },
+    "opt_cosine_weights": {
+      "length": 4000,
+      "real_weight": -0.3420201433256694,
+      "imag_weight": -0.9396926207859082
+    },
+    "opt_minus_sine_weights": {
       "length": 4000,
       "real_weight": -0.9396926207859082,
       "imag_weight": 0.3420201433256694
