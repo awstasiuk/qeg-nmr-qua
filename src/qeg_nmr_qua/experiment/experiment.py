@@ -85,7 +85,11 @@ class Experiment:
             "config": self.config.to_opx_config(),
             "settings": self.settings.to_dict(),
         }
-        self.save_dir = Path(__file__).resolve().parent / "data"
+        self.save_dir = (
+            Path(__file__).resolve().parent / "data"
+            if settings.save_dir is None
+            else settings.save_dir
+        )
 
     def add_pulse(
         self,
@@ -348,17 +352,15 @@ class Experiment:
         try:
             # Save results
             data_handler = DataHandler(root_data_folder=self.save_dir)
-            files = list(self.save_dir.glob("*"))
-            if len(files) == 0:
-                name = "1"
-            else:
-                numbers = [int(f.name) for f in files if f.name.isdigit()]
-                name = str(max(numbers) + 1) if numbers else "1"
+            script_name = Path(__file__).name
+            data_handler.additional_files = {
+                script_name: script_name,
+            }
 
             data_handler.save_data(
                 data=self.save_data_dict,
-                name=name,
+                name="test 1",
             )
-            print(f"Data saved successfully in folder: {self.save_dir / name}")
+            print(f"Data saved successfully in folder: {self.save_dir / 'test 1'}")
         except Exception as e:
             print(f"Failed to save data: {e}")

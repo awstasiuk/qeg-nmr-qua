@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Dict, Any, List, Optional
 
 from qualang_tools.units import unit
@@ -47,6 +48,9 @@ class ExperimentSettings:
     # resonator excitation
     excitation_len = 5 * u.us
     excitation_amp = 0.03
+
+    # Data saving
+    save_dir: Optional[Path | str] = None
 
     # config element keys
     res_key: str = "resonator"

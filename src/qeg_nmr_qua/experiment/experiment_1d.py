@@ -161,7 +161,25 @@ class Experiment1D(Experiment):
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
 
-        print("Experiment finished.")
+        # Keep the interactive plot open after acquisition until the user closes it
+        message = "Acquisition finished. Close the plot window to continue."
+        print(message)
+        try:
+            # Add a centered text box on the figure (figure coordinates)
+            fig_live.text(
+                0.04,
+                0.02,
+                message,
+                ha="left",
+                va="bottom",
+                fontsize=8,
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+            )
+            fig_live.canvas.draw_idle()
+        except Exception as e:
+            print(e)
+        while plt.fignum_exists(fig_live.number):
+            plt.pause(0.5)
 
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
