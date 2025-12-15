@@ -359,6 +359,6 @@ class Experiment:
                 data=self.save_data_dict,
                 name=name,
             )
-            print(f"Data saved in: {data_handler.data_folder}")
+            print(f"Data saved successfully in folder: {self.save_dir / name}")
         except Exception as e:
             print(f"Failed to save data: {e}")

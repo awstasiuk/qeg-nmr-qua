@@ -33,4 +33,4 @@ expt = qnmr.Experiment1D(
 expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
 
 # simulate to check everything is working
-expt.simulate_experiment()
+expt.execute_experiment()
