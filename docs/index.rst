@@ -18,9 +18,9 @@ Features
 --------
 
 * **OPX-1000 Configuration**: Structured configuration management for the OPX-1000 low-frequency front-end module
-* **Experiment Management**: 1D and 2D experiment control with QUA programming
-* **Data Analysis**: Built-in data saving and analysis tools
-* **Spectroscopy**: Specialized tools for NMR spectroscopy experiments
+* **Experiment Management**: Experiment design and exectution with high-level QUA programming
+* **Data Analysis**: Built-in data saving and analysis tools (in development)
+* **Spectroscopy**: Specialized script for NMR Probe spectroscopy experiments. WARNING: Possible Hardware Damage if used improperly.
 
 Indices and tables
 ==================

@@ -1,20 +1,32 @@
 Configuration Module
 ====================
 
-The configuration module provides classes and utilities for managing OPX-1000 configurations.
-
-Main Configuration
-------------------
-
-.. automodule:: qeg_nmr_qua.config.config
-   :members:
-   :undoc-members:
-   :show-inheritance:
+The configuration module provides classes and utilities for managing OPX-1000 configurations. The settings
+class contains high-level parameters for nuclear spin control, while the other classes define specific configuration
+elements such as chasis, controller, element, pulse, waveform, and integration weights. Unless modifying the 
+hardware configureation, users will primarily interact with the Settings class and the configuration generator function,
+`config_from_settings`.
 
 Settings
 --------
 
 .. automodule:: qeg_nmr_qua.config.settings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Configuration from Settings
+---------------------------
+
+.. automodule:: qeg_nmr_qua.config.config_from_settings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Chasis Configuration
+------------------
+
+.. automodule:: qeg_nmr_qua.config.config
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,22 +67,6 @@ Integration Weights
 -------------------
 
 .. automodule:: qeg_nmr_qua.config.integration
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Configuration from Settings
----------------------------
-
-.. automodule:: qeg_nmr_qua.config.config_from_settings
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Default Configuration
----------------------
-
-.. automodule:: qeg_nmr_qua.config.qm_default_cfg
    :members:
    :undoc-members:
    :show-inheritance:

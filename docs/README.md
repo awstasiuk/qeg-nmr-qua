@@ -32,13 +32,22 @@ The generated HTML documentation will be in `docs/_build/html/`.
 
 ### View the Documentation
 
-Open `docs/_build/html/index.html` in your web browser, or run:
+Open `docs/_build/html/index.html` in your web browser. It is recommended
+to have the "open in browser" VScode extension to make this simple. Or, run:
 
+From the project root:
 ```bash
+cd docs
 python -m http.server --directory docs/_build/html
 ```
 
-Then navigate to http://localhost:8000 in your browser.
+Or from the `docs` directory:
+```bash
+python -m http.server --directory _build/html
+```
+
+Then navigate to http://localhost:8000 in your browser. This appears to be much
+less stable than simply using the "open in browser" extension.
 
 ## Documentation Structure
 
