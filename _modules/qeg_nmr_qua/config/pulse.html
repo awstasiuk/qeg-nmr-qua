@@ -1,0 +1,394 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qeg_nmr_qua.config.pulse &mdash; qeg-nmr-qua 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            qeg-nmr-qua
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">qeg-nmr-qua</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qeg_nmr_qua.config.pulse</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qeg_nmr_qua.config.pulse</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrationWeightMapping</span>
+
+
+<div class="viewcode-block" id="ControlPulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.ControlPulse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ControlPulse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for a control (drive) pulse.</span>
+
+<span class="sd">    Defines a pulse used to drive/manipulate quantum states. Control pulses output</span>
+<span class="sd">    a waveform to an element and may optionally trigger a digital marker for</span>
+<span class="sd">    synchronization or external monitoring.</span>
+
+<span class="sd">    **Current Limitations:**</span>
+
+<span class="sd">    - Single waveform only (no waveform mixing)</span>
+<span class="sd">    - See :class:`MeasPulse` for measurement pulses with integration.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        length (int): Pulse duration in nanoseconds (default: 0).</span>
+<span class="sd">            Must be a multiple of 4 ns (1 clock cycle).</span>
+<span class="sd">        waveform (str): Name of the waveform to play (default: &quot;zero_wf&quot;).</span>
+<span class="sd">            Must be defined in the waveform configuration.</span>
+<span class="sd">        digital_marker (Literal[&quot;ON&quot;, &quot;OFF&quot;] | None): Whether to set a digital marker</span>
+<span class="sd">            during pulse execution (default: &quot;OFF&quot;). &quot;ON&quot; activates the marker,</span>
+<span class="sd">            &quot;OFF&quot; deactivates it. Use None for no marker.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># in nanoseconds</span>
+    <span class="n">waveform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;zero_wf&quot;</span>  <span class="c1"># waveform name</span>
+    <span class="n">digital_marker</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;OFF&quot;</span>  <span class="c1"># set digital marker during pulse</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="ControlPulse.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.ControlPulse.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;operation&quot;</span><span class="p">:</span> <span class="s2">&quot;control&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="s2">&quot;waveforms&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;single&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">waveform</span><span class="p">},</span>
+            <span class="s2">&quot;digital_marker&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ControlPulse.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.ControlPulse.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;control&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="s2">&quot;waveform&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">waveform</span><span class="p">,</span>
+            <span class="s2">&quot;digital_marker&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ControlPulse.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.ControlPulse.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;ControlPulse&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">length</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;length&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="n">waveform</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;waveform&quot;</span><span class="p">,</span> <span class="s2">&quot;zero_wf&quot;</span><span class="p">),</span>
+            <span class="n">digital_marker</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;digital_marker&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;ControlPulse len=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> wf=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">waveform</span><span class="si">}</span><span class="s2"> marker=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span><span class="si">}</span><span class="s2">&gt;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MeasPulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.MeasPulse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeasPulse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for a measurement pulse.</span>
+
+<span class="sd">    Defines a pulse used for measurement/readout of quantum states. Measurement</span>
+<span class="sd">    pulses output a waveform, acquire data, and apply integration weights for</span>
+<span class="sd">    demodulation and signal extraction. Optionally triggers a digital marker.</span>
+
+<span class="sd">    **Current Limitations:**</span>
+
+<span class="sd">    - Single waveform only (no waveform mixing)</span>
+<span class="sd">    - See :class:`ControlPulse` for simple control pulses.</span>
+
+<span class="sd">    **Demodulation:**</span>
+
+<span class="sd">    Integration weights are applied to the acquired signal to extract in-phase (I)</span>
+<span class="sd">    and quadrature (Q) components. Common weight sets include cosine/sine,</span>
+<span class="sd">    rotated, and optimized variants.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        length (int): Measurement duration in nanoseconds (default: 1000).</span>
+<span class="sd">            Must be a multiple of 4 ns (1 clock cycle).</span>
+<span class="sd">        waveform (str): Name of the readout waveform (default: &quot;readout_wf&quot;).</span>
+<span class="sd">            Must be defined in the waveform configuration.</span>
+<span class="sd">        integration_weights (IntegrationWeightMapping): Mapping of demodulation weights</span>
+<span class="sd">            for extracting I/Q components (default: default mapping).</span>
+<span class="sd">        digital_marker (Literal[&quot;ON&quot;, &quot;OFF&quot;] | None): Whether to trigger a digital</span>
+<span class="sd">            marker during measurement (default: None). None means no marker action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>  <span class="c1"># in nanoseconds</span>
+    <span class="n">waveform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;readout_wf&quot;</span>  <span class="c1"># waveform name</span>
+    <span class="n">integration_weights</span><span class="p">:</span> <span class="n">IntegrationWeightMapping</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">IntegrationWeightMapping</span>
+    <span class="p">)</span>
+    <span class="n">digital_marker</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="kc">None</span>  <span class="c1"># set digital marker during pulse</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="MeasPulse.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.MeasPulse.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">dct</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;operation&quot;</span><span class="p">:</span> <span class="s2">&quot;measurement&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="s2">&quot;waveforms&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;single&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">waveform</span><span class="p">},</span>
+            <span class="s2">&quot;integration_weights&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s2">&quot;digital_marker&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span>
+        <span class="k">return</span> <span class="n">dct</span></div>
+
+
+<div class="viewcode-block" id="MeasPulse.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.MeasPulse.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;measurement&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
+            <span class="s2">&quot;waveform&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">waveform</span><span class="p">,</span>
+            <span class="s2">&quot;integration_weights&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;digital_marker&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="MeasPulse.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.MeasPulse.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;MeasPulse&quot;</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrationWeightMapping</span>
+
+        <span class="n">iw</span> <span class="o">=</span> <span class="n">IntegrationWeightMapping</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;integration_weights&quot;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;integration_weights&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">iw</span> <span class="o">=</span> <span class="n">IntegrationWeightMapping</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">iw</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">iw</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">length</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;length&quot;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span>
+            <span class="n">waveform</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;waveform&quot;</span><span class="p">,</span> <span class="s2">&quot;readout_wf&quot;</span><span class="p">),</span>
+            <span class="n">integration_weights</span><span class="o">=</span><span class="n">iw</span><span class="p">,</span>
+            <span class="n">digital_marker</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;digital_marker&quot;</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># integration_weights may be an IntegrationWeights (has .weights) or a</span>
+        <span class="c1"># IntegrationWeightMapping (has .to_dict()). Be robust.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">iw_summary</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;weights=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;MeasPulse len=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="si">}</span><span class="s2"> wf=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">waveforms</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">iw_summary</span><span class="si">}</span><span class="s2"> marker=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">digital_marker</span><span class="si">}</span><span class="s2">&gt;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="PulseConfig">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PulseConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration for a pulse, which can be either a control pulse or a measurement.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pulses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ControlPulse</span> <span class="o">|</span> <span class="n">MeasPulse</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PulseConfig.add_pulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig.add_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_pulse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">pulse</span><span class="p">:</span> <span class="n">ControlPulse</span> <span class="o">|</span> <span class="n">MeasPulse</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a pulse configuration from one of the pulse types.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the pulse.</span>
+<span class="sd">            pulse: ControlPulse or MeasPulse instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pulse</span></div>
+
+
+<div class="viewcode-block" id="PulseConfig.add_control_pulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig.add_control_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_control_pulse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">waveform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;const&quot;</span><span class="p">,</span>
+        <span class="n">digital_marker</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;OFF&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a control pulse configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the control pulse.</span>
+<span class="sd">            length: Pulse length in nanoseconds.</span>
+<span class="sd">            waveform: Waveform name.</span>
+<span class="sd">            digital_marker: Whether to set the digital marker during the pulse.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ControlPulse</span><span class="p">(</span>
+            <span class="n">length</span><span class="o">=</span><span class="n">length</span><span class="p">,</span>
+            <span class="n">waveform</span><span class="o">=</span><span class="n">waveform</span><span class="p">,</span>
+            <span class="n">digital_marker</span><span class="o">=</span><span class="n">digital_marker</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PulseConfig.add_measurement_pulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig.add_measurement_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_measurement_pulse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">waveform</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;readout_wf&quot;</span><span class="p">,</span>
+        <span class="n">digital_marker</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span> <span class="s2">&quot;OFF&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">integration_weights</span><span class="p">:</span> <span class="n">IntegrationWeightMapping</span> <span class="o">=</span> <span class="n">IntegrationWeightMapping</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a measurement pulse configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the measurement pulse.</span>
+<span class="sd">            length: Pulse length in nanoseconds.</span>
+<span class="sd">            waveform: Waveform name.</span>
+<span class="sd">            integration_weights: Integration weight mapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">MeasPulse</span><span class="p">(</span>
+            <span class="n">length</span><span class="o">=</span><span class="n">length</span><span class="p">,</span>
+            <span class="n">waveform</span><span class="o">=</span><span class="n">waveform</span><span class="p">,</span>
+            <span class="n">integration_weights</span><span class="o">=</span><span class="n">integration_weights</span><span class="p">,</span>
+            <span class="n">digital_marker</span><span class="o">=</span><span class="n">digital_marker</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PulseConfig.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">pulse</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pulse</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+
+<div class="viewcode-block" id="PulseConfig.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;PulseConfig&quot;</span><span class="p">:</span>
+        <span class="n">pc</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pd</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pd</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">ptype</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;control&quot;</span><span class="p">:</span>
+                <span class="n">pulse</span> <span class="o">=</span> <span class="n">ControlPulse</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">pd</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;measurement&quot;</span><span class="p">:</span>
+                <span class="n">pulse</span> <span class="o">=</span> <span class="n">MeasPulse</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">pd</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pulse</span> <span class="o">=</span> <span class="n">ControlPulse</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">pd</span><span class="p">)</span>
+            <span class="n">pc</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pulse</span>
+        <span class="k">return</span> <span class="n">pc</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;PulseConfig pulses=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+
+<div class="viewcode-block" id="PulseConfig.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.pulse.PulseConfig.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">pulse</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">pulse</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, awstasiuk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

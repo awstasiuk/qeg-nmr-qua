@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qeg_nmr_qua.config.element &mdash; qeg-nmr-qua 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            qeg-nmr-qua
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">qeg-nmr-qua</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qeg_nmr_qua.config.element</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qeg_nmr_qua.config.element</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">OPX-1000 Element Configuration Module.</span>
+
+<span class="sd">This module provides configuration utilities for the OPX-1000 LF-FEM</span>
+<span class="sd">for solid state NMR experiments.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+
+<div class="viewcode-block" id="digitalElementConfig">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.digitalElementConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">digitalElementConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for a digital element&#39;s paired input/output connection.</span>
+
+<span class="sd">    Specifies how a digital marker or trigger signal is routed between the OPX</span>
+<span class="sd">    and a physical element (like an RF switch or frequency marker).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        port (tuple[str, int, int]): Physical port specification as</span>
+<span class="sd">            (controller_name, chassis_slot, port_number). Example: (&quot;con1&quot;, 1, 1)</span>
+<span class="sd">            specifies controller 1, chassis slot 1, digital port 1.</span>
+<span class="sd">        delay (int): Delay applied to the digital signal in nanoseconds (default: 0).</span>
+<span class="sd">            Useful for synchronization with analog signals.</span>
+<span class="sd">        buffer (int): Buffer/timing margin in nanoseconds (default: 0).</span>
+<span class="sd">            Provides timing headroom for signal stabilization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">port</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span>
+    <span class="p">]</span>  <span class="c1"># (controller_name, chasis_slot, port_number) for digital trigger</span>
+    <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># in nanoseconds?</span>
+    <span class="n">buffer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># in nanoseconds?</span>
+
+<div class="viewcode-block" id="digitalElementConfig.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.digitalElementConfig.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+            <span class="s2">&quot;delay&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="p">,</span>
+            <span class="s2">&quot;buffer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="digitalElementConfig.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.digitalElementConfig.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="digitalElementConfig.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.digitalElementConfig.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;digitalElementConfig&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">port</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;port&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;con1&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))),</span>
+            <span class="n">delay</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;delay&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;buffer&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&lt;digitalElement port=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2"> delay=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">delay</span><span class="si">}</span><span class="s2"> buffer=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Element">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.Element">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Element</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for a physical quantum element connected to the OPX-1000.</span>
+
+<span class="sd">    An Element represents a physical connection to the OPX, such as a resonator,</span>
+<span class="sd">    amplifier, or signal source. It aggregates analog I/O ports, digital control</span>
+<span class="sd">    lines, and associated pulse operations.</span>
+
+<span class="sd">    **Port Mapping:**</span>
+
+<span class="sd">    In OPX convention:</span>
+
+<span class="sd">    - ``analog_input``: The OPX&#39;s output port that drives this element</span>
+<span class="sd">    - ``analog_output``: The OPX&#39;s input port that reads from this element</span>
+<span class="sd">    - This naming convention reflects the signal direction relative to the element,</span>
+<span class="sd">      not the OPX.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str): Unique identifier for this element (e.g., &quot;resonator&quot;, &quot;amplifier&quot;).</span>
+<span class="sd">        frequency (float): Intermediate frequency (IF) of this element in Hz.</span>
+<span class="sd">            For direct sampling, this is the actual RF frequency.</span>
+<span class="sd">        analog_input (tuple[str, int, int]): Port specification for OPX output</span>
+<span class="sd">            as (controller_name, chassis_slot, port_number).</span>
+<span class="sd">        analog_output (tuple[str, int, int]): Port specification for OPX input</span>
+<span class="sd">            as (controller_name, chassis_slot, port_number).</span>
+<span class="sd">        digital_inputs (dict[str, digitalElementConfig]): Mapping of operation names</span>
+<span class="sd">            to digital control configurations (default: empty).</span>
+<span class="sd">        operations (dict[str, str]): Mapping of operation names to pulse config</span>
+<span class="sd">            names (default: empty). Example: {&quot;pi_half&quot;: &quot;pi_half_pulse&quot;}.</span>
+<span class="sd">        time_of_flight (float): Signal propagation delay in nanoseconds (default: 0.0).</span>
+<span class="sd">            Delay between when a pulse is output and when the response is received.</span>
+<span class="sd">        sticky (bool): Whether this element retains state between operations (default: False).</span>
+<span class="sd">            If True, the element state persists after pulse completion.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># in Hz</span>
+    <span class="c1"># from OPX (controller_name, chasis_slot, port_number)</span>
+    <span class="n">analog_input</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="c1"># to OPX (controller_name, chasis_slot, port_number)</span>
+    <span class="n">analog_output</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="c1"># operation name with digitalElementConfig</span>
+    <span class="n">digital_inputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">digitalElementConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="c1"># operation name to pulse-config name mapping</span>
+    <span class="n">operations</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="c1"># in nanoseconds, delay between output and input signals</span>
+    <span class="n">time_of_flight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1"># whether the element retains state between operations</span>
+    <span class="n">sticky</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="Element.add_digital_input">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.Element.add_digital_input">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_digital_input</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">controller_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">chasis_slot</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">port_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a digital input configuration for a specific operation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            operation: Name of the digital operation (e.g &quot;marker&quot;).</span>
+<span class="sd">            controller_name: Name of the OPX controller.</span>
+<span class="sd">            chasis_slot: Physical slot number in chassis.</span>
+<span class="sd">            port_number: Digital port number on the OPX.</span>
+<span class="sd">            delay: Delay in nanoseconds.</span>
+<span class="sd">            buffer: Buffer time in nanoseconds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">digital_inputs</span><span class="p">[</span><span class="n">operation</span><span class="p">]</span> <span class="o">=</span> <span class="n">digitalElementConfig</span><span class="p">(</span>
+            <span class="n">port</span><span class="o">=</span><span class="p">(</span><span class="n">controller_name</span><span class="p">,</span> <span class="n">chasis_slot</span><span class="p">,</span> <span class="n">port_number</span><span class="p">),</span>
+            <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
+            <span class="n">buffer</span><span class="o">=</span><span class="n">buffer</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Element.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.Element.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the Element configuration to a dictionary.&quot;&quot;&quot;</span>
+        <span class="n">dct</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;singleInput&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">analog_input</span><span class="p">},</span>
+            <span class="s2">&quot;intermediate_frequency&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">,</span>
+            <span class="s2">&quot;outputs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;out1&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">analog_output</span><span class="p">},</span>
+            <span class="s2">&quot;digitalInputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="nb">input</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="nb">input</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_inputs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;operations&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">,</span>
+            <span class="s2">&quot;time_of_flight&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_of_flight</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticky</span><span class="p">:</span>
+            <span class="n">dct</span><span class="p">[</span><span class="s2">&quot;sticky&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;analog&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticky</span><span class="p">,</span> <span class="s2">&quot;digital&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticky</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">dct</span></div>
+
+
+<div class="viewcode-block" id="Element.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.Element.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;frequency&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">,</span>
+            <span class="s2">&quot;analog_input&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">analog_input</span><span class="p">,</span>
+            <span class="s2">&quot;analog_output&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">analog_output</span><span class="p">,</span>
+            <span class="s2">&quot;digital_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="nb">input</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="nb">input</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_inputs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;operations&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">,</span>
+            <span class="s2">&quot;time_of_flight&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_of_flight</span><span class="p">,</span>
+            <span class="s2">&quot;sticky&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticky</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Element.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.Element.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;Element&quot;</span><span class="p">:</span>
+        <span class="n">el</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="n">frequency</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;frequency&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">analog_input</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;analog_input&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;con1&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))),</span>
+            <span class="n">analog_output</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;analog_output&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;con1&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dd</span> <span class="ow">in</span> <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;digital_inputs&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">el</span><span class="o">.</span><span class="n">digital_inputs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">digitalElementConfig</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">dd</span><span class="p">)</span>
+        <span class="n">el</span><span class="o">.</span><span class="n">operations</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;operations&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="n">el</span><span class="o">.</span><span class="n">time_of_flight</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time_of_flight&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">el</span><span class="o">.</span><span class="n">sticky</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sticky&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">el</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;Element </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> freq=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="si">}</span><span class="s2"> in=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">analog_input</span><span class="si">}</span><span class="s2"> out=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">analog_output</span><span class="si">}</span><span class="s2">&gt;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ElementConfig">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.ElementConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ElementConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container for multiple Element configurations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">elements</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Element</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ElementConfig.add_element">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.ElementConfig.add_element">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_element</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">element</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add an element configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the element.</span>
+<span class="sd">            frequency: Operating frequency in Hz.</span>
+<span class="sd">            analog_input: Tuple specifying the analog input (controller_name, chasis_slot, port_number).</span>
+<span class="sd">            analog_output: Tuple specifying the analog output (controller_name, chasis_slot, port_number).</span>
+<span class="sd">            time_of_flight: Delay between output and input signals in nanoseconds.</span>
+<span class="sd">            sticky: Whether the element retains state between operations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">element</span></div>
+
+
+<div class="viewcode-block" id="ElementConfig.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.ElementConfig.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the Element configurations to a dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+
+<div class="viewcode-block" id="ElementConfig.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.ElementConfig.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the Element configurations to OPX configuration format.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">element</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ElementConfig.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.element.ElementConfig.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;ElementConfig&quot;</span><span class="p">:</span>
+        <span class="n">ec</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">ed</span> <span class="ow">in</span> <span class="p">(</span><span class="n">d</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ed</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">ec</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Element</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">ed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ec</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;ElementConfig elements=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">)</span><span class="si">}</span><span class="s2">&gt;&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, awstasiuk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

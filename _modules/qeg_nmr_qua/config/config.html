@@ -1,0 +1,304 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qeg_nmr_qua.config.config &mdash; qeg-nmr-qua 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            qeg-nmr-qua
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">qeg-nmr-qua</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qeg_nmr_qua.config.config</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qeg_nmr_qua.config.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">OPX-1000 Configuration Module.</span>
+
+<span class="sd">This module provides configuration utilities for the OPX-1000 LF-FEM</span>
+<span class="sd">for solid state NMR experiments.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControllerConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">ElementConfig</span><span class="p">,</span> <span class="n">Element</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.pulse</span><span class="w"> </span><span class="kn">import</span> <span class="n">PulseConfig</span><span class="p">,</span> <span class="n">ControlPulse</span><span class="p">,</span> <span class="n">MeasPulse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.waveform</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalogWaveformConfig</span><span class="p">,</span> <span class="n">DigitalWaveformConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegrationWeights</span>
+
+
+<div class="viewcode-block" id="OPXConfig">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OPXConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Complete configuration for the OPX-1000 low-frequency front-end module.</span>
+
+<span class="sd">    This is the main configuration class that aggregates all sub-configurations needed</span>
+<span class="sd">    to operate the OPX-1000 for NMR experiments. It manages controllers, elements (physical</span>
+<span class="sd">    connections), pulses, waveforms, digital waveforms, and integration weights.</span>
+
+<span class="sd">    **Connection Settings:**</span>
+
+<span class="sd">    - ``qop_ip``: IP address of the Quantum Orchestration Platform (default: &quot;192.168.88.253&quot;)</span>
+<span class="sd">    - ``cluster``: Name of the OPX cluster to use (default: &quot;lex&quot;)</span>
+
+<span class="sd">    **Configuration Components:**</span>
+
+<span class="sd">    Each component is a nested configuration object:</span>
+
+<span class="sd">    - ``controllers``: :class:`~ControllerConfig` - Hardware controllers (analog/digital I/O)</span>
+<span class="sd">    - ``elements``: :class:`~ElementConfig` - Physical elements (resonators, amplifiers, etc.)</span>
+<span class="sd">    - ``pulses``: :class:`~PulseConfig` - Pulse definitions (control and measurement)</span>
+<span class="sd">    - ``waveforms``: :class:`~AnalogWaveformConfig` - Analog waveform shapes</span>
+<span class="sd">    - ``digital_waveforms``: :class:`~DigitalWaveformConfig` - Digital marker waveforms</span>
+<span class="sd">    - ``integration_weights``: :class:`~IntegrationWeights` - Integration weight sets for demodulation</span>
+
+<span class="sd">    **Serialization:**</span>
+
+<span class="sd">    Use :meth:`to_dict` and :meth:`from_dict` for programmatic serialization, or use</span>
+<span class="sd">    :meth:`save_to_file` and :meth:`load_from_file` for JSON file I/O.</span>
+
+<span class="sd">    **OPX Format:**</span>
+
+<span class="sd">    Use :meth:`to_opx_config` to generate the configuration in OPX-compatible format</span>
+<span class="sd">    for passing to the Quantum Orchestration Platform.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; config = OPXConfig(qop_ip=&quot;192.168.1.100&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; config.elements.add_element(&quot;resonator&quot;, frequency=282.1901e6)</span>
+<span class="sd">        &gt;&gt;&gt; opx_config_dict = config.to_opx_config()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">qop_ip</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;192.168.88.253&quot;</span>
+    <span class="n">cluster</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lex&quot;</span>
+
+    <span class="n">controllers</span><span class="p">:</span> <span class="n">ControllerConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">ControllerConfig</span><span class="p">)</span>
+    <span class="n">elements</span><span class="p">:</span> <span class="n">ElementConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">ElementConfig</span><span class="p">)</span>
+    <span class="n">pulses</span><span class="p">:</span> <span class="n">PulseConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">PulseConfig</span><span class="p">)</span>
+    <span class="n">waveforms</span><span class="p">:</span> <span class="n">AnalogWaveformConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AnalogWaveformConfig</span><span class="p">)</span>
+    <span class="n">digital_waveforms</span><span class="p">:</span> <span class="n">DigitalWaveformConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="n">DigitalWaveformConfig</span>
+    <span class="p">)</span>
+    <span class="n">integration_weights</span><span class="p">:</span> <span class="n">IntegrationWeights</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">IntegrationWeights</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OPXConfig.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert the OPX configuration to a dictionary.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;qop_ip&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qop_ip</span><span class="p">,</span>
+            <span class="s2">&quot;cluster&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span>
+            <span class="s2">&quot;controllers&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;pulses&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;waveforms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">waveforms</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;digital_waveforms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_waveforms</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+            <span class="s2">&quot;integration_weights&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;OPXConfig&quot;</span><span class="p">:</span>
+        <span class="c1"># Import here to avoid circular imports at module import time</span>
+        <span class="n">controllers</span> <span class="o">=</span> <span class="n">ControllerConfig</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;controllers&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">elements</span> <span class="o">=</span> <span class="n">ElementConfig</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;elements&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">pulses</span> <span class="o">=</span> <span class="n">PulseConfig</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pulses&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">waveforms</span> <span class="o">=</span> <span class="n">AnalogWaveformConfig</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;waveforms&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">digital_waveforms</span> <span class="o">=</span> <span class="n">DigitalWaveformConfig</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;digital_waveforms&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="p">)</span>
+        <span class="n">integration_weights</span> <span class="o">=</span> <span class="n">IntegrationWeights</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;integration_weights&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">qop_ip</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qop_ip&quot;</span><span class="p">,</span> <span class="s2">&quot;192.168.88.253&quot;</span><span class="p">),</span>
+            <span class="n">cluster</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cluster&quot;</span><span class="p">,</span> <span class="s2">&quot;lex&quot;</span><span class="p">),</span>
+            <span class="n">controllers</span><span class="o">=</span><span class="n">controllers</span><span class="p">,</span>
+            <span class="n">elements</span><span class="o">=</span><span class="n">elements</span><span class="p">,</span>
+            <span class="n">pulses</span><span class="o">=</span><span class="n">pulses</span><span class="p">,</span>
+            <span class="n">waveforms</span><span class="o">=</span><span class="n">waveforms</span><span class="p">,</span>
+            <span class="n">digital_waveforms</span><span class="o">=</span><span class="n">digital_waveforms</span><span class="p">,</span>
+            <span class="n">integration_weights</span><span class="o">=</span><span class="n">integration_weights</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.save_to_file">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.save_to_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save the OPXConfig to a JSON file at `filepath`.&quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.load_from_file">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.load_from_file">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OPXConfig&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load an OPXConfig from a JSON file at `filepath`.&quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.to_opx_config">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.to_opx_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_opx_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to OPX configuration format.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;controllers&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+            <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+            <span class="s2">&quot;pulses&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+            <span class="s2">&quot;waveforms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">waveforms</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+            <span class="s2">&quot;digital_waveforms&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">digital_waveforms</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+            <span class="s2">&quot;integration_weights&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_controller">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_controller">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">controller_config</span><span class="p">:</span> <span class="n">ControllerConfig</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a controller configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">controllers</span> <span class="o">=</span> <span class="n">controller_config</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_element">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_element">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">add_element</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_pulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pulse</span><span class="p">:</span> <span class="n">ControlPulse</span> <span class="o">|</span> <span class="n">MeasPulse</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a pulse configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_waveform">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_waveform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_waveform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an analog waveform configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waveforms</span><span class="o">.</span><span class="n">add_waveform</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">waveform</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_digital_waveform">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_digital_waveform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_digital_waveform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a digital waveform (marker) configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">digital_waveforms</span><span class="o">.</span><span class="n">add_waveform</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">length</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_integration_weight">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_integration_weight">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_integration_weight</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">real_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">imag_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add an integration weight configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">integration_weights</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">real_weight</span><span class="o">=</span><span class="n">real_weight</span><span class="p">,</span> <span class="n">imag_weight</span><span class="o">=</span><span class="n">imag_weight</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;OPXConfig(qop_ip=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">qop_ip</span><span class="si">}</span><span class="s2">, cluster=&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cluster</span><span class="si">}</span><span class="s2">&#39;, num_modules=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">controllers</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">, num_elements=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, awstasiuk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
