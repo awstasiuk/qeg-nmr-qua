@@ -13,6 +13,12 @@ pip install -e .
 
 - **OPX-1000 Configuration**: Structured configuration management for the OPX-1000 low-frequency front-end module
 
+- **NMR Experiment Builder**: High-level python interface for running complex solid-state NMR Experiments
+
+- **Robust Data Handling**: Experimental data and metadata always saved to file and easily retrievable and reproducible
+
+See the docs here: https://awstasiuk.github.io/qeg-nmr-qua/index.html
+
 
 ## Requirements
 
