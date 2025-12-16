@@ -11,7 +11,20 @@ from typing import Any
 
 @dataclass
 class AnalogOutput:
-    """Configuration for an analog output channel."""
+    """Configuration for an analog output channel of the OPX.
+
+    Analog outputs are used to generate control signals (pulses, RF signals, etc.)
+    for driving quantum elements. Each output has an independent offset, sampling rate,
+    and output mode.
+
+    Attributes:
+        offset (float): DC offset applied to the output in volts (default: 0.0).
+            Used for calibration and bias adjustment.
+        sampling_rate (int): Output sampling rate in Hz (default: 1 GHz).
+            Typically 1e9 for high-speed operations.
+        output_mode (str): Output mode, typically "direct" for direct waveform output
+            (default: "direct").
+    """
 
     offset: float = 0.0
     sampling_rate: int = 1_000_000_000  # 1e9
@@ -41,7 +54,19 @@ class AnalogOutput:
 
 @dataclass
 class AnalogInput:
-    """Configuration for an analog input channel."""
+    """Configuration for an analog input channel of the OPX.
+
+    Analog inputs measure signals from quantum elements (e.g., resonator readout).
+    Each input has independent offset, gain, and sampling rate for signal conditioning.
+
+    Attributes:
+        offset (float): Input offset in volts (default: 0.0).
+            Compensates for DC bias in the measurement.
+        gain_db (int): Programmable gain amplifier setting in dB (default: 0).
+            Amplifies or attenuates the input signal.
+        sampling_rate (int): Input sampling rate in Hz (default: 1 GHz).
+            Must match the acquisition requirements.
+    """
 
     offset: float = 0.0
     gain_db: int = 0
@@ -71,7 +96,20 @@ class AnalogInput:
 
 @dataclass
 class DigitalIO:
-    """Configuration for digital input/output."""
+    """Configuration for digital input/output lines.
+
+    Digital I/O is used for control signals like RF switching, marker pulses,
+    and external triggering. Digital signals are binary (0 or 1) and can be
+    synchronized with analog operations.
+
+    Attributes:
+        name (str): Descriptive name for this digital line (default: "TTL").
+            Example names: "RF_switch", "marker1", "trigger".
+        direction (str): Signal direction, either "input" or "output" (default: "output").
+            Determines whether this line reads or drives digital signals.
+        inverted (bool): Whether the signal logic is inverted (default: False).
+            If True, a logical 0 is represented as a high voltage and vice versa.
+    """
 
     name: str = "TTL"
     direction: str = "output"  # 'input' or 'output'

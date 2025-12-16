@@ -28,6 +28,19 @@ u = unit(coerce_to_integer=True)
 
 
 class Experiment2D(Experiment):
+    """
+    Class to create and run 2D NMR experiments using the QUA programming language. Inherits
+    from the base :class:`Experiment` class and implements methods specific to 2D experiments, which
+    can have a broad range of applications such as measuring relaxation times (T1, T2), performing
+    pulse amplitude sweeps, and performing two-point correlation measurements under Hamiltonian engineering
+    pulse sequences.
+
+    2D experiments involve sweeping one parameter (e.g., pulse amplitude, delay time, evolution time) while
+    measuring the system's response. This is typically done by defining a variable vector that contains the values to be
+    swept. The experiment loops over this vector, applying the corresponding parameter value in each iteration. In
+    this class's implementation, the swept parameter is varied first, then the averaging loop is performed. During longer
+    experiments, this ordering should help mitigate the effects of slow drifts in system parameters.
+    """
 
     def validate_experiment(self):
         """
@@ -46,8 +59,8 @@ class Experiment2D(Experiment):
     def create_experiment(self):
         """
         Creates the Quantum Machine program for the experiment, and returns the
-        experiment object as a qua `program`. This is used by the `execute_experiment` and
-        `simulate_experiment` methods.
+        experiment object as a qua ``program()``. This is used by the :meth:`~Experiment.execute_experiment` and
+        :meth:`~Experiment.simulate_experiment` methods.
 
         Returns:
             program: The QUA program for the experiment defined by this class's commands.

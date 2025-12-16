@@ -28,14 +28,45 @@ u = unit(coerce_to_integer=True)
 
 
 class Experiment:
+    """
+    Base class for conducting NMR experiments on the OPX-1000.
+
+    This class manages quantum machine configurations, experiment commands (pulses, delays, alignments),
+    and data collection. It provides a structured interface for building and executing pulse sequences
+    with support for looped experiments and real-time data acquisition.
+
+    Subclasses should implement experiment-specific logic in:
+
+    - ``create_experiment()``: Build the QUA program from stored commands
+    - ``validate_experiment()``: Validate settings and command consistency
+    - ``live_data_processing()``: Handle real-time data during hardware execution
+
+    Typical workflow:
+
+    1. Create an Experiment subclass instance with relevant settings and config
+    2. Build sequence: add pulses, delays, and alignments using ``add_*`` methods
+    3. Test: call ``simulate_experiment()`` to verify timing and waveforms
+    4. Execute: call ``execute_experiment()`` to run on hardware
+    5. Save: call ``save_data()`` to persist configuration, settings, and results
+
+    Attributes:
+        settings: Experiment-specific parameters (frequencies, pulse lengths, etc.)
+        config: OPX configuration object
+        save_dir: Directory to save experiment data
+        save_data_dict: Dictionary which contains data extracted during the experiment for saving
+        qmm: ``QuantumMachinesManager`` instance for managing connection to the OPX-1000
+    """
+
     def __init__(self, settings: ExperimentSettings, config: OPXConfig = None):
         """
-        Initializes the base experiment class with default configurations and containers for commands, results,
-        plotting data, and experimental delays. This class serves as a foundational structure for conducting
-        experiments.
+        Initialize experiment with configuration and settings.
 
-        Experimental-style specific setting should be implemented in subclasses.
+        Args:
+            settings: Experiment-specific parameters (frequencies, pulse lengths, etc.).
+            config: OPX configuration. If None, automatically generated from settings.
 
+        Raises:
+            ValueError: If readout delay is too short to accommodate switching times.
         """
         self.settings = settings
 
@@ -283,8 +314,8 @@ class Experiment:
     def create_experiment(self):
         """
         Creates the Quantum Machine program for the experiment, and returns the
-        experiment object as a qua `program`. This is used by the `execute_experiment` and
-        `simulate_experiment` methods.
+        experiment object as a qua ``program``. This is used by the :meth:`execute_experiment` and
+        :meth:`simulate_experiment` methods.
 
         Returns:
             program: The QUA program for the experiment defined by this class's commands.
@@ -302,20 +333,14 @@ class Experiment:
     def simulate_experiment(self, sim_length=10_000):
         """
         Simulates the experiment using the configured experiment defined by this class based on the current
-        config defined by this instance's `config` attribute. The simulation returns the generated waveforms
-        of the experiment up to the duration `sim_length` in ns. Useful for checking the timings before running
+        config defined by this instance's ``config`` attribute. The simulation returns the generated waveforms
+        of the experiment up to the duration ``sim_length`` in ns. Useful for checking the timings before running
         on hardware.
 
         Parameters:
-            sim_length (int, optional): The duration of the simulation in ns. Defaults to 10_000.
-            n_avg (int, optional): The number of averages per point. Defaults to 100_000.
-            measure_contrast (bool): If True, only the |0> state is measured, if False, both |0> and |1> are measured.
-
-        Raises:
-            ValueError: Throws an error if insufficient details about the experiment are defined.
+            sim_length (int, optional): The duration of the simulation in ns. Defaults to ``10_000``.
         """
-        if len(self._commands) == 0:
-            raise ValueError("No commands have been added to the experiment.")
+        self.validate_experiment()
         expt = self.create_experiment()
         simulation_config = SimulationConfig(
             duration=sim_length // 4

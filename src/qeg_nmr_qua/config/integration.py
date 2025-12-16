@@ -5,6 +5,30 @@ from typing import Any, Dict, Optional, Type, TypeVar
 
 @dataclass
 class IntegrationWeightMapping:
+    """Mapping of demodulation weight names to integration weight set identifiers.
+
+    This class defines the naming convention for different integration weight sets
+    used during measurement. Each attribute maps a weight type to its identifier
+    in the integration weights configuration.
+
+    **Standard Weight Sets:**
+
+    - ``cos``, ``sin``, ``minus_sin``: Standard cosine/sine demodulation
+    - ``rotated_cos``, ``rotated_sin``, ``rotated_minus_sin``: Rotated basis demodulation
+    - ``opt_cos``, ``opt_sin``, ``opt_minus_sin``: Optimized weights for specific experiments
+
+    Attributes:
+        cos (str): Cosine weight set name (default: "cosine_weights")
+        sin (str): Sine weight set name (default: "sine_weights")
+        minus_sin (str): Negative sine weight set name (default: "minus_sine_weights")
+        rotated_cos (str): Rotated cosine weight set (default: "rotated_cosine_weights")
+        rotated_sin (str): Rotated sine weight set (default: "rotated_sine_weights")
+        rotated_minus_sin (str): Rotated negative sine weight set (default: "rotated_minus_sine_weights")
+        opt_cos (str): Optimized cosine weight set (default: "opt_cosine_weights")
+        opt_sin (str): Optimized sine weight set (default: "opt_sine_weights")
+        opt_minus_sin (str): Optimized negative sine weight set (default: "opt_minus_sine_weights")
+    """
+
     cos: str = "cosine_weights"
     sin: str = "sine_weights"
     minus_sin: str = "minus_sine_weights"
@@ -53,8 +77,20 @@ class IntegrationWeightMapping:
 
 @dataclass
 class IntegrationWeight:
-    """
-    Configuration for a single integration weight set.
+    """Configuration for a single integration weight set for demodulation.
+
+    Defines how to demodulate and integrate an acquired signal. During measurement,
+    the acquired signal is multiplied by cosine and sine reference signals (weighted
+    by these parameters) and integrated over the measurement duration to extract
+    in-phase (I) and quadrature (Q) components.
+
+    Attributes:
+        length (int): Integration window duration in nanoseconds (default: 0).
+            Typically matches the measurement pulse length.
+        real_weight (float): Weight factor for cosine (I) component (default: 1.0).
+            Scales the in-phase signal amplitude.
+        imag_weight (float): Weight factor for sine (Q) component (default: 0.0).
+            Scales the quadrature signal amplitude.
     """
 
     length: int = 0  # in nanoseconds
@@ -88,8 +124,15 @@ class IntegrationWeight:
 
 @dataclass
 class IntegrationWeights:
-    """
-    Configuration for integration weights used in measurements.
+    """Container for all integration weight sets used in the experiment.
+
+    Manages a collection of named integration weight configurations. During
+    measurement, these weights are applied to demodulate and integrate the
+    acquired signals, extracting I/Q components for data analysis.
+
+    Attributes:
+        weights (dict[str, IntegrationWeight]): Mapping of weight set names
+            to their configurations (default: empty).
     """
 
     weights: dict[str, IntegrationWeight] = field(default_factory=dict)

@@ -26,6 +26,16 @@ u = unit(coerce_to_integer=True)
 
 
 class Experiment1D(Experiment):
+    """
+    Class to create and run 1D NMR experiments using the QUA programming language. Inherits
+    from the base :class:`Experiment` class and implements methods specific to 1D experiments, usually
+    used for measuring free induction decay (FID) signals. The resulting signal is used to
+    calibrate drifts in the nuclear spin frequency phase reference.
+
+    In solid-state systems, the FID signal typically decays within 100-500 microseconds due to
+    strong dipolar interactions between nuclear spins. Direct fitting of T2* from the FID is often
+    unreliable because of this rapid decay.
+    """
 
     def validate_experiment(self):
         """
@@ -44,8 +54,8 @@ class Experiment1D(Experiment):
     def create_experiment(self):
         """
         Creates the Quantum Machine program for the experiment, and returns the
-        experiment object as a qua `program`. This is used by the `execute_experiment` and
-        `simulate_experiment` methods.
+        experiment object as a qua ``program``. This is used by the :meth:`~Experiment.execute_experiment` and
+        :meth:`~Experiment.simulate_experiment` methods.
 
         Returns:
             program: The QUA program for the experiment defined by this class's commands.

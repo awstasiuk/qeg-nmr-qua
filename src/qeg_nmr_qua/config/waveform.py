@@ -5,8 +5,16 @@ from typing import Dict, Optional, Any, Type, TypeVar, Literal
 
 @dataclass
 class AnalogWaveform:
-    """
-    Configuration for a single waveform.
+    """Configuration for a single analog waveform.
+
+    Represents a waveform that can be output on an analog channel. Supports both
+    constant-amplitude waveforms and arbitrary waveforms with sample-by-sample
+    amplitude specification.
+
+    Attributes:
+        sample (float | list): Waveform amplitude specification.
+            - If float: Constant waveform with that amplitude (in volts)
+            - If list: Arbitrary waveform with per-sample amplitudes (in volts)
     """
 
     sample: float | list = (
@@ -37,8 +45,14 @@ class AnalogWaveform:
 
 @dataclass
 class ArbitraryWaveform:
-    """
-    Configuration for an arbitrary waveform.
+    """Configuration for an arbitrary (custom) analog waveform.
+
+    Represents a shaped waveform defined sample-by-sample. Useful for complex
+    pulse shapes like STIRAP, RAPID, or other optimal control pulses.
+
+    Attributes:
+        samples (list[float]): List of amplitude values (in volts) for each sample.
+            The waveform is played back in sequence at the OPX sampling rate.
     """
 
     samples: list[float] = field(default_factory=list)  # list of amplitude values
@@ -61,9 +75,21 @@ class ArbitraryWaveform:
 
 @dataclass
 class DigitalWaveform:
-    """
-    Configuration for a digital waveform (marker). A length of 0 means the marker will hold its state
-    for the duration of the pulse it is associated with. If the pulse ends, the marker returns to 0.
+    """Configuration for a digital marker waveform.
+
+    Defines a digital (binary) signal that can be used for RF switching, trigger
+    signals, or monitoring pulse execution. The marker holds its specified state
+    for the specified duration, then returns to 0 when the pulse ends.
+
+    **Timing Behavior:**
+
+    - Length 0: Marker holds its state for the entire duration of the associated pulse
+    - Length > 0: Marker holds its state for the specified nanoseconds, then returns to 0
+
+    Attributes:
+        state (int): Digital state (0 or 1). 0 = low/off, 1 = high/on (default: 0).
+        length (int): Duration the marker holds its state in nanoseconds (default: 0).
+            Special case: 0 means hold for entire pulse duration.
     """
 
     state: int = 0  # 0 or 1
@@ -88,9 +114,22 @@ class DigitalWaveform:
 
 @dataclass
 class AnalogWaveformConfig:
-    """
-    Simple container for waveform name mappings, e.g. {"single": "const_wf"}.
-    Keeps the mapping opaque so other parts of the code can use arbitrary keys.
+    """Container for analog waveform definitions.
+
+    Manages a collection of named analog waveforms. Waveforms are referenced by
+    name in pulse configurations. This design allows arbitrary key names for
+    maximum flexibility.
+
+    **Waveform Types:**
+
+    Waveforms can be:
+
+    - Constant amplitude (flat pulse)
+    - Arbitrary shaped (custom pulse envelope)
+
+    Attributes:
+        waveforms (Dict[str, AnalogWaveform]): Mapping of waveform names to
+            their configurations. Example: {"pi_pulse": AnalogWaveform(...)}.
     """
 
     waveforms: Dict[str, AnalogWaveform] = field(default_factory=dict)
