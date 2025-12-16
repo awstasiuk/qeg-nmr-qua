@@ -1,0 +1,540 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qeg_nmr_qua.analysis.data_saver &mdash; qeg-nmr-qua 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/_modules/qeg_nmr_qua/analysis/data_saver.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            qeg-nmr-qua
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">qeg-nmr-qua</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qeg_nmr_qua.analysis.data_saver</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qeg_nmr_qua.analysis.data_saver</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Data Saving Module.</span>
+
+<span class="sd">This module provides utilities for saving experiment data from NMR experiments</span>
+<span class="sd">using the OPX-1000, including automated handling of NumPy arrays, matplotlib</span>
+<span class="sd">figures, and other scientific computing types via :class:`QuantumEncoder`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.analysis.encoder</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumEncoder</span>
+
+
+<div class="viewcode-block" id="DataSaver">
+<a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataSaver</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manage saving and loading of NMR experiment data with metadata.</span>
+
+<span class="sd">    Provides a structured approach to persisting experiment configurations, settings,</span>
+<span class="sd">    commands, and results to disk. Each experiment is saved to a uniquely named folder</span>
+<span class="sd">    containing JSON files and optionally PNG figures.</span>
+
+<span class="sd">    **Folder Structure:**</span>
+
+<span class="sd">    Each saved experiment creates a folder with::</span>
+
+<span class="sd">        experiment_001/</span>
+<span class="sd">        ├── config.json          # OPX configuration</span>
+<span class="sd">        ├── settings.json        # Experiment settings</span>
+<span class="sd">        ├── commands.json        # Command sequence executed</span>
+<span class="sd">        ├── data.json            # Experimental results and metadata</span>
+<span class="sd">        ├── figures.json         # (Optional) Mapping of figure keys to filenames</span>
+<span class="sd">        └── figure_*.png         # (Optional) Saved matplotlib figures</span>
+
+<span class="sd">    **Data Handling:**</span>
+
+<span class="sd">    - JSON-serializable data (dicts, lists, numbers, strings) are saved directly</span>
+<span class="sd">    - NumPy arrays/scalars are converted to native Python types</span>
+<span class="sd">    - Matplotlib figures are automatically saved as PNG files (300 dpi)</span>
+<span class="sd">    - Non-serializable objects are converted to descriptive strings with warnings</span>
+<span class="sd">    - Path objects are converted to strings</span>
+
+<span class="sd">    **Error Recovery:**</span>
+
+<span class="sd">    If saving fails, the partially created experiment folder is automatically</span>
+<span class="sd">    cleaned up, maintaining a consistent state.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        root_data_folder (Path): The root directory where experiment data will be saved.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; saver = DataSaver(&quot;./experiment_data&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; config = {&quot;qop_ip&quot;: &quot;192.168.1.100&quot;, ...}</span>
+<span class="sd">        &gt;&gt;&gt; settings = {&quot;n_avg&quot;: 8, ...}</span>
+<span class="sd">        &gt;&gt;&gt; commands = [{&quot;type&quot;: &quot;pulse&quot;, ...}]</span>
+<span class="sd">        &gt;&gt;&gt; data = {&quot;I_data&quot;: np.array([...]), &quot;Q_data&quot;: np.array([...])}</span>
+<span class="sd">        &gt;&gt;&gt; folder = saver.save_experiment(&quot;exp_001&quot;, config, settings, commands, data)</span>
+<span class="sd">        &gt;&gt;&gt; loaded = saver.load_experiment(&quot;exp_001&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DataSaver.__init__">
+<a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_data_folder</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the DataSaver with a root data folder.</span>
+
+<span class="sd">        Creates the root data folder if it doesn&#39;t exist. All experiments will be</span>
+<span class="sd">        saved as subfolders within this directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            root_data_folder (str | Path): The root directory for saving experiment data.</span>
+<span class="sd">                Can be a string path or Path object. Will be created with parents=True</span>
+<span class="sd">                if it doesn&#39;t exist.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; saver = DataSaver(&quot;./data&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; saver.root_data_folder</span>
+<span class="sd">            PosixPath(&#39;data&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root_data_folder</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DataSaver.save_experiment">
+<a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver.save_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_experiment</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">commands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save experiment metadata and data to a structured directory.</span>
+
+<span class="sd">        Creates a folder with the specified experiment_name and atomically saves</span>
+<span class="sd">        OPX configuration, experiment settings, command sequence, and experimental</span>
+<span class="sd">        results. Handles special data types (numpy arrays, matplotlib figures) and</span>
+<span class="sd">        non-serializable objects gracefully.</span>
+
+<span class="sd">        **Saved Files:**</span>
+
+<span class="sd">        - ``config.json``: OPX-1000 configuration dictionary</span>
+<span class="sd">        - ``settings.json``: Experiment settings (frequencies, pulse params, etc.)</span>
+<span class="sd">        - ``commands.json``: List of pulse commands executed</span>
+<span class="sd">        - ``data.json``: Experimental results and metadata (numpy arrays converted to lists)</span>
+<span class="sd">        - ``figures.json``: (Optional) Mapping of data keys to saved figure filenames</span>
+<span class="sd">        - ``figure_*.png``: (Optional) Matplotlib figures extracted from data</span>
+
+<span class="sd">        **Data Processing:**</span>
+
+<span class="sd">        - NumPy arrays are converted to JSON-serializable lists</span>
+<span class="sd">        - NumPy scalars are converted to native Python types</span>
+<span class="sd">        - Matplotlib figures are automatically saved as PNG files with 300 dpi</span>
+<span class="sd">        - Non-serializable objects are converted to descriptive strings with warnings</span>
+<span class="sd">        - Failed keys are tracked in ``_failed_keys`` in the saved data</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            experiment_name (str): Name for the experiment folder (e.g., &quot;experiment_001&quot;).</span>
+<span class="sd">                Must be a simple name without path separators or dots.</span>
+<span class="sd">            config (dict[str, Any]): OPX configuration dictionary from</span>
+<span class="sd">                :meth:`~OPXConfig.to_dict`.</span>
+<span class="sd">            settings (dict[str, Any]): Experiment settings dictionary from</span>
+<span class="sd">                :meth:`~ExperimentSettings.to_dict`.</span>
+<span class="sd">            commands (list[dict[str, Any]]): List of command dictionaries defining</span>
+<span class="sd">                the pulse sequence.</span>
+<span class="sd">            data (dict[str, Any]): Experimental data dictionary. Can contain numpy arrays,</span>
+<span class="sd">                matplotlib figures, and other Python objects. NumPy types and figures</span>
+<span class="sd">                are handled automatically.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Path: The path to the created experiment folder.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If experiment_name contains path separators or is invalid.</span>
+<span class="sd">            FileExistsError: If the experiment folder already exists.</span>
+<span class="sd">            RuntimeError: If saving fails (folder is cleaned up on failure).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; saver = DataSaver(&quot;./data&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; folder = saver.save_experiment(</span>
+<span class="sd">            ...     &quot;exp_001&quot;,</span>
+<span class="sd">            ...     config={&quot;qop_ip&quot;: &quot;192.168.1.100&quot;},</span>
+<span class="sd">            ...     settings={&quot;n_avg&quot;: 8},</span>
+<span class="sd">            ...     commands=[{&quot;type&quot;: &quot;pulse&quot;, &quot;name&quot;: &quot;pi_half&quot;}],</span>
+<span class="sd">            ...     data={&quot;I&quot;: np.array([1, 2, 3]), &quot;Q&quot;: np.array([4, 5, 6])}</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; folder.name</span>
+<span class="sd">            &#39;exp_001&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate experiment name</span>
+        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">experiment_name</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">experiment_name</span> <span class="ow">or</span> <span class="n">experiment_name</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid experiment name &#39;</span><span class="si">{</span><span class="n">experiment_name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="s2">&quot;Must be a simple name without path separators.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create experiment folder</span>
+        <span class="n">experiment_folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span> <span class="o">/</span> <span class="n">experiment_name</span>
+
+        <span class="k">if</span> <span class="n">experiment_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Experiment folder already exists at </span><span class="si">{</span><span class="n">experiment_folder</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">experiment_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Save config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_json</span><span class="p">(</span><span class="n">experiment_folder</span> <span class="o">/</span> <span class="s2">&quot;config.json&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+            <span class="c1"># Save settings</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_json</span><span class="p">(</span><span class="n">experiment_folder</span> <span class="o">/</span> <span class="s2">&quot;settings.json&quot;</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+
+            <span class="c1"># Save commands</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_json</span><span class="p">(</span><span class="n">experiment_folder</span> <span class="o">/</span> <span class="s2">&quot;commands.json&quot;</span><span class="p">,</span> <span class="n">commands</span><span class="p">)</span>
+
+            <span class="c1"># Process and save data (extract figures, handle failures gracefully)</span>
+            <span class="n">cleaned_data</span><span class="p">,</span> <span class="n">figure_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data_payload</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">,</span> <span class="n">experiment_folder</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Save the cleaned data (without figures)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_json</span><span class="p">(</span><span class="n">experiment_folder</span> <span class="o">/</span> <span class="s2">&quot;data.json&quot;</span><span class="p">,</span> <span class="n">cleaned_data</span><span class="p">)</span>
+
+            <span class="c1"># Save a mapping of figure keys to their filenames</span>
+            <span class="k">if</span> <span class="n">figure_map</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_save_json</span><span class="p">(</span><span class="n">experiment_folder</span> <span class="o">/</span> <span class="s2">&quot;figures.json&quot;</span><span class="p">,</span> <span class="n">figure_map</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">experiment_folder</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Clean up on failure</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">experiment_folder</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Failed to save experiment &#39;</span><span class="si">{</span><span class="n">experiment_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
+
+<div class="viewcode-block" id="DataSaver.load_experiment">
+<a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver.load_experiment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load experiment metadata and data from a saved folder.</span>
+
+<span class="sd">        Reconstructs the complete experiment state from JSON files. Returns all</span>
+<span class="sd">        saved data including configuration, settings, commands, and results.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            experiment_name (str): Name of the experiment folder to load.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, Any]: Dictionary with keys:</span>
+<span class="sd">                - ``config``: OPX configuration</span>
+<span class="sd">                - ``settings``: Experiment settings</span>
+<span class="sd">                - ``commands``: Command sequence</span>
+<span class="sd">                - ``data``: Experimental results</span>
+<span class="sd">                - ``figures``: (Optional) Mapping of figure keys to filenames</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: If the experiment folder or required files don&#39;t exist.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; saver = DataSaver(&quot;./data&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; loaded = saver.load_experiment(&quot;exp_001&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; config = loaded[&quot;config&quot;]</span>
+<span class="sd">            &gt;&gt;&gt; data = loaded[&quot;data&quot;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">experiment_folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span> <span class="o">/</span> <span class="n">experiment_name</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">experiment_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Experiment folder not found at </span><span class="si">{</span><span class="n">experiment_folder</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Load each file</span>
+        <span class="n">required_files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;config.json&quot;</span><span class="p">,</span> <span class="s2">&quot;settings.json&quot;</span><span class="p">,</span> <span class="s2">&quot;commands.json&quot;</span><span class="p">,</span> <span class="s2">&quot;data.json&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">required_files</span><span class="p">:</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="n">experiment_folder</span> <span class="o">/</span> <span class="n">filename</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">filepath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Required file &#39;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&#39; not found in </span><span class="si">{</span><span class="n">experiment_folder</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+        <span class="c1"># Load figure mapping if it exists</span>
+        <span class="n">figures_file</span> <span class="o">=</span> <span class="n">experiment_folder</span> <span class="o">/</span> <span class="s2">&quot;figures.json&quot;</span>
+        <span class="k">if</span> <span class="n">figures_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;figures&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_json</span><span class="p">(</span><span class="n">figures_file</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_save_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save data to a JSON file with NumPy type handling.</span>
+
+<span class="sd">        Writes data to JSON format using the custom :class:`QuantumEncoder`, which handles</span>
+<span class="sd">        NumPy arrays, scalars, and Path objects automatically.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filepath (Path): Path where the JSON file will be saved.</span>
+<span class="sd">            data (Any): Data to serialize. Can contain numpy arrays, Path objects, etc.</span>
+<span class="sd">            indent (int): JSON indentation level for human readability (default: 2).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If data contains non-serializable types not handled by :class:`QuantumEncoder`.</span>
+<span class="sd">            OSError: If the file cannot be written.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">QuantumEncoder</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load data from a JSON file.</span>
+
+<span class="sd">        Reads and deserializes JSON data from file. Returns standard Python types</span>
+<span class="sd">        (no automatic reconstruction of NumPy arrays).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filepath (Path): Path to the JSON file to load.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Any: Deserialized JSON data (dict, list, str, int, float, bool, or None).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: If the file doesn&#39;t exist.</span>
+<span class="sd">            json.JSONDecodeError: If the file contains invalid JSON.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_data_payload</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">experiment_folder</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process the data payload to extract matplotlib figures and handle serialization.</span>
+
+<span class="sd">        Inspects each field in the data dictionary:</span>
+
+<span class="sd">        - Matplotlib figures: Saved as PNG files, replaced with reference strings</span>
+<span class="sd">        - NumPy arrays/scalars: Converted to native Python types by encoder</span>
+<span class="sd">        - JSON-serializable objects: Passed through as-is</span>
+<span class="sd">        - Non-serializable objects: Converted to descriptive strings with warnings</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (dict[str, Any]): The data payload that may contain figures, numpy</span>
+<span class="sd">                arrays, and other objects.</span>
+<span class="sd">            experiment_folder (Path): Folder where figures will be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[dict[str, Any], dict[str, str]]: Tuple of:</span>
+<span class="sd">                - cleaned_data: Data dict with figures removed, numpy types converted,</span>
+<span class="sd">                  and failed keys recorded in ``_failed_keys``</span>
+<span class="sd">                - figure_map: Dict mapping original data keys to saved figure filenames</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">figure_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">failed_keys</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Check if value is a matplotlib figure</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_matplotlib_figure</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="c1"># Save figure as PNG</span>
+                    <span class="n">figure_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;figure_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.png&quot;</span>
+                    <span class="n">figure_path</span> <span class="o">=</span> <span class="n">experiment_folder</span> <span class="o">/</span> <span class="n">figure_filename</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_save_figure</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">figure_path</span><span class="p">)</span>
+                    <span class="n">figure_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">figure_filename</span>
+                    <span class="c1"># Replace with a reference string in the data</span>
+                    <span class="n">cleaned_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&lt;figure saved as </span><span class="si">{</span><span class="n">figure_filename</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Try to serialize the value</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="c1"># Test if it&#39;s JSON serializable</span>
+                        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">QuantumEncoder</span><span class="p">)</span>
+                        <span class="n">cleaned_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="c1"># If serialization fails, save as string representation</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Could not serialize data[&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;] as JSON: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;Saving as string representation instead.&quot;</span><span class="p">,</span>
+                            <span class="ne">UserWarning</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">cleaned_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;&lt;non-serializable: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
+                        <span class="p">)</span>
+                        <span class="n">failed_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># If anything goes wrong, log and continue</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Failed to process data[&#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;]: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. Skipping this field.&quot;</span><span class="p">,</span>
+                    <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">failed_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">failed_keys</span><span class="p">:</span>
+            <span class="n">cleaned_data</span><span class="p">[</span><span class="s2">&quot;_failed_keys&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">failed_keys</span>
+
+        <span class="k">return</span> <span class="n">cleaned_data</span><span class="p">,</span> <span class="n">figure_map</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_matplotlib_figure</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if an object is a matplotlib Figure instance.</span>
+
+<span class="sd">        Safely checks if the object is a matplotlib Figure without raising an error</span>
+<span class="sd">        if matplotlib is not installed. Returns False if matplotlib is unavailable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obj: Object to check.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if obj is a matplotlib.figure.Figure, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.figure</span>
+
+            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save a matplotlib figure to a PNG file.</span>
+
+<span class="sd">        Saves the figure with 300 dpi resolution and tight bounding box for</span>
+<span class="sd">        publication-quality output. Warnings are issued if the save fails,</span>
+<span class="sd">        but execution continues.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fig: Matplotlib Figure object to save.</span>
+<span class="sd">            filepath (Path): Path where the PNG file will be saved.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            If saving fails, a UserWarning is issued and execution continues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to save figure to </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataSaver.list_experiments">
+<a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver.list_experiments">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List all saved experiments in the root data folder.</span>
+
+<span class="sd">        Scans the root folder and returns a sorted list of all experiment folders</span>
+<span class="sd">        that contain a valid ``data.json`` file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[str]: List of experiment folder names sorted alphabetically.</span>
+<span class="sd">                Returns an empty list if no experiments have been saved.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; saver = DataSaver(&quot;./data&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; experiments = saver.list_experiments()</span>
+<span class="sd">            &gt;&gt;&gt; experiments</span>
+<span class="sd">            [&#39;exp_001&#39;, &#39;exp_002&#39;, &#39;exp_003&#39;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">experiments</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;data.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, awstasiuk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

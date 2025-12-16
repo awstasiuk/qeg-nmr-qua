@@ -50,10 +50,24 @@
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="config.html">Configuration Module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Experiment Module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#base-experiment">Base Experiment</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#d-experiments">1D Experiments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id1">2D Experiments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#experiment-macros">Experiment Macros</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-qeg_nmr_qua.experiment.experiment">Base Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment"><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-qeg_nmr_qua.experiment.experiment_1d">1D Experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D"><code class="docutils literal notranslate"><span class="pre">Experiment1D</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-qeg_nmr_qua.experiment.experiment_2d">2D Experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D"><code class="docutils literal notranslate"><span class="pre">Experiment2D</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-qeg_nmr_qua.experiment.macros">Experiment Macros</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.experiment.macros.drive_mode"><code class="docutils literal notranslate"><span class="pre">drive_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.experiment.macros.readout_mode"><code class="docutils literal notranslate"><span class="pre">readout_mode()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.experiment.macros.safe_mode"><code class="docutils literal notranslate"><span class="pre">safe_mode()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="analysis.html">Analysis Module</a></li>
@@ -90,35 +104,441 @@
   <section id="experiment-module">
 <h1>Experiment Module<a class="headerlink" href="#experiment-module" title="Link to this heading"></a></h1>
 <p>The experiment module provides classes for running a variety of standard NMR experiments. The base class,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code>, contains common functionality for all experiments, while the <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment1D</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment2D</span></code>
+<a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="qeg_nmr_qua.experiment.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a>, contains common functionality for all experiments, while the <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D" title="qeg_nmr_qua.experiment.experiment_1d.Experiment1D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment1D</span></code></a> and <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D" title="qeg_nmr_qua.experiment.experiment_2d.Experiment2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment2D</span></code></a>
 classes implement specific logic for one-dimensional and two-dimensional experiments, respectively. Each base class
-needs to implement three main methods: <code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code>, and <code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code>.</p>
-<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code> checks that the provided parameters are valid for the specific experiment type, and is useful
+needs to implement three main methods: <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code></a>, <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.create_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.create_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code></a>, and <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code></a>.</p>
+<p><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code></a> checks that the provided parameters are valid for the specific experiment type, and is useful
 for catching user errors before running the experiment. Generally, this should catch what would otherwise be runtime
 errors in the QUA program.</p>
-<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code> builds the QUA program for the specific experiment, using the provided parameters and
+<p><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.create_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.create_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code></a> builds the QUA program for the specific experiment, using the provided parameters and
 configuration. This method should define and return the QUA program. Users should be especially careful to ensure that
 within the QUA program, all variables will be QUA variables, and so are subject to QUA’s restrictions. Mid-experiment
 computations (such as division) can over 20 clock cycles, and lead to unexpected behavior if not handled properly. Further,
 QUA functions usually expect timings in terms of clock cycles (4 ns), so users should convert from seconds to clock cycles
-as needed, which is usually handled in the <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code> base class. The extracted data must be buffered in accordance to
-the expected <code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code> behavior. Finally, the QUA program should ensure judicious use of the safety macros
-provided in <code class="xref py py-mod docutils literal notranslate"><span class="pre">macros</span></code> to prevent hardware damage.</p>
-<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code> defines how to process and visualize the data as it is acquired. This method is called
+as needed, which is usually handled in the <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="qeg_nmr_qua.experiment.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a> base class. The extracted data must be buffered in accordance to
+the expected <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code></a> behavior. Finally, the QUA program should ensure judicious use of the safety macros
+provided in <a class="reference internal" href="#module-qeg_nmr_qua.experiment.macros" title="qeg_nmr_qua.experiment.macros"><code class="xref py py-mod docutils literal notranslate"><span class="pre">macros</span></code></a> to prevent hardware damage.</p>
+<p><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code></a> defines how to process and visualize the data as it is acquired. This method is called
 periodically during the experiment, and should handle fetching the data from the OPX, processing it (e.g., averaging,
 Fourier transforming), and updating any plots or visualizations. Data the needs to be saved should be added to the class’
-<code class="xref py py-attr docutils literal notranslate"><span class="pre">save_data_dict</span></code> attribute, which is saved to file at the end of the experiment.</p>
-<section id="base-experiment">
-<h2>Base Experiment<a class="headerlink" href="#base-experiment" title="Link to this heading"></a></h2>
+<a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.save_data_dict" title="qeg_nmr_qua.experiment.experiment.Experiment.save_data_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">save_data_dict</span></code></a> attribute, which is saved to file at the end of the experiment.</p>
+<section id="module-qeg_nmr_qua.experiment.experiment">
+<span id="base-experiment"></span><h2>Base Experiment<a class="headerlink" href="#module-qeg_nmr_qua.experiment.experiment" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.experiment.experiment.</span></span><span class="sig-name descname"><span class="pre">Experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Base class for conducting NMR experiments on the OPX-1000.</p>
+<p>This class manages quantum machine configurations, experiment commands (pulses, delays, alignments),
+and data collection. It provides a structured interface for building and executing pulse sequences
+with support for looped experiments and real-time data acquisition.</p>
+<p>Subclasses should implement experiment-specific logic in:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">create_experiment()</span></code>: Build the QUA program from stored commands</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">validate_experiment()</span></code>: Validate settings and command consistency</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">live_data_processing()</span></code>: Handle real-time data during hardware execution</p></li>
+</ul>
+<p>Typical workflow:</p>
+<ol class="arabic simple">
+<li><p>Create an Experiment subclass instance with relevant settings and config</p></li>
+<li><p>Build sequence: add pulses, delays, and alignments using <code class="docutils literal notranslate"><span class="pre">add_*</span></code> methods</p></li>
+<li><p>Test: call <code class="docutils literal notranslate"><span class="pre">simulate_experiment()</span></code> to verify timing and waveforms</p></li>
+<li><p>Execute: call <code class="docutils literal notranslate"><span class="pre">execute_experiment()</span></code> to run on hardware</p></li>
+<li><p>Save: call <code class="docutils literal notranslate"><span class="pre">save_data()</span></code> to persist configuration, settings, and results</p></li>
+</ol>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.settings">
+<span class="sig-name descname"><span class="pre">settings</span></span><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.settings" title="Link to this definition"></a></dt>
+<dd><p>Experiment-specific parameters (frequencies, pulse lengths, etc.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.config">
+<span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.config" title="Link to this definition"></a></dt>
+<dd><p>OPX configuration object</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.save_dir">
+<span class="sig-name descname"><span class="pre">save_dir</span></span><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.save_dir" title="Link to this definition"></a></dt>
+<dd><p>Directory to save experiment data</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.save_data_dict">
+<span class="sig-name descname"><span class="pre">save_data_dict</span></span><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.save_data_dict" title="Link to this definition"></a></dt>
+<dd><p>Dictionary which contains data extracted during the experiment for saving</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.qmm">
+<span class="sig-name descname"><span class="pre">qmm</span></span><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.qmm" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">QuantumMachinesManager</span></code> instance for managing connection to the OPX-1000</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize experiment with configuration and settings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>settings</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="config.html#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a></span>) – Experiment-specific parameters (frequencies, pulse lengths, etc.).</p></li>
+<li><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">OPXConfig</span></code></span>) – OPX configuration. If None, automatically generated from settings.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If readout delay is too short to accommodate switching times.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.add_pulse">
+<span class="sig-name descname"><span class="pre">add_pulse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_pulse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_pulse" title="Link to this definition"></a></dt>
+<dd><p>Adds a pulse command to the experiment. Stores the data to control the pulse in the experiment’s command list,
+and ensures the command is well defined</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the pulse operation, must be defined in the element’s config.</p></li>
+<li><p><strong>element</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Element to which the pulse is applied. Must be defined in the config.</p></li>
+<li><p><strong>phase</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Iterable</em>) – Phase of the pulse in degrees. Saves as a fraction of 2pi.</p></li>
+<li><p><strong>amplitude</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Iterable</em>) – Amplitude of the pulse. This factor multiplies the waveform’s defined amplitude.</p></li>
+<li><p><strong>length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Iterable</em>) – Length of the pulse in nanoseconds. This overrides the waveform’s defined length.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.add_delay">
+<span class="sig-name descname"><span class="pre">add_delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_delay" title="Link to this definition"></a></dt>
+<dd><p>Adds a delay command to the experiment. Stores the data to control the delay in the experiment’s command list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>duration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Iterable</em>) – Duration of the delay in nanoseconds.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.add_align">
+<span class="sig-name descname"><span class="pre">add_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_align"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_align" title="Link to this definition"></a></dt>
+<dd><p>Adds an align command to the experiment. Stores the data to control the alignment in the experiment’s command list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>elements</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em>) – List of elements to align.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.remove_initial_delay">
+<span class="sig-name descname"><span class="pre">remove_initial_delay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remove</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.remove_initial_delay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.remove_initial_delay" title="Link to this definition"></a></dt>
+<dd><p>Removes the 5 T1 delay from the start of the sequence. Useful for testing with the
+simulator, but should be generally used to ensure proper thermalization between
+experiments. By default, the delay is included. The delay can be re-added by calling
+this method with <cite>remove</cite> set to False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>remove</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – By default, is True, removes the initial delay. If False, the delay is re-added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.update_loop">
+<span class="sig-name descname"><span class="pre">update_loop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_vec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.update_loop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.update_loop" title="Link to this definition"></a></dt>
+<dd><p>Updates the variable vector for the experiment. This is used to define the loop
+that the experiment will run over. If the variable vector is already defined, this
+function will check that the new vector is consistent with the previous one by determining
+if the new vector is a constant multiple of the old one.</p>
+<p>For internal use only - will have dramatic mutation side effects otherwise.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>var_vec</strong> (<em>array</em>) – Array of values for the variable in the experiment</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The constant multiple of the new vector to the old vector, 1 if this is the first update.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – Throws an error if the new vector is not a constant multiple of the old one, or if
+    the new vector is all zeros.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.translate_command">
+<span class="sig-name descname"><span class="pre">translate_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.translate_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.translate_command" title="Link to this definition"></a></dt>
+<dd><p>Translates a command dictionary into QUA code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>command</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Command dictionary to translate.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the command type is unknown.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.create_experiment">
+<span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.create_experiment" title="Link to this definition"></a></dt>
+<dd><p>Creates the Quantum Machine program for the experiment, and returns the
+experiment object as a qua <code class="docutils literal notranslate"><span class="pre">program</span></code>. This is used by the <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_experiment()</span></code></a> and
+<a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.simulate_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.simulate_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">simulate_experiment()</span></code></a> methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The QUA program for the experiment defined by this class’s commands.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>program</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment">
+<span class="sig-name descname"><span class="pre">validate_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.validate_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment" title="Link to this definition"></a></dt>
+<dd><p>Function to be implemented by subclasses to validate that the commands and settings for
+the experiment are consistent and valid. Running this function should return helpful error messages
+if the experiment is not properly defined.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.simulate_experiment">
+<span class="sig-name descname"><span class="pre">simulate_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sim_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.simulate_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.simulate_experiment" title="Link to this definition"></a></dt>
+<dd><p>Simulates the experiment using the configured experiment defined by this class based on the current
+config defined by this instance’s <code class="docutils literal notranslate"><span class="pre">config</span></code> attribute. The simulation returns the generated waveforms
+of the experiment up to the duration <code class="docutils literal notranslate"><span class="pre">sim_length</span></code> in ns. Useful for checking the timings before running
+on hardware.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sim_length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The duration of the simulation in ns. Defaults to <code class="docutils literal notranslate"><span class="pre">10_000</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment">
+<span class="sig-name descname"><span class="pre">execute_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.execute_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment" title="Link to this definition"></a></dt>
+<dd><p>Executes the experiment using the configured experiment defined by this class based on the current
+config defined by this instance’s <cite>config</cite> attribute. The method handles the execution on hardware,
+data fetching, and basic plotting of results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – Throws an error if insufficient details about the experiment are defined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing">
+<span class="sig-name descname"><span class="pre">live_data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.live_data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="Link to this definition"></a></dt>
+<dd><p>Grabs the results of the experiment as it is being executed. This method must be
+implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
+The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
+this method can (and should) update the <cite>save_data_dict</cite> attribute with relevant raw data for saving to
+disk after the experiment completes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The quantum machine executing the experiment.</p></li>
+<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job running the experiment.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.save_data">
+<span class="sig-name descname"><span class="pre">save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">experiment_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'experiment_001'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.save_data" title="Link to this definition"></a></dt>
+<dd><p>Saves the experiment data to the specified directory using the DataSaver.</p>
+<p>Creates a folder with the given experiment_name containing:
+- config.json: OPX configuration
+- settings.json: Experiment settings
+- commands.json: List of commands executed
+- data.json: Experimental results and metadata</p>
+<p>Each experiment is saved in a newly created folder with a simple naming structure
+for easy loading elsewhere.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>experiment_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name for the experiment folder. Defaults to “experiment_001”.
+Should be a simple name without path separators (e.g., “experiment_001”, “test_run”).</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.14)"><strong>FileExistsError</strong></a> – If the experiment folder already exists.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If experiment_name contains path separators or is invalid.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="d-experiments">
-<h2>1D Experiments<a class="headerlink" href="#d-experiments" title="Link to this heading"></a></h2>
+<section id="module-qeg_nmr_qua.experiment.experiment_1d">
+<span id="d-experiments"></span><h2>1D Experiments<a class="headerlink" href="#module-qeg_nmr_qua.experiment.experiment_1d" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_1d.Experiment1D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.experiment.experiment_1d.</span></span><span class="sig-name descname"><span class="pre">Experiment1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_1d.html#Experiment1D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="qeg_nmr_qua.experiment.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a></p>
+<p>Class to create and run 1D NMR experiments using the QUA programming language. Inherits
+from the base <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code> class and implements methods specific to 1D experiments, usually
+used for measuring free induction decay (FID) signals. The resulting signal is used to
+calibrate drifts in the nuclear spin frequency phase reference.</p>
+<p>In solid-state systems, the FID signal typically decays within 100-500 microseconds due to
+strong dipolar interactions between nuclear spins. Direct fitting of T2* from the FID is often
+unreliable because of this rapid decay.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_1d.Experiment1D.validate_experiment">
+<span class="sig-name descname"><span class="pre">validate_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_1d.html#Experiment1D.validate_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.validate_experiment" title="Link to this definition"></a></dt>
+<dd><p>Checks to make sure that the experiment contains no variable operations,
+since it is a 1D experiment. Variable operations require looping which is not
+supported in 1D experiments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – A looping operation was found in the experiment commands.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_1d.Experiment1D.create_experiment">
+<span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_1d.html#Experiment1D.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.create_experiment" title="Link to this definition"></a></dt>
+<dd><p>Creates the Quantum Machine program for the experiment, and returns the
+experiment object as a qua <code class="docutils literal notranslate"><span class="pre">program</span></code>. This is used by the <code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_experiment()</span></code> and
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">simulate_experiment()</span></code> methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The QUA program for the experiment defined by this class’s commands.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>program</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_1d.Experiment1D.live_data_processing">
+<span class="sig-name descname"><span class="pre">live_data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_1d.html#Experiment1D.live_data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.live_data_processing" title="Link to this definition"></a></dt>
+<dd><p>Grabs the results of the experiment as it is being executed. This method must be
+implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
+The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
+this method can (and should) update the <cite>save_data_dict</cite> attribute with relevant raw data for saving to
+disk after the experiment completes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The quantum machine executing the experiment.</p></li>
+<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job running the experiment.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="id1">
-<h2>2D Experiments<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="module-qeg_nmr_qua.experiment.experiment_2d">
+<span id="id1"></span><h2>2D Experiments<a class="headerlink" href="#module-qeg_nmr_qua.experiment.experiment_2d" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_2d.Experiment2D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.experiment.experiment_2d.</span></span><span class="sig-name descname"><span class="pre">Experiment2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_2d.html#Experiment2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="qeg_nmr_qua.experiment.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a></p>
+<p>Class to create and run 2D NMR experiments using the QUA programming language. Inherits
+from the base <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code> class and implements methods specific to 2D experiments, which
+can have a broad range of applications such as measuring relaxation times (T1, T2), performing
+pulse amplitude sweeps, and performing two-point correlation measurements under Hamiltonian engineering
+pulse sequences.</p>
+<p>2D experiments involve sweeping one parameter (e.g., pulse amplitude, delay time, evolution time) while
+measuring the system’s response. This is typically done by defining a variable vector that contains the values to be
+swept. The experiment loops over this vector, applying the corresponding parameter value in each iteration. In
+this class’s implementation, the swept parameter is varied first, then the averaging loop is performed. During longer
+experiments, this ordering should help mitigate the effects of slow drifts in system parameters.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_2d.Experiment2D.validate_experiment">
+<span class="sig-name descname"><span class="pre">validate_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_2d.html#Experiment2D.validate_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.validate_experiment" title="Link to this definition"></a></dt>
+<dd><p>Checks to make sure that the experiment contains variable operations,
+since it is a 2D experiment. Variable operations require looping which is
+supported in 2D experiments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – No variable vector was found in the experiment commands.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_2d.Experiment2D.create_experiment">
+<span class="sig-name descname"><span class="pre">create_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_2d.html#Experiment2D.create_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.create_experiment" title="Link to this definition"></a></dt>
+<dd><p>Creates the Quantum Machine program for the experiment, and returns the
+experiment object as a qua <code class="docutils literal notranslate"><span class="pre">program()</span></code>. This is used by the <code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_experiment()</span></code> and
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">simulate_experiment()</span></code> methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The QUA program for the experiment defined by this class’s commands.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>program</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_2d.Experiment2D.live_data_processing">
+<span class="sig-name descname"><span class="pre">live_data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_2d.html#Experiment2D.live_data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.live_data_processing" title="Link to this definition"></a></dt>
+<dd><p>Grabs the results of the experiment as it is being executed. This method must be
+implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
+The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
+this method can (and should) update the <cite>save_data_dict</cite> attribute with relevant raw data for saving to
+disk after the experiment completes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The quantum machine executing the experiment.</p></li>
+<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job running the experiment.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="experiment-macros">
-<h2>Experiment Macros<a class="headerlink" href="#experiment-macros" title="Link to this heading"></a></h2>
+<section id="module-qeg_nmr_qua.experiment.macros">
+<span id="experiment-macros"></span><h2>Experiment Macros<a class="headerlink" href="#module-qeg_nmr_qua.experiment.macros" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.macros.drive_mode">
+<span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.experiment.macros.</span></span><span class="sig-name descname"><span class="pre">drive_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">switch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplifier</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/macros.html#drive_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.macros.drive_mode" title="Link to this definition"></a></dt>
+<dd><p>Configures the hardware such that the receiver switch does not
+allow signal to pass through, and the amplifier is turned on and
+unblanked, ready for driving the system. This adds 4 align() calls
+and 730 clock cycles of wait time.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.macros.readout_mode">
+<span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.experiment.macros.</span></span><span class="sig-name descname"><span class="pre">readout_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">switch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplifier</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/macros.html#readout_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.macros.readout_mode" title="Link to this definition"></a></dt>
+<dd><p>Configures the hardware such that the receiver switch allows signal
+to pass through, and the amplifier off (blanked) for reading out the
+resonator. This adds 4 align() calls and 730 clock cycles of wait time.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.macros.safe_mode">
+<span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.experiment.macros.</span></span><span class="sig-name descname"><span class="pre">safe_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">switch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplifier</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/macros.html#safe_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.macros.safe_mode" title="Link to this definition"></a></dt>
+<dd><p>Turns off the amplifier and opens the switch to ensure that no signal
+can pass through. This adds 3 align() calls and 500 clock cycles
+of wait time.</p>
+</dd></dl>
+
 </section>
 </section>
 

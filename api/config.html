@@ -49,8 +49,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start Guide</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Configuration Module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#settings">Settings</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#configuration-from-settings">Configuration from Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-qeg_nmr_qua.config.settings">Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings"><code class="docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-qeg_nmr_qua.config.config_from_settings">Configuration from Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qeg_nmr_qua.config.config_from_settings.cfg_from_settings"><code class="docutils literal notranslate"><span class="pre">cfg_from_settings()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#chassis-configuration">Chassis Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#controller-configuration">Controller Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#element-configuration">Element Configuration</a></li>
@@ -98,11 +104,440 @@ class contains high-level parameters for nuclear spin control, while the other c
 elements such as chasis, controller, element, pulse, waveform, and integration weights. Unless modifying the
 hardware configureation, users will primarily interact with the <code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code> class and the configuration generator function,
 <code class="xref py py-func docutils literal notranslate"><span class="pre">config_from_settings()</span></code>.</p>
-<section id="settings">
-<h2>Settings<a class="headerlink" href="#settings" title="Link to this heading"></a></h2>
+<section id="module-qeg_nmr_qua.config.settings">
+<span id="settings"></span><h2>Settings<a class="headerlink" href="#module-qeg_nmr_qua.config.settings" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.config.settings.</span></span><span class="sig-name descname"><span class="pre">ExperimentSettings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_avg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotation_angle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const_amp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.03</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thermal_reset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000000000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">282190100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">750</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_amp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dwell_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excitation_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'resonator'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'amplifier'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">helper_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'helper'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sw_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'switch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi_half_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pi_half'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Container for experiment-specific program parameters and hardware configuration.</p>
+<p>This dataclass manages all user-facing settings for NMR experiments on the OPX-1000,
+including pulse parameters, frequencies, readout configuration, and data handling.
+All values are stored in standard units (nanoseconds, Hz, amplitude) and converted internally
+as needed.</p>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p><strong>Mutable with validation</strong>: Settings can be updated atomically with <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.update" title="qeg_nmr_qua.config.settings.ExperimentSettings.update"><code class="xref py py-meth docutils literal notranslate"><span class="pre">update()</span></code></a></p></li>
+<li><p><strong>Serialization</strong>: Convert to/from dictionaries with <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.to_dict" title="qeg_nmr_qua.config.settings.ExperimentSettings.to_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_dict()</span></code></a> and <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.from_dict" title="qeg_nmr_qua.config.settings.ExperimentSettings.from_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code></a></p></li>
+<li><p><strong>Change notifications</strong>: Register callbacks with <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_update_callback()</span></code></a> to
+be notified when settings change</p></li>
+<li><p><strong>Atomic updates</strong>: All changes are validated before being applied</p></li>
+</ul>
+<p><strong>Parameter Groups:</strong></p>
+<p><strong>Pulse Parameters</strong>: Core pulse control settings</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">n_avg</span></code>: Number of signal averages (default: 4)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulse_length</span></code>: Duration of control pulse in nanoseconds (default: 1.1 µs)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulse_amplitude</span></code>: Normalized pulse amplitude 0-0.5 (default: 0.25, representing 0.5 Vpp)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rotation_angle</span></code>: Pulse rotation angle in degrees (default: 90°)</p></li>
+</ul>
+<p><strong>Continuous Wave (CW) Parameters</strong>: For continuous wave experiments</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">const_len</span></code>: Length of continuous wave pulse in nanoseconds (default: 100 ns)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">const_amp</span></code>: Amplitude of continuous wave pulse (default: 0.03)</p></li>
+</ul>
+<p><strong>Timing Parameters</strong>: Experiment timing and delays</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">thermal_reset</span></code>: Pre-scan delay for thermal equilibration, in nanoseconds (default: 4 s)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">readout_delay</span></code>: Minimum delay before measurement occurs, in nanoseconds (default: 20 µs)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dwell_time</span></code>: Demodulation interval during readout, in nanoseconds (default: 4 µs)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">readout_start</span></code>: Start time of readout window, in nanoseconds (default: 0)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">readout_end</span></code>: End time of readout window, in nanoseconds (default: 256 µs)</p></li>
+</ul>
+<p><strong>Frequency Parameters</strong>: NMR frequency configuration</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">center_freq</span></code>: Center frequency for NMR in Hz (default: 282.1901 MHz for ¹⁹F)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">offset_freq</span></code>: Frequency offset in Hz. This increases by 50-100 Hz every few days (default: 750 Hz)</p></li>
+</ul>
+<p><strong>Resonator Parameters</strong>: Resonator excitation settings</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">readout_amp</span></code>: Readout pulse amplitude, should be small (default: 0.01)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">excitation_length</span></code>: Duration of resonator excitation pulse in nanoseconds (default: 5 µs)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">excitation_amp</span></code>: Amplitude of resonator excitation (default: 0.03)</p></li>
+</ul>
+<p><strong>Data Handling:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">save_dir</span></code>: Directory for saving experimental data (default: None, uses <code class="docutils literal notranslate"><span class="pre">data/</span></code> folder)</p></li>
+</ul>
+<p><strong>Configuration Keys</strong>: Element names in the OPX configuration</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">res_key</span></code>: Resonator element name (default: “resonator”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">amp_key</span></code>: Amplifier element name (default: “amplifier”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">helper_key</span></code>: Helper element name (default: “helper”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sw_key</span></code>: Switch control element name (default: “switch”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pi_half_key</span></code>: π/2 pulse operation name (default: “pi_half”)</p></li>
+</ul>
+<p><strong>Validation:</strong></p>
+<p>All settings are validated on instantiation and update:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">n_avg</span></code> must be an integer &gt;= 1</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulse_length</span></code> must be &gt;= 64 ns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulse_amplitude</span></code> must be in range [-0.5, 0.5]</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">readout_delay</span></code> must be &gt;= 5 µs</p></li>
+<li><p>Frequency must be in valid OPX range: 0 &lt;= (center_freq - offset_freq) &lt; 750 MHz</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.n_avg">
+<span class="sig-name descname"><span class="pre">n_avg</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.n_avg" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.pulse_length">
+<span class="sig-name descname"><span class="pre">pulse_length</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1100</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.pulse_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.pulse_amplitude">
+<span class="sig-name descname"><span class="pre">pulse_amplitude</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.pulse_amplitude" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.rotation_angle">
+<span class="sig-name descname"><span class="pre">rotation_angle</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">90.0</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.rotation_angle" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.const_len">
+<span class="sig-name descname"><span class="pre">const_len</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.const_len" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.const_amp">
+<span class="sig-name descname"><span class="pre">const_amp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.03</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.const_amp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.thermal_reset">
+<span class="sig-name descname"><span class="pre">thermal_reset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4000000000</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.thermal_reset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.center_freq">
+<span class="sig-name descname"><span class="pre">center_freq</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">282190100</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.center_freq" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.offset_freq">
+<span class="sig-name descname"><span class="pre">offset_freq</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">750</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.offset_freq" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.readout_delay">
+<span class="sig-name descname"><span class="pre">readout_delay</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20000</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.readout_delay" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.readout_amp">
+<span class="sig-name descname"><span class="pre">readout_amp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.01</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.readout_amp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.dwell_time">
+<span class="sig-name descname"><span class="pre">dwell_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4000</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.dwell_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.readout_start">
+<span class="sig-name descname"><span class="pre">readout_start</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.readout_start" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.readout_end">
+<span class="sig-name descname"><span class="pre">readout_end</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">256000</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.readout_end" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.excitation_length">
+<span class="sig-name descname"><span class="pre">excitation_length</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5000</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.excitation_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.excitation_amp">
+<span class="sig-name descname"><span class="pre">excitation_amp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.03</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.excitation_amp" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.save_dir">
+<span class="sig-name descname"><span class="pre">save_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a><span class="pre">,</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a><span class="pre">,</span> <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.save_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.res_key">
+<span class="sig-name descname"><span class="pre">res_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'resonator'</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.res_key" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.amp_key">
+<span class="sig-name descname"><span class="pre">amp_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'amplifier'</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.amp_key" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.helper_key">
+<span class="sig-name descname"><span class="pre">helper_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'helper'</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.helper_key" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.sw_key">
+<span class="sig-name descname"><span class="pre">sw_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'switch'</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.sw_key" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.pi_half_key">
+<span class="sig-name descname"><span class="pre">pi_half_key</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'pi_half'</span></em><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.pi_half_key" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.validate" title="Link to this definition"></a></dt>
+<dd><p>Validate all current settings and raise ValueError if any are invalid.</p>
+<p>This method checks all constraints defined for ExperimentSettings:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">n_avg</span></code> must be a positive integer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulse_length</span></code> must be at least 64 ns (4 clock cycles &#64; 16 ns each)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulse_amplitude</span></code> must be in range [-0.5, 0.5] (max ±1 Vpp)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">readout_delay</span></code> must be at least 5 µs for ringdown protection</p></li>
+<li><p>Effective frequency (center_freq - offset_freq) must be in OPX range [0, 750 MHz)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rotation_angle</span></code> is normalized to [0, 360) automatically</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If any setting violates the defined constraints.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.update" title="Link to this definition"></a></dt>
+<dd><p>Update one or more settings atomically with full validation.</p>
+<p>All requested changes are validated together before any are applied,
+ensuring the settings object remains in a valid state even if update fails.
+Registered callbacks are invoked only if changes are actually made.</p>
+<p><strong>Thread Safety</strong>: Not thread-safe. Callers must serialize access if concurrent
+updates are possible in their environment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Field names and new values. Unknown fields raise AttributeError.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Dictionary of fields that actually changed (name -&gt; new_value).</dt><dd><p>Empty dict if no changes were made or all new values matched existing ones.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.14)"><strong>AttributeError</strong></a> – If an unknown setting name is provided.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If validation fails for any changed setting (no changes applied).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">changes</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pulse_length</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">n_avg</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># changes now contains {&quot;pulse_length&quot;: 2000, &quot;n_avg&quot;: 8}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.to_dict" title="Link to this definition"></a></dt>
+<dd><p>Convert settings to a serializable dictionary.</p>
+<p>Returns all user-facing settings as a plain Python dict suitable for
+JSON serialization or storage. Internal fields (callbacks, locks, etc.)
+are excluded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A shallow copy of all settings with internal fields excluded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.from_dict" title="qeg_nmr_qua.config.settings.ExperimentSettings.from_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code></a> to reconstruct settings from a dict.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.from_dict">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.from_dict" title="Link to this definition"></a></dt>
+<dd><p>Create a new ExperimentSettings instance from a dictionary.</p>
+<p>Constructs a new instance with validation. Unknown fields in the input
+dict are silently ignored. All settings are validated before the instance
+is returned, ensuring consistency with class constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span>) – Dictionary with setting names as keys. Can contain extra keys
+which will be ignored.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new validated instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings">ExperimentSettings</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If any settings in the dict violate validation constraints.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If any setting value is of an incompatible type.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.to_dict" title="qeg_nmr_qua.config.settings.ExperimentSettings.to_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_dict()</span></code></a> to convert an instance to a dict.</p>
+</div>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;n_avg&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s2">&quot;pulse_length&quot;</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span> <span class="s2">&quot;extra_field&quot;</span><span class="p">:</span> <span class="s2">&quot;ignored&quot;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback">
+<span class="sig-name descname"><span class="pre">register_update_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.register_update_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback" title="Link to this definition"></a></dt>
+<dd><p>Register a callback to be notified when settings change.</p>
+<p>The callback will be invoked each time settings are updated via <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.update" title="qeg_nmr_qua.config.settings.ExperimentSettings.update"><code class="xref py py-meth docutils literal notranslate"><span class="pre">update()</span></code></a>.
+The callback signature is <code class="docutils literal notranslate"><span class="pre">fn(self,</span> <span class="pre">changes_dict)</span></code> where <code class="docutils literal notranslate"><span class="pre">changes_dict</span></code>
+contains the field names and new values.</p>
+<p><strong>Exception Handling</strong>: Callback exceptions are caught and suppressed to
+prevent failures from propagating to the caller. Consider logging exceptions
+if needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span>) – A callable with signature <code class="docutils literal notranslate"><span class="pre">(self:</span> <span class="pre">ExperimentSettings,</span> <span class="pre">changes:</span> <span class="pre">Dict[str,</span> <span class="pre">Any])</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">fn</span></code> is not callable.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">unregister_update_callback()</span></code></a> to remove a callback.</p>
+</div>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">on_settings_change</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Settings changed: </span><span class="si">{</span><span class="n">changes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span><span class="o">.</span><span class="n">register_update_callback</span><span class="p">(</span><span class="n">on_settings_change</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">n_avg</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># Prints: Settings changed: {&#39;n_avg&#39;: 10}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback">
+<span class="sig-name descname"><span class="pre">unregister_update_callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.unregister_update_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback" title="Link to this definition"></a></dt>
+<dd><p>Unregister a previously registered callback.</p>
+<p>Removes the callback from the list of callbacks to be invoked on updates.
+If the callback was not registered, this method does nothing (no error).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span>) – The callback function to unregister. Must be the same object
+that was passed to <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_update_callback()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_update_callback()</span></code></a> to register a callback.</p>
+</div>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">on_change</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">pass</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span><span class="o">.</span><span class="n">register_update_callback</span><span class="p">(</span><span class="n">on_change</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span><span class="o">.</span><span class="n">unregister_update_callback</span><span class="p">(</span><span class="n">on_change</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.copy" title="Link to this definition"></a></dt>
+<dd><p>Create a shallow copy of these settings.</p>
+<p>Creates a new independent instance with the same field values.
+Callbacks are not copied (the new instance starts with no callbacks).
+Modifications to the copy do not affect the original.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A new instance with identical settings.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings">ExperimentSettings</a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">settings1</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="p">(</span><span class="n">n_avg</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings2</span> <span class="o">=</span> <span class="n">settings1</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings2</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">n_avg</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings1</span><span class="o">.</span><span class="n">n_avg</span>  <span class="c1"># Still 8</span>
+<span class="go">8</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.rf_freq">
+<span class="sig-name descname"><span class="pre">rf_freq</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/settings.html#ExperimentSettings.rf_freq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.rf_freq" title="Link to this definition"></a></dt>
+<dd><p>Calculate the effective RF (radio frequency) in MHz.</p>
+<p>Computes the actual RF frequency used by the OPX by subtracting the
+frequency offset from the center frequency. This accounts for any
+frequency calibration adjustments stored in <code class="docutils literal notranslate"><span class="pre">offset_freq</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The effective RF frequency in MHz.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="p">(</span><span class="n">center_freq</span><span class="o">=</span><span class="mi">282_190_100</span><span class="p">,</span> <span class="n">offset_freq</span><span class="o">=</span><span class="mi">75_000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">settings</span><span class="o">.</span><span class="n">rf_freq</span><span class="p">()</span>
+<span class="go">282_115_100</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.settings.ExperimentSettings.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_avg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotation_angle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const_amp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.03</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thermal_reset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000000000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">282190100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">750</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_amp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dwell_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readout_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excitation_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'resonator'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'amplifier'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">helper_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'helper'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sw_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'switch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pi_half_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pi_half'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#qeg_nmr_qua.config.settings.ExperimentSettings.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="configuration-from-settings">
-<h2>Configuration from Settings<a class="headerlink" href="#configuration-from-settings" title="Link to this heading"></a></h2>
+<section id="module-qeg_nmr_qua.config.config_from_settings">
+<span id="configuration-from-settings"></span><h2>Configuration from Settings<a class="headerlink" href="#module-qeg_nmr_qua.config.config_from_settings" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="qeg_nmr_qua.config.config_from_settings.cfg_from_settings">
+<span class="sig-prename descclassname"><span class="pre">qeg_nmr_qua.config.config_from_settings.</span></span><span class="sig-name descname"><span class="pre">cfg_from_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/config/config_from_settings.html#cfg_from_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.config.config_from_settings.cfg_from_settings" title="Link to this definition"></a></dt>
+<dd><p>Create an OPXConfig object from ExperimentSettings. This function
+closesly reproduces the config_building.py example, as of 12/3/2025.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">OPXConfig</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="chassis-configuration">
 <h2>Chassis Configuration<a class="headerlink" href="#chassis-configuration" title="Link to this heading"></a></h2>

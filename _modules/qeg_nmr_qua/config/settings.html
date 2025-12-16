@@ -1,0 +1,523 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qeg_nmr_qua.config.settings &mdash; qeg-nmr-qua 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/_modules/qeg_nmr_qua/config/settings.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            qeg-nmr-qua
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">qeg-nmr-qua</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qeg_nmr_qua.config.settings</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qeg_nmr_qua.config.settings</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">unit</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="n">unit</span><span class="p">(</span><span class="n">coerce_to_integer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">UpdateCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;ExperimentSettings&quot;</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ExperimentSettings">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExperimentSettings</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container for experiment-specific program parameters and hardware configuration.</span>
+
+<span class="sd">    This dataclass manages all user-facing settings for NMR experiments on the OPX-1000,</span>
+<span class="sd">    including pulse parameters, frequencies, readout configuration, and data handling.</span>
+<span class="sd">    All values are stored in standard units (nanoseconds, Hz, amplitude) and converted internally</span>
+<span class="sd">    as needed.</span>
+
+<span class="sd">    **Features:**</span>
+
+<span class="sd">    - **Mutable with validation**: Settings can be updated atomically with :meth:`update`</span>
+<span class="sd">    - **Serialization**: Convert to/from dictionaries with :meth:`to_dict` and :meth:`from_dict`</span>
+<span class="sd">    - **Change notifications**: Register callbacks with :meth:`register_update_callback` to</span>
+<span class="sd">      be notified when settings change</span>
+<span class="sd">    - **Atomic updates**: All changes are validated before being applied</span>
+
+<span class="sd">    **Parameter Groups:**</span>
+
+<span class="sd">    **Pulse Parameters**: Core pulse control settings</span>
+
+<span class="sd">    - ``n_avg``: Number of signal averages (default: 4)</span>
+<span class="sd">    - ``pulse_length``: Duration of control pulse in nanoseconds (default: 1.1 µs)</span>
+<span class="sd">    - ``pulse_amplitude``: Normalized pulse amplitude 0-0.5 (default: 0.25, representing 0.5 Vpp)</span>
+<span class="sd">    - ``rotation_angle``: Pulse rotation angle in degrees (default: 90°)</span>
+
+<span class="sd">    **Continuous Wave (CW) Parameters**: For continuous wave experiments</span>
+
+<span class="sd">    - ``const_len``: Length of continuous wave pulse in nanoseconds (default: 100 ns)</span>
+<span class="sd">    - ``const_amp``: Amplitude of continuous wave pulse (default: 0.03)</span>
+
+<span class="sd">    **Timing Parameters**: Experiment timing and delays</span>
+
+<span class="sd">    - ``thermal_reset``: Pre-scan delay for thermal equilibration, in nanoseconds (default: 4 s)</span>
+<span class="sd">    - ``readout_delay``: Minimum delay before measurement occurs, in nanoseconds (default: 20 µs)</span>
+<span class="sd">    - ``dwell_time``: Demodulation interval during readout, in nanoseconds (default: 4 µs)</span>
+<span class="sd">    - ``readout_start``: Start time of readout window, in nanoseconds (default: 0)</span>
+<span class="sd">    - ``readout_end``: End time of readout window, in nanoseconds (default: 256 µs)</span>
+
+<span class="sd">    **Frequency Parameters**: NMR frequency configuration</span>
+
+<span class="sd">    - ``center_freq``: Center frequency for NMR in Hz (default: 282.1901 MHz for ¹⁹F)</span>
+<span class="sd">    - ``offset_freq``: Frequency offset in Hz. This increases by 50-100 Hz every few days (default: 750 Hz)</span>
+
+<span class="sd">    **Resonator Parameters**: Resonator excitation settings</span>
+
+<span class="sd">    - ``readout_amp``: Readout pulse amplitude, should be small (default: 0.01)</span>
+<span class="sd">    - ``excitation_length``: Duration of resonator excitation pulse in nanoseconds (default: 5 µs)</span>
+<span class="sd">    - ``excitation_amp``: Amplitude of resonator excitation (default: 0.03)</span>
+
+<span class="sd">    **Data Handling:**</span>
+
+<span class="sd">    - ``save_dir``: Directory for saving experimental data (default: None, uses ``data/`` folder)</span>
+
+<span class="sd">    **Configuration Keys**: Element names in the OPX configuration</span>
+
+<span class="sd">    - ``res_key``: Resonator element name (default: &quot;resonator&quot;)</span>
+<span class="sd">    - ``amp_key``: Amplifier element name (default: &quot;amplifier&quot;)</span>
+<span class="sd">    - ``helper_key``: Helper element name (default: &quot;helper&quot;)</span>
+<span class="sd">    - ``sw_key``: Switch control element name (default: &quot;switch&quot;)</span>
+<span class="sd">    - ``pi_half_key``: π/2 pulse operation name (default: &quot;pi_half&quot;)</span>
+
+<span class="sd">    **Validation:**</span>
+
+<span class="sd">    All settings are validated on instantiation and update:</span>
+
+<span class="sd">    - ``n_avg`` must be an integer &gt;= 1</span>
+<span class="sd">    - ``pulse_length`` must be &gt;= 64 ns</span>
+<span class="sd">    - ``pulse_amplitude`` must be in range [-0.5, 0.5]</span>
+<span class="sd">    - ``readout_delay`` must be &gt;= 5 µs</span>
+<span class="sd">    - Frequency must be in valid OPX range: 0 &lt;= (center_freq - offset_freq) &lt; 750 MHz</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Core experiment parameters</span>
+    <span class="n">n_avg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">pulse_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.100</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>  <span class="c1"># nanoseconds</span>
+    <span class="n">pulse_amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># 0.5*Vpp</span>
+    <span class="n">rotation_angle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">90.0</span>  <span class="c1"># degrees</span>
+
+    <span class="c1"># cw params</span>
+    <span class="n">const_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">ns</span>
+    <span class="n">const_amp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.03</span>
+
+    <span class="c1"># pre-scan delay</span>
+    <span class="n">thermal_reset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">s</span>
+
+    <span class="c1"># Frequencies</span>
+    <span class="n">center_freq</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">282.1901</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">MHz</span>
+    <span class="n">offset_freq</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">750</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">Hz</span>
+
+    <span class="c1"># readout parameters</span>
+    <span class="n">readout_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>
+    <span class="n">readout_amp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># should be small</span>
+    <span class="n">dwell_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>
+    <span class="n">readout_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>
+    <span class="n">readout_end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>
+
+    <span class="c1"># resonator excitation</span>
+    <span class="n">excitation_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>
+    <span class="n">excitation_amp</span> <span class="o">=</span> <span class="mf">0.03</span>
+
+    <span class="c1"># Data saving</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># config element keys</span>
+    <span class="n">res_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;resonator&quot;</span>
+    <span class="n">amp_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplifier&quot;</span>
+    <span class="n">helper_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;helper&quot;</span>
+    <span class="n">sw_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;switch&quot;</span>
+    <span class="n">pi_half_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pi_half&quot;</span>
+
+    <span class="c1"># Internal: callbacks (no thread locking - updates are not synchronized)</span>
+    <span class="n">_callbacks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UpdateCallback</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="ExperimentSettings.validate">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate all current settings and raise ValueError if any are invalid.</span>
+
+<span class="sd">        This method checks all constraints defined for ExperimentSettings:</span>
+
+<span class="sd">        - ``n_avg`` must be a positive integer</span>
+<span class="sd">        - ``pulse_length`` must be at least 64 ns (4 clock cycles @ 16 ns each)</span>
+<span class="sd">        - ``pulse_amplitude`` must be in range [-0.5, 0.5] (max ±1 Vpp)</span>
+<span class="sd">        - ``readout_delay`` must be at least 5 µs for ringdown protection</span>
+<span class="sd">        - Effective frequency (center_freq - offset_freq) must be in OPX range [0, 750 MHz)</span>
+<span class="sd">        - ``rotation_angle`` is normalized to [0, 360) automatically</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any setting violates the defined constraints.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;n_avg must be an integer &gt;= 1&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pulse_length</span> <span class="o">&lt;</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pulse length must be at least 64 ns&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pulse_amplitude</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;pulse power max at 1 Vpp&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_delay</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;readout delay must be at least 5 us to protect from ringdown&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">center_freq</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_freq</span> <span class="o">&lt;</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_freq</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_freq</span> <span class="o">&gt;=</span> <span class="mi">750</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">MHz</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Frequency out of OPX range. Ensure 0 &lt;= center_freq - offset_freq &lt; 750 MHz&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Normalize rotation angle to [0, 360)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotation_angle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotation_angle</span> <span class="o">%</span> <span class="mf">360.0</span></div>
+
+
+<div class="viewcode-block" id="ExperimentSettings.update">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update one or more settings atomically with full validation.</span>
+
+<span class="sd">        All requested changes are validated together before any are applied,</span>
+<span class="sd">        ensuring the settings object remains in a valid state even if update fails.</span>
+<span class="sd">        Registered callbacks are invoked only if changes are actually made.</span>
+
+<span class="sd">        **Thread Safety**: Not thread-safe. Callers must serialize access if concurrent</span>
+<span class="sd">        updates are possible in their environment.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Field names and new values. Unknown fields raise AttributeError.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Dictionary of fields that actually changed (name -&gt; new_value).</span>
+<span class="sd">                  Empty dict if no changes were made or all new values matched existing ones.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AttributeError: If an unknown setting name is provided.</span>
+<span class="sd">            ValueError: If validation fails for any changed setting (no changes applied).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; settings = ExperimentSettings()</span>
+<span class="sd">            &gt;&gt;&gt; changes = settings.update(pulse_length=2000, n_avg=8)</span>
+<span class="sd">            &gt;&gt;&gt; # changes now contains {&quot;pulse_length&quot;: 2000, &quot;n_avg&quot;: 8}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="c1"># Create a tentative, serializable copy and apply updates for validation.</span>
+        <span class="c1"># We do not perform thread synchronization here — callers must ensure</span>
+        <span class="c1"># they coordinate access if concurrent updates are possible in their</span>
+        <span class="c1"># environment.</span>
+        <span class="n">tentative</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tentative</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown setting: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">tentative</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="c1"># Validate tentative values (this may normalize e.g. rotation_angle)</span>
+        <span class="n">tentative</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+
+        <span class="c1"># Determine which fields changed and apply to self</span>
+        <span class="n">changes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">new_value</span> <span class="ow">in</span> <span class="n">tentative</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">old_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">old_value</span> <span class="o">!=</span> <span class="n">new_value</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">new_value</span><span class="p">)</span>
+                <span class="n">changes</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
+
+        <span class="k">if</span> <span class="n">changes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_notify_update</span><span class="p">(</span><span class="n">changes</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">changes</span></div>
+
+
+<div class="viewcode-block" id="ExperimentSettings.to_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert settings to a serializable dictionary.</span>
+
+<span class="sd">        Returns all user-facing settings as a plain Python dict suitable for</span>
+<span class="sd">        JSON serialization or storage. Internal fields (callbacks, locks, etc.)</span>
+<span class="sd">        are excluded.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: A shallow copy of all settings with internal fields excluded.</span>
+
+<span class="sd">        See Also:</span>
+<span class="sd">            :meth:`from_dict` to reconstruct settings from a dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build the dict directly from dataclass fields to avoid deep-copying</span>
+        <span class="c1"># internal/unpicklable objects (e.g. threading.Lock) which `asdict`</span>
+        <span class="c1"># may attempt to deepcopy and therefore fail.</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_callbacks&quot;</span><span class="p">,</span> <span class="s2">&quot;_lock&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="ExperimentSettings.from_dict">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExperimentSettings&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new ExperimentSettings instance from a dictionary.</span>
+
+<span class="sd">        Constructs a new instance with validation. Unknown fields in the input</span>
+<span class="sd">        dict are silently ignored. All settings are validated before the instance</span>
+<span class="sd">        is returned, ensuring consistency with class constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: Dictionary with setting names as keys. Can contain extra keys</span>
+<span class="sd">                  which will be ignored.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ExperimentSettings: A new validated instance.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any settings in the dict violate validation constraints.</span>
+<span class="sd">            TypeError: If any setting value is of an incompatible type.</span>
+
+<span class="sd">        See Also:</span>
+<span class="sd">            :meth:`to_dict` to convert an instance to a dict.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; data = {&quot;n_avg&quot;: 16, &quot;pulse_length&quot;: 2000, &quot;extra_field&quot;: &quot;ignored&quot;}</span>
+<span class="sd">            &gt;&gt;&gt; settings = ExperimentSettings.from_dict(data)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Only pass known fields to constructor</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">}</span>
+        <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">}</span>
+        <span class="n">inst</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">init_kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">inst</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">inst</span></div>
+
+
+<div class="viewcode-block" id="ExperimentSettings.register_update_callback">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_update_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">UpdateCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a callback to be notified when settings change.</span>
+
+<span class="sd">        The callback will be invoked each time settings are updated via :meth:`update`.</span>
+<span class="sd">        The callback signature is ``fn(self, changes_dict)`` where ``changes_dict``</span>
+<span class="sd">        contains the field names and new values.</span>
+
+<span class="sd">        **Exception Handling**: Callback exceptions are caught and suppressed to</span>
+<span class="sd">        prevent failures from propagating to the caller. Consider logging exceptions</span>
+<span class="sd">        if needed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fn: A callable with signature ``(self: ExperimentSettings, changes: Dict[str, Any]) -&gt; None``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If ``fn`` is not callable.</span>
+
+<span class="sd">        See Also:</span>
+<span class="sd">            :meth:`unregister_update_callback` to remove a callback.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; def on_settings_change(settings, changes):</span>
+<span class="sd">            ...     print(f&quot;Settings changed: {changes}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; settings = ExperimentSettings()</span>
+<span class="sd">            &gt;&gt;&gt; settings.register_update_callback(on_settings_change)</span>
+<span class="sd">            &gt;&gt;&gt; settings.update(n_avg=10)  # Prints: Settings changed: {&#39;n_avg&#39;: 10}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;callback must be callable&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExperimentSettings.unregister_update_callback">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unregister_update_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">UpdateCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unregister a previously registered callback.</span>
+
+<span class="sd">        Removes the callback from the list of callbacks to be invoked on updates.</span>
+<span class="sd">        If the callback was not registered, this method does nothing (no error).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fn: The callback function to unregister. Must be the same object</span>
+<span class="sd">                that was passed to :meth:`register_update_callback`.</span>
+
+<span class="sd">        See Also:</span>
+<span class="sd">            :meth:`register_update_callback` to register a callback.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; def on_change(settings, changes):</span>
+<span class="sd">            ...     pass</span>
+<span class="sd">            &gt;&gt;&gt; settings = ExperimentSettings()</span>
+<span class="sd">            &gt;&gt;&gt; settings.register_update_callback(on_change)</span>
+<span class="sd">            &gt;&gt;&gt; settings.unregister_update_callback(on_change)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_notify_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal: Invoke all registered callbacks with change information.</span>
+
+<span class="sd">        This is called automatically after successful updates and should not</span>
+<span class="sd">        be called directly. Exceptions raised by callbacks are suppressed</span>
+<span class="sd">        to avoid breaking caller code.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            changes: Dictionary of field names to new values that changed.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This is an internal method and is not part of the public API.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Make a shallow copy to avoid mutation by callbacks</span>
+        <span class="n">callbacks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Intentionally swallow exceptions to avoid breaking caller code.</span>
+                <span class="c1"># In a real system, consider logging these.</span>
+                <span class="k">pass</span>
+
+<div class="viewcode-block" id="ExperimentSettings.copy">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExperimentSettings&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a shallow copy of these settings.</span>
+
+<span class="sd">        Creates a new independent instance with the same field values.</span>
+<span class="sd">        Callbacks are not copied (the new instance starts with no callbacks).</span>
+<span class="sd">        Modifications to the copy do not affect the original.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ExperimentSettings: A new instance with identical settings.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; settings1 = ExperimentSettings(n_avg=8)</span>
+<span class="sd">            &gt;&gt;&gt; settings2 = settings1.copy()</span>
+<span class="sd">            &gt;&gt;&gt; settings2.update(n_avg=16)</span>
+<span class="sd">            &gt;&gt;&gt; settings1.n_avg  # Still 8</span>
+<span class="sd">            8</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">fields</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+<div class="viewcode-block" id="ExperimentSettings.rf_freq">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings.rf_freq">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rf_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the effective RF (radio frequency) in MHz.</span>
+
+<span class="sd">        Computes the actual RF frequency used by the OPX by subtracting the</span>
+<span class="sd">        frequency offset from the center frequency. This accounts for any</span>
+<span class="sd">        frequency calibration adjustments stored in ``offset_freq``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The effective RF frequency in MHz.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; settings = ExperimentSettings(center_freq=282_190_100, offset_freq=75_000)</span>
+<span class="sd">            &gt;&gt;&gt; settings.rf_freq()</span>
+<span class="sd">            282_115_100</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_freq</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_freq</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, awstasiuk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
