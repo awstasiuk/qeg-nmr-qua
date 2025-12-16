@@ -19,11 +19,42 @@ from qeg_nmr_qua.config.integration import IntegrationWeights
 @dataclass
 class OPXConfig:
     """
-    Configuration class for OPX-1000 with NMR applications in mind.
+    Complete configuration for the OPX-1000 low-frequency front-end module.
 
-    Attributes:
-        qop_ip (str): IP address of the QOP.
-        cluster (str): Name of the cluster to use.
+    This is the main configuration class that aggregates all sub-configurations needed
+    to operate the OPX-1000 for NMR experiments. It manages controllers, elements (physical
+    connections), pulses, waveforms, digital waveforms, and integration weights.
+
+    **Connection Settings:**
+
+    - ``qop_ip``: IP address of the Quantum Orchestration Platform (default: "192.168.88.253")
+    - ``cluster``: Name of the OPX cluster to use (default: "lex")
+
+    **Configuration Components:**
+
+    Each component is a nested configuration object:
+
+    - ``controllers``: :class:`~ControllerConfig` - Hardware controllers (analog/digital I/O)
+    - ``elements``: :class:`~ElementConfig` - Physical elements (resonators, amplifiers, etc.)
+    - ``pulses``: :class:`~PulseConfig` - Pulse definitions (control and measurement)
+    - ``waveforms``: :class:`~AnalogWaveformConfig` - Analog waveform shapes
+    - ``digital_waveforms``: :class:`~DigitalWaveformConfig` - Digital marker waveforms
+    - ``integration_weights``: :class:`~IntegrationWeights` - Integration weight sets for demodulation
+
+    **Serialization:**
+
+    Use :meth:`to_dict` and :meth:`from_dict` for programmatic serialization, or use
+    :meth:`save_to_file` and :meth:`load_from_file` for JSON file I/O.
+
+    **OPX Format:**
+
+    Use :meth:`to_opx_config` to generate the configuration in OPX-compatible format
+    for passing to the Quantum Orchestration Platform.
+
+    Example:
+        >>> config = OPXConfig(qop_ip="192.168.1.100")
+        >>> config.elements.add_element("resonator", frequency=282.1901e6)
+        >>> opx_config_dict = config.to_opx_config()
     """
 
     qop_ip: str = "192.168.88.253"

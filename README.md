@@ -20,7 +20,6 @@ pip install -e .
 - qm-qua >= 1.1.0
 - numpy >= 1.20.0
 - matplotlib >= 3.5.0
-- h5py >= 3.0.0
 
 ## License
 

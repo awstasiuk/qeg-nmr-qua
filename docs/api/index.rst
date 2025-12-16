@@ -12,10 +12,3 @@ This section contains the complete API reference for qeg-nmr-qua.
    analysis
    spectroscopy
 
-Main Package
-------------
-
-.. automodule:: qeg_nmr_qua
-   :members:
-   :undoc-members:
-   :show-inheritance:

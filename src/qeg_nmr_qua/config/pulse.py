@@ -5,8 +5,25 @@ from qeg_nmr_qua.config.integration import IntegrationWeightMapping
 
 @dataclass
 class ControlPulse:
-    """
-    Configuration for a control pulse. Does not currently support mixing waveforms.
+    """Configuration for a control (drive) pulse.
+
+    Defines a pulse used to drive/manipulate quantum states. Control pulses output
+    a waveform to an element and may optionally trigger a digital marker for
+    synchronization or external monitoring.
+
+    **Current Limitations:**
+
+    - Single waveform only (no waveform mixing)
+    - See :class:`MeasPulse` for measurement pulses with integration.
+
+    Attributes:
+        length (int): Pulse duration in nanoseconds (default: 0).
+            Must be a multiple of 4 ns (1 clock cycle).
+        waveform (str): Name of the waveform to play (default: "zero_wf").
+            Must be defined in the waveform configuration.
+        digital_marker (Literal["ON", "OFF"] | None): Whether to set a digital marker
+            during pulse execution (default: "OFF"). "ON" activates the marker,
+            "OFF" deactivates it. Use None for no marker.
     """
 
     length: int = 0  # in nanoseconds
@@ -45,8 +62,32 @@ class ControlPulse:
 
 @dataclass
 class MeasPulse:
-    """
-    Configuration for a measurement. Does not support mixing waveforms.
+    """Configuration for a measurement pulse.
+
+    Defines a pulse used for measurement/readout of quantum states. Measurement
+    pulses output a waveform, acquire data, and apply integration weights for
+    demodulation and signal extraction. Optionally triggers a digital marker.
+
+    **Current Limitations:**
+
+    - Single waveform only (no waveform mixing)
+    - See :class:`ControlPulse` for simple control pulses.
+
+    **Demodulation:**
+
+    Integration weights are applied to the acquired signal to extract in-phase (I)
+    and quadrature (Q) components. Common weight sets include cosine/sine,
+    rotated, and optimized variants.
+
+    Attributes:
+        length (int): Measurement duration in nanoseconds (default: 1000).
+            Must be a multiple of 4 ns (1 clock cycle).
+        waveform (str): Name of the readout waveform (default: "readout_wf").
+            Must be defined in the waveform configuration.
+        integration_weights (IntegrationWeightMapping): Mapping of demodulation weights
+            for extracting I/Q components (default: default mapping).
+        digital_marker (Literal["ON", "OFF"] | None): Whether to trigger a digital
+            marker during measurement (default: None). None means no marker action.
     """
 
     length: int = 1000  # in nanoseconds

@@ -11,7 +11,20 @@ from typing import Any
 
 @dataclass
 class digitalElementConfig:
-    """Configuration for a digital element's paired input/output."""
+    """Configuration for a digital element's paired input/output connection.
+
+    Specifies how a digital marker or trigger signal is routed between the OPX
+    and a physical element (like an RF switch or frequency marker).
+
+    Attributes:
+        port (tuple[str, int, int]): Physical port specification as
+            (controller_name, chassis_slot, port_number). Example: ("con1", 1, 1)
+            specifies controller 1, chassis slot 1, digital port 1.
+        delay (int): Delay applied to the digital signal in nanoseconds (default: 0).
+            Useful for synchronization with analog signals.
+        buffer (int): Buffer/timing margin in nanoseconds (default: 0).
+            Provides timing headroom for signal stabilization.
+    """
 
     port: tuple[
         str, int, int
@@ -45,10 +58,37 @@ class digitalElementConfig:
 
 @dataclass
 class Element:
-    """
-    Configuration for an Element. An element's inputs are the OPX's outputs and vice
-    versa. An element represents a physical connection to the OPX-1000, like the NMR probe,
-    refered to a as a `resonator`.
+    """Configuration for a physical quantum element connected to the OPX-1000.
+
+    An Element represents a physical connection to the OPX, such as a resonator,
+    amplifier, or signal source. It aggregates analog I/O ports, digital control
+    lines, and associated pulse operations.
+
+    **Port Mapping:**
+
+    In OPX convention:
+
+    - ``analog_input``: The OPX's output port that drives this element
+    - ``analog_output``: The OPX's input port that reads from this element
+    - This naming convention reflects the signal direction relative to the element,
+      not the OPX.
+
+    Attributes:
+        name (str): Unique identifier for this element (e.g., "resonator", "amplifier").
+        frequency (float): Intermediate frequency (IF) of this element in Hz.
+            For direct sampling, this is the actual RF frequency.
+        analog_input (tuple[str, int, int]): Port specification for OPX output
+            as (controller_name, chassis_slot, port_number).
+        analog_output (tuple[str, int, int]): Port specification for OPX input
+            as (controller_name, chassis_slot, port_number).
+        digital_inputs (dict[str, digitalElementConfig]): Mapping of operation names
+            to digital control configurations (default: empty).
+        operations (dict[str, str]): Mapping of operation names to pulse config
+            names (default: empty). Example: {"pi_half": "pi_half_pulse"}.
+        time_of_flight (float): Signal propagation delay in nanoseconds (default: 0.0).
+            Delay between when a pulse is output and when the response is received.
+        sticky (bool): Whether this element retains state between operations (default: False).
+            If True, the element state persists after pulse completion.
     """
 
     name: str

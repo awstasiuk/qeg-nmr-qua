@@ -1,0 +1,7 @@
+qm-qua
+numpy
+scipy
+matplotlib
+qualang-tools
+pytest
+setuptools
