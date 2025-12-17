@@ -8,9 +8,9 @@ u = unit(coerce_to_integer=True)
 
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
-    n_avg=4,
+    n_avg=8,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.41,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.4087,  # amplitude is 0.5*Vpp
     rotation_angle=255.0,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
@@ -24,10 +24,10 @@ settings = qnmr.ExperimentSettings(
 
 cfg = qnmr.cfg_from_settings(settings)
 
-amp_list = np.arange(.95,1.06,.01)
-expt = qnmr.Experiment2D(config=cfg, settings=settings)
+amp_list = np.arange(.9,1.11,.025)
+expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-n_wraps = 2
+n_wraps = 1
 
 for i in range(n_wraps * 4):
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key, amplitude=amp_list)
@@ -37,5 +37,8 @@ expt.add_pulse(name=settings.pi_half_key, element=settings.res_key, amplitude=am
 
 #expt.remove_initial_delay()
 #expt.simulate_experiment()
+
+expt.update_sweep_axis(amp_list*settings.pulse_amplitude)
+expt.update_sweep_label("Pulse Amplitude (Vpp)")
 expt.execute_experiment()
     

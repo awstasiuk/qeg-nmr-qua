@@ -9,7 +9,7 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.42,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.4087,  # amplitude is 0.5*Vpp
     rotation_angle=255.0,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,

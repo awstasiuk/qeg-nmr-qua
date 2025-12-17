@@ -41,8 +41,8 @@ class Experiment2D(Experiment):
     this class's implementation, the swept parameter is varied first, then the averaging loop is performed. During longer
     experiments, this ordering should help mitigate the effects of slow drifts in system parameters.
     """
-    def __init__(self, config, settings):
-        super().__init__(config, settings)
+    def __init__(self, settings, config):
+        super().__init__(settings=settings, config=config)
         self.sweep_axis = None  # Axis for live plotting and data saving
         self.sweep_label = "Swept Variable"  # Label for sweep axis
 
@@ -260,3 +260,5 @@ class Experiment2D(Experiment):
         self.save_data_dict.update({"sweep_axis": axis})
         self.save_data_dict.update({"sweep_label": self.sweep_label})
         self.save_data_dict.update({"fig_live": fig_live})
+
+        self.save_data()
