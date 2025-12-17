@@ -23,6 +23,7 @@ from qeg_nmr_qua.config.settings import ExperimentSettings
 from qeg_nmr_qua.config.waveform import AnalogWaveformConfig, DigitalWaveformConfig
 from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
 from qeg_nmr_qua.experiment.experiment_1d import Experiment1D
+from qeg_nmr_qua.experiment.experiment_2d import Experiment2D
 from qeg_nmr_qua.analysis.data_saver import DataSaver, QuantumEncoder
 
 __version__ = "0.1.0"
@@ -46,6 +47,7 @@ __all__ = [
     "LivePlotter",
     "cfg_from_settings",
     "Experiment1D",
+    "Experiment2D",
     "__version__",
 ]
 

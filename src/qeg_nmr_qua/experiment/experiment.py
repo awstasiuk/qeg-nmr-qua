@@ -84,7 +84,7 @@ class Experiment:
         self.rx_switch_key = settings.sw_key
 
         self.pre_scan_delay = (
-            settings.readout_delay // 4 - 2 * AMPLIFIER_BLANKING_TIME - RX_SWITCH_DELAY
+            settings.readout_delay // 4 - AMPLIFIER_BLANKING_TIME - 2 * RX_SWITCH_DELAY
         )
         if self.pre_scan_delay < 16:
             raise ValueError("Readout delay too short to accommodate switching times.")
@@ -328,7 +328,7 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
-    def simulate_experiment(self, sim_length=10_000):
+    def simulate_experiment(self, sim_length=40_000):
         """
         Simulates the experiment using the configured experiment defined by this class based on the current
         config defined by this instance's ``config`` attribute. The simulation returns the generated waveforms
@@ -350,11 +350,13 @@ class Experiment:
         samples.con1.plot()
         # Get the waveform report object
         waveform_report = job.get_simulated_waveform_report()
+        # Cast the waveform report to a python dictionary
+        waveform_dict = waveform_report.to_dict()
         # Visualize and save the waveform report
         waveform_report.create_plot(
             samples, plot=True, save_path=str(Path(__file__).resolve().parent)
         )
-        return job
+        #return job
 
     def execute_experiment(self):
         """
