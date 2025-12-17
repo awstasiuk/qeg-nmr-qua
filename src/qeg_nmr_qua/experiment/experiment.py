@@ -144,7 +144,9 @@ class Experiment:
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
-        if name not in self.config.elements.elements[element].operations.keys():
+        
+        pulse = self.config.elements.elements[element].operations.get(name, None)
+        if pulse is None:
             raise ValueError(f"Operation {name} not defined for element {element}.")
 
         command = {
@@ -152,25 +154,21 @@ class Experiment:
             "name": name,
             "element": element,
         }
-        length = (
-            length // 4
-            if length is not None
-            else self.config.elements.elements[element].operations[name].length // 4
-        )
+        
         if isinstance(phase, Iterable):
-            command["length"] = (
+            command["length"] = length = (
                 length // 4
                 if length is not None
-                else self.config.elements.elements[element].operations[name].length // 4
+                else self.config.pulses.pulses[pulse].length // 4
             )
             command["amplitude"] = amplitude
             self.update_loop((np.array(phase) / 360) % 1)
             self.use_fixed = True
         elif isinstance(amplitude, Iterable):
-            command["length"] = (
+            command["length"] = length = (
                 length // 4
                 if length is not None
-                else self.config.elements.elements[element].operations[name].length // 4
+                else self.config.pulses.pulses[pulse].length // 4
             )
             command["phase"] = (phase / 360) % 1
             self.update_loop(np.array(amplitude))
@@ -183,10 +181,10 @@ class Experiment:
         else:
             command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
-            command["length"] = (
+            command["length"] = length = (
                 length // 4
                 if length is not None
-                else self.config.elements.elements[element].operations[name].length // 4
+                else self.config.pulses.pulses[pulse].length // 4
             )
 
         self._commands.append(command)
@@ -391,11 +389,12 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
-    def save_data(self, experiment_name: str = "experiment_001"):
+    def save_data(self, experiment_prefix: str = "experiment"):
         """
         Saves the experiment data to the specified directory using the DataSaver.
 
-        Creates a folder with the given experiment_name containing:
+        Creates a folder with an auto-incremented name based on ``experiment_prefix``
+        (e.g., ``prefix_0001``, ``prefix_0002``) containing:
         - config.json: OPX configuration
         - settings.json: Experiment settings
         - commands.json: List of commands executed
@@ -405,12 +404,11 @@ class Experiment:
         for easy loading elsewhere.
 
         Args:
-            experiment_name (str): Name for the experiment folder. Defaults to "experiment_001".
-                Should be a simple name without path separators (e.g., "experiment_001", "test_run").
+            experiment_prefix (str): Prefix for the experiment folder naming. Defaults to "experiment".
+                The created folder name will be ``<experiment_prefix>_NNNN`` with a 4-digit counter.
 
         Raises:
-            FileExistsError: If the experiment folder already exists.
-            ValueError: If experiment_name contains path separators or is invalid.
+            ValueError: If experiment_prefix contains path separators or is invalid.
         """
         try:
             # Prepare the data payload: include both metadata and results
@@ -418,7 +416,7 @@ class Experiment:
 
             # Save the experiment using DataSaver
             experiment_folder = self.data_saver.save_experiment(
-                experiment_name=experiment_name,
+                experiment_prefix=experiment_prefix,
                 config=self.config.to_dict(),
                 settings=self.settings.to_dict(),
                 commands=self._commands,

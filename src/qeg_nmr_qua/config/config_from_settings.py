@@ -156,7 +156,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     )
     # needed for reasons that currently elude me
     excitation = ControlPulse(
-        length=settings.excitation_len,
+        length=settings.excitation_length,
         waveform="excitation_wf",
         digital_marker="ON",
     )
