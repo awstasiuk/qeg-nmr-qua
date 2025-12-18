@@ -16,13 +16,7 @@ from pathlib import Path
 from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qualang_tools.units import unit
-from qm.qua import (
-    play,
-    wait,
-    frame_rotation_2pi,
-    align,
-    amp,
-)
+from qm.qua import play, wait, frame_rotation_2pi, align, amp, for_
 
 u = unit(coerce_to_integer=True)
 
@@ -144,7 +138,7 @@ class Experiment:
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
-        
+
         pulse = self.config.elements.elements[element].operations.get(name, None)
         if pulse is None:
             raise ValueError(f"Operation {name} not defined for element {element}.")
@@ -154,7 +148,7 @@ class Experiment:
             "name": name,
             "element": element,
         }
-        
+
         if isinstance(phase, Iterable):
             command["length"] = length = (
                 length // 4
@@ -225,6 +219,32 @@ class Experiment:
         }
         self._commands.append(command)
 
+    def add_floquet_sequence(
+        self, phases: list[float], delays: list[int], repetitions: int | list[int]
+    ):
+        """
+        Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
+
+        Args:
+            phases (list[float]): List of phases for the pulses in degrees.
+            delays (list[int]): List of delays in nanoseconds.
+        """
+        if len(phases) + 1 != len(delays):
+            raise ValueError(
+                "There must be one more delay than phase in a Floquet sequence."
+            )
+
+        command = {
+            "type": "sequence",
+            "phases": (np.array(phases) / 360) % 1,
+            "delays": np.array(delays) // 4,
+        }
+        if isinstance(repetitions, Iterable):
+            self.update_loop(np.array(repetitions))
+            self.use_fixed = False
+        else:
+            command["repetitions"] = repetitions
+
     def remove_initial_delay(self, remove: bool = True):
         """
         Removes the 5 T1 delay from the start of the sequence. Useful for testing with the
@@ -276,12 +296,17 @@ class Experiment:
 
         raise ValueError("Inconsistent loop variables.")
 
-    def translate_command(self, command: dict, var: Any = None):
+    def translate_command(
+        self, command: dict, var: Any = None, m: Any = None, l: Any = None
+    ):
         """
         Translates a command dictionary into QUA code.
 
         Args:
             command (dict): Command dictionary to translate.
+            var (Any, optional): QUA Variable to use for swept parameters.
+            m (QUAInt, optional): QUA Variable to use for Floquet loops.
+            l (QUAInt, optional): QUA Variable to use for 3D loops.
 
         Raises:
             ValueError: If the command type is unknown.
@@ -306,6 +331,23 @@ class Experiment:
         elif command["type"] == "align":
 
             align(*command["elements"]) if command["elements"] is not None else align()
+
+        elif command["type"] == "sequence":
+            phases = command["phases"]
+            delays = command["delays"]
+            repetitions = command.get("repetitions", var)
+
+            with for_(m, 0, m < repetitions, m + 1):
+                wait(delays[0])
+                for phase, delay in zip(phases, delays[1:]):
+                    frame_rotation_2pi(phase, self.probe_key)
+                    play(
+                        self.pi_half_pulse,
+                        self.probe_key,
+                    )
+                    frame_rotation_2pi(-phase, self.probe_key)
+                    wait(delay)
+
         else:
             raise ValueError(f"Unknown command type: {command['type']}")
 
@@ -356,7 +398,7 @@ class Experiment:
         waveform_report.create_plot(
             samples, plot=True, save_path=str(Path(__file__).resolve().parent)
         )
-        #return job
+        # return job
 
     def execute_experiment(self):
         """

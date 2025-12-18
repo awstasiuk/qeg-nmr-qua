@@ -41,6 +41,7 @@ class Experiment2D(Experiment):
     this class's implementation, the swept parameter is varied first, then the averaging loop is performed. During longer
     experiments, this ordering should help mitigate the effects of slow drifts in system parameters.
     """
+
     def __init__(self, settings, config):
         super().__init__(settings=settings, config=config)
         self.sweep_axis = None  # Axis for live plotting and data saving
@@ -95,6 +96,7 @@ class Experiment2D(Experiment):
 
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
+            m = declare(int)  # QUA variable for floquet loops
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
             I1 = declare(fixed)
             Q1 = declare(fixed)
@@ -117,7 +119,7 @@ class Experiment2D(Experiment):
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:
-                        self.translate_command(command, var)
+                        self.translate_command(command, var, m)
 
                     # wait for ringdown to decay, blank amplifier, set to receive mode
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
