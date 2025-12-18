@@ -20,7 +20,7 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=8,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.4087,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.4083,  # amplitude is 0.5*Vpp
     rotation_angle=255.0,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
@@ -34,15 +34,15 @@ settings = qnmr.ExperimentSettings(
 
 cfg = qnmr.cfg_from_settings(settings)
 
-amp_list = np.arange(.9,1.11,.025)
+amp_list = np.arange(.95,1.06,.01)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-n_wraps = 1
+n_wraps = 2
 
 for i in range(n_wraps * 4):
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key, amplitude=amp_list)
     expt.add_delay(2*u.us)
-
+expt.add_delay(1*u.ms)
 expt.add_pulse(name=settings.pi_half_key, element=settings.res_key, amplitude=amp_list)
 
 expt.update_sweep_axis(amp_list*settings.pulse_amplitude)
@@ -51,9 +51,10 @@ expt.execute_experiment()
 
 fit = True
 if fit:
-    results = expt.save_data_dict["data"]
-    re = np.array(results["I_data"])*1e6
-    power = np.array(results["sweep_axis"])
+    
+    fig = plt.figure()
+    re = np.array(expt.save_data_dict["I_data"])*1e6
+    power = np.array(expt.save_data_dict["sweep_axis"])
 
     plt.scatter(power,re[:,0])
     coefficients = np.polyfit(power, re[:, 0], 2)
@@ -72,3 +73,5 @@ if fit:
     plt.ylabel('FID Signal Amplitude (µV)')
     plt.title('Pulse Calibration: FID Signal vs Pulse Amplitude, {} wraps'.format(n_wraps))
     print(f"Maximum at x = {vertex_x}, y = {vertex_y}")
+
+    plt.show()
