@@ -111,6 +111,9 @@ class Experiment:
         self.use_fixed = False  # whether to use fixed point for looping variables
         self.var_vec = None  # variable vector for looped experiments
         self.start_with_wait = True  # whether to start the experiment with a wait
+        self.use_frame_change = False
+        self.frame_change_angle = 0.0  # angle for frame change compensation
+        self.frame_change_element = ""  # element for frame change compensation
 
         # ---- Data to save ---- #
         self.save_data_dict = {
@@ -253,6 +256,43 @@ class Experiment:
 
         self._commands.append(command)
 
+    def add_z_rotation(self, angle: float, element: str):
+        """
+        Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.
+
+        Args:
+            angle (float): Angle of the Z rotation in degrees.
+            element (str): Element to which the Z rotation is applied. Must be defined in the config.
+        """
+        if element not in self.config.elements.elements.keys():
+            raise ValueError(f"Element {element} not defined in config.")
+
+        command = {
+            "type": "pulse",
+            "name": "virtual_z",
+            "element": element,
+            "phase": (angle / 360) % 1,  # convert to fraction of 2pi
+        }
+
+        self._commands.append(command)
+
+    def add_frame_change(self, angle: float, element: str):
+        """
+        Adds frame change compensation to the experiment, which is implemented as a frame rotation after
+        each applied pi-half pulse. This feature is useful for correcting out-of-phase overrotation errors
+        in pi-half only pulse sequences. In principle, any pulse sequence can be written with only pi-half
+        pulses and z-rotations, allowing for frame change compensation to be applied in all cases.
+
+        Args:
+            angle (float): Angle of the frame change in degrees.
+            element (str): Element to which the frame change is applied. Must be defined in the config.
+        """
+        if element not in self.config.elements.elements.keys():
+            raise ValueError(f"Element {element} not defined in config.")
+        self.use_frame_change = True
+        self.frame_change_angle = (angle / 360) % 1  # convert to fraction of 2pi
+        self.frame_change_element = element
+
     def remove_initial_delay(self, remove: bool = True):
         """
         Removes the 5 T1 delay from the start of the sequence. Useful for testing with the
@@ -332,17 +372,25 @@ class Experiment:
             )
             frame_rotation_2pi(-phase, command["element"])
 
+            if self.use_frame_change:
+                frame_rotation_2pi(self.frame_change_angle, self.frame_change_element)
+
         elif command["type"] == "delay":
             duration = command.get("duration", var)
 
             wait(duration)
+
+        elif command["type"] == "z_rotation":
+            phase = command.get("phase", var)
+            frame_rotation_2pi(phase, command["element"])
+
         elif command["type"] == "align":
 
             align(*command["elements"]) if command["elements"] is not None else align()
 
         elif command["type"] == "sequence":
-            phases = command["phases"]
-            delays = command["delays"]
+            phases = command.get("phases", None)
+            delays = command.get("delays", None)
             repetitions = command.get("repetitions", var)
 
             with for_(m, 0, m < repetitions, m + 1):
@@ -354,6 +402,10 @@ class Experiment:
                         self.probe_key,
                     )
                     frame_rotation_2pi(-phase, self.probe_key)
+                    if self.use_frame_change:
+                        frame_rotation_2pi(
+                            self.frame_change_angle, self.frame_change_element
+                        )
                     wait(delay)
 
         else:
