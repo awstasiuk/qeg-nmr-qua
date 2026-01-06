@@ -237,13 +237,15 @@ class Experiment:
         command = {
             "type": "sequence",
             "phases": (np.array(phases) / 360) % 1,
-            "delays": np.array(delays) // 4,
+            "delays": np.array(delays, dtype=np.int64) // 4,
         }
         if isinstance(repetitions, Iterable):
             self.update_loop(np.array(repetitions))
             self.use_fixed = False
         else:
             command["repetitions"] = repetitions
+
+        self._commands.append(command)
 
     def remove_initial_delay(self, remove: bool = True):
         """
