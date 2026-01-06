@@ -4,6 +4,8 @@ from qeg_nmr_qua.experiment.macros import (
     drive_mode,
 )
 from qeg_nmr_qua.experiment.experiment import Experiment
+from qeg_nmr_qua.config.config import OPXConfig
+from qeg_nmr_qua.config.settings import ExperimentSettings
 
 
 import matplotlib.pyplot as plt
@@ -42,8 +44,13 @@ class Experiment2D(Experiment):
     experiments, this ordering should help mitigate the effects of slow drifts in system parameters.
     """
 
-    def __init__(self, settings, config):
-        super().__init__(settings=settings, config=config)
+    def __init__(
+        self,
+        settings: ExperimentSettings,
+        config: OPXConfig = None,
+        connect: bool = True,
+    ):
+        super().__init__(settings=settings, config=config, connect=connect)
         self.sweep_axis = None  # Axis for live plotting and data saving
         self.sweep_label = "Swept Variable"  # Label for sweep axis
 
@@ -106,7 +113,10 @@ class Experiment2D(Experiment):
             Q_st = declare_stream()
             t1 = declare(int)
             t2 = declare(int)
-            var = declare(fixed)
+            if self.use_fixed:
+                var = declare(fixed)
+            else:
+                var = declare(int)
 
             if self.start_with_wait:
                 wait(self.wait_between_scans, self.probe_key)

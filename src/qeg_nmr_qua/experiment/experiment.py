@@ -51,7 +51,12 @@ class Experiment:
         qmm: ``QuantumMachinesManager`` instance for managing connection to the OPX-1000
     """
 
-    def __init__(self, settings: ExperimentSettings, config: OPXConfig = None):
+    def __init__(
+        self,
+        settings: ExperimentSettings,
+        config: OPXConfig = None,
+        connect: bool = True,
+    ):
         """
         Initialize experiment with configuration and settings.
 
@@ -96,9 +101,10 @@ class Experiment:
 
         self.wait_between_scans = settings.thermal_reset // 4  # 5 T1 in clock cycles
 
-        self.qmm = QuantumMachinesManager(
-            self.config.qop_ip, cluster_name=self.config.cluster
-        )
+        if connect:
+            self.qmm = QuantumMachinesManager(
+                self.config.qop_ip, cluster_name=self.config.cluster
+            )
 
         # command parameters
         self._commands = []  # list of commands to build the experiment, FIFO
@@ -237,7 +243,7 @@ class Experiment:
         command = {
             "type": "sequence",
             "phases": (np.array(phases) / 360) % 1,
-            "delays": np.array(delays, dtype=np.int64) // 4,
+            "delays": np.array(delays, dtype=int) // 4,
         }
         if isinstance(repetitions, Iterable):
             self.update_loop(np.array(repetitions))
