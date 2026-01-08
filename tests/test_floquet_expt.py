@@ -44,6 +44,8 @@ period_list = np.arange(0,25,1)
 # define experiment object
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
+expt.add_frame_change(angle=5.50, element=settings.res_key)
+
 expt.add_floquet_sequence(phases=pine8_phases, delays=pine8_delays, repetitions=period_list)
 
 expt.add_delay(1*u.ms)
