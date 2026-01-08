@@ -78,6 +78,8 @@
     <span class="n">drive_mode</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.experiment.experiment</span><span class="w"> </span><span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPXConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.config.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentSettings</span>
 
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
@@ -118,6 +120,45 @@
 <span class="sd">    experiments, this ordering should help mitigate the effects of slow drifts in system parameters.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="Experiment2D.__init__">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">settings</span><span class="p">:</span> <span class="n">ExperimentSettings</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">OPXConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">connect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">connect</span><span class="o">=</span><span class="n">connect</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweep_axis</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Axis for live plotting and data saving</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweep_label</span> <span class="o">=</span> <span class="s2">&quot;Swept Variable&quot;</span>  <span class="c1"># Label for sweep axis</span></div>
+
+
+<div class="viewcode-block" id="Experiment2D.update_sweep_axis">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.update_sweep_axis">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_sweep_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_axis</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the sweep axis for live plotting and data saving. If this method is not called, the</span>
+<span class="sd">        variable vector :attr:`var_vec` will be used as the sweep axis by default. It can be convienient</span>
+<span class="sd">        to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude</span>
+<span class="sd">        rescaling factor physical Vpp units).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_axis</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;New sweep axis must have the same length as the variable vector.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweep_axis</span> <span class="o">=</span> <span class="n">new_axis</span></div>
+
+
+<div class="viewcode-block" id="Experiment2D.update_sweep_label">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.update_sweep_label">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_sweep_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_label</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Updates the label for the sweep axis in live plotting. If this method is not called, the</span>
+<span class="sd">        default label &quot;Swept Variable&quot; will be used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweep_label</span> <span class="o">=</span> <span class="n">new_label</span></div>
+
+
 <div class="viewcode-block" id="Experiment2D.validate_experiment">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.validate_experiment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -152,6 +193,7 @@
 
             <span class="c1"># define the variables and datastreams</span>
             <span class="n">n</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># QUA variable for the averaging loop</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># QUA variable for floquet loops</span>
             <span class="n">n_st</span> <span class="o">=</span> <span class="n">declare_stream</span><span class="p">()</span>  <span class="c1"># Stream for the averaging iteration &#39;n&#39;</span>
             <span class="n">I1</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
             <span class="n">Q1</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
@@ -161,7 +203,10 @@
             <span class="n">Q_st</span> <span class="o">=</span> <span class="n">declare_stream</span><span class="p">()</span>
             <span class="n">t1</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
             <span class="n">t2</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-            <span class="n">var</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_fixed</span><span class="p">:</span>
+                <span class="n">var</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">var</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_with_wait</span><span class="p">:</span>
                 <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wait_between_scans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="p">)</span>
@@ -174,11 +219,11 @@
                     <span class="n">drive_mode</span><span class="p">(</span><span class="n">switch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rx_switch_key</span><span class="p">,</span> <span class="n">amplifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">amplifier_key</span><span class="p">)</span>
 
                     <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">translate_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">translate_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
 
                     <span class="c1"># wait for ringdown to decay, blank amplifier, set to receive mode</span>
                     <span class="n">safe_mode</span><span class="p">(</span><span class="n">switch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rx_switch_key</span><span class="p">,</span> <span class="n">amplifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">amplifier_key</span><span class="p">)</span>
-                    <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readout</span><span class="p">)</span>
+                    <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_scan_delay</span><span class="p">)</span>
                     <span class="n">readout_mode</span><span class="p">(</span>
                         <span class="n">switch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rx_switch_key</span><span class="p">,</span> <span class="n">amplifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">amplifier_key</span>
                     <span class="p">)</span>
@@ -234,11 +279,12 @@
             <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;live&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">fig_live</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax3</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">fig_live</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax3</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mf">6.4</span><span class="p">))</span>
         <span class="n">interrupt_on_close</span><span class="p">(</span><span class="n">fig_live</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">while</span> <span class="n">results</span><span class="o">.</span><span class="n">is_processing</span><span class="p">():</span>
                 <span class="n">I</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">iteration</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">fetch_all</span><span class="p">()</span>
+                <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sweep_axis</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sweep_axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span>
                 <span class="n">progress_counter</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
 
                 <span class="c1"># Convert results into Volts</span>
@@ -248,14 +294,14 @@
                 <span class="c1"># 2D color plot: pulse amplitude vs I</span>
                 <span class="n">ax1</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
                 <span class="n">im1</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span><span class="p">,</span>
+                    <span class="n">axis</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
                     <span class="n">I</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
                     <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
                     <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Delay (µs)&quot;</span><span class="p">)</span>
-                <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Swept Variable&quot;</span><span class="p">)</span>
+                <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sweep_label</span><span class="p">)</span>
                 <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;I&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="s2">&quot;_colorbar&quot;</span><span class="p">):</span>
                     <span class="n">ax1</span><span class="o">.</span><span class="n">_colorbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;I (V)&quot;</span><span class="p">)</span>
@@ -265,14 +311,14 @@
                 <span class="c1"># 2D color plot: pulse amplitude vs tau for Q</span>
                 <span class="n">ax2</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
                 <span class="n">im2</span> <span class="o">=</span> <span class="n">ax2</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span><span class="p">,</span>
+                    <span class="n">axis</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
                     <span class="n">Q</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
                     <span class="n">shading</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
                     <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Delay (µs)&quot;</span><span class="p">)</span>
-                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Swept Variable&quot;</span><span class="p">)</span>
+                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sweep_label</span><span class="p">)</span>
                 <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Q&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ax2</span><span class="p">,</span> <span class="s2">&quot;_colorbar&quot;</span><span class="p">):</span>
                     <span class="n">ax2</span><span class="o">.</span><span class="n">_colorbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Q (µV)&quot;</span><span class="p">)</span>
@@ -280,11 +326,15 @@
                     <span class="n">ax2</span><span class="o">.</span><span class="n">_colorbar</span><span class="o">.</span><span class="n">update_normal</span><span class="p">(</span><span class="n">im2</span><span class="p">)</span>
 
                 <span class="n">ax3</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
-                <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span><span class="p">,</span> <span class="n">I</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;I&quot;</span><span class="p">)</span>
-                <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Swept Variable&quot;</span><span class="p">)</span>
+                <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">I</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;I&quot;</span><span class="p">)</span>
+                <span class="n">ax3</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sweep_label</span><span class="p">)</span>
                 <span class="n">ax3</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;I (µV)&quot;</span><span class="p">)</span>
                 <span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Primary signal&quot;</span><span class="p">)</span>
                 <span class="n">ax3</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+                <span class="n">fig_live</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+                <span class="n">fig_live</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment interrupted by user.&quot;</span><span class="p">)</span>
@@ -311,6 +361,9 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;I_data&quot;</span><span class="p">:</span> <span class="n">I</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Q_data&quot;</span><span class="p">:</span> <span class="n">Q</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;swept_variable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;sweep_axis&quot;</span><span class="p">:</span> <span class="n">axis</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;sweep_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sweep_label</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;fig_live&quot;</span><span class="p">:</span> <span class="n">fig_live</span><span class="p">})</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data</span><span class="p">()</span></div>

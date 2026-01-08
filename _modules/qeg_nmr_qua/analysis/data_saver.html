@@ -81,6 +81,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
@@ -161,7 +162,7 @@
 <a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver.save_experiment">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_experiment</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">experiment_prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">commands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
@@ -169,7 +170,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Save experiment metadata and data to a structured directory.</span>
 
-<span class="sd">        Creates a folder with the specified experiment_name and atomically saves</span>
+<span class="sd">        Creates a folder with an auto-incremented name based on ``experiment_prefix``</span>
+<span class="sd">        (e.g., ``prefix_0001``, ``prefix_0002``) and atomically saves</span>
 <span class="sd">        OPX configuration, experiment settings, command sequence, and experimental</span>
 <span class="sd">        results. Handles special data types (numpy arrays, matplotlib figures) and</span>
 <span class="sd">        non-serializable objects gracefully.</span>
@@ -192,8 +194,10 @@
 <span class="sd">        - Failed keys are tracked in ``_failed_keys`` in the saved data</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            experiment_name (str): Name for the experiment folder (e.g., &quot;experiment_001&quot;).</span>
-<span class="sd">                Must be a simple name without path separators or dots.</span>
+<span class="sd">            experiment_prefix (str): Prefix for the experiment folder name (e.g., &quot;experiment&quot;).</span>
+<span class="sd">                The actual folder created will be ``&lt;experiment_prefix&gt;_NNNN`` with a</span>
+<span class="sd">                zero-padded 4-digit counter (starting at 0001). Must not contain path</span>
+<span class="sd">                separators or be &quot;.&quot;.</span>
 <span class="sd">            config (dict[str, Any]): OPX configuration dictionary from</span>
 <span class="sd">                :meth:`~OPXConfig.to_dict`.</span>
 <span class="sd">            settings (dict[str, Any]): Experiment settings dictionary from</span>
@@ -208,36 +212,33 @@
 <span class="sd">            Path: The path to the created experiment folder.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If experiment_name contains path separators or is invalid.</span>
-<span class="sd">            FileExistsError: If the experiment folder already exists.</span>
+<span class="sd">            ValueError: If experiment_prefix contains path separators or is invalid.</span>
 <span class="sd">            RuntimeError: If saving fails (folder is cleaned up on failure).</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; saver = DataSaver(&quot;./data&quot;)</span>
 <span class="sd">            &gt;&gt;&gt; folder = saver.save_experiment(</span>
-<span class="sd">            ...     &quot;exp_001&quot;,</span>
+<span class="sd">            ...     &quot;exp&quot;,</span>
 <span class="sd">            ...     config={&quot;qop_ip&quot;: &quot;192.168.1.100&quot;},</span>
 <span class="sd">            ...     settings={&quot;n_avg&quot;: 8},</span>
 <span class="sd">            ...     commands=[{&quot;type&quot;: &quot;pulse&quot;, &quot;name&quot;: &quot;pi_half&quot;}],</span>
 <span class="sd">            ...     data={&quot;I&quot;: np.array([1, 2, 3]), &quot;Q&quot;: np.array([4, 5, 6])}</span>
 <span class="sd">            ... )</span>
-<span class="sd">            &gt;&gt;&gt; folder.name</span>
-<span class="sd">            &#39;exp_001&#39;</span>
+<span class="sd">            &gt;&gt;&gt; folder.name  # first call</span>
+<span class="sd">            &#39;exp_0001&#39;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Validate experiment name</span>
-        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">experiment_name</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">experiment_name</span> <span class="ow">or</span> <span class="n">experiment_name</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
+        <span class="c1"># Validate experiment prefix</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">experiment_prefix</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">experiment_prefix</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;experiment_prefix must be a non-empty string.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">experiment_prefix</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">experiment_prefix</span> <span class="ow">or</span> <span class="n">experiment_prefix</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Invalid experiment name &#39;</span><span class="si">{</span><span class="n">experiment_name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid experiment prefix &#39;</span><span class="si">{</span><span class="n">experiment_prefix</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
                 <span class="s2">&quot;Must be a simple name without path separators.&quot;</span>
             <span class="p">)</span>
 
-        <span class="c1"># Create experiment folder</span>
+        <span class="c1"># Determine next available experiment folder name for this prefix</span>
+        <span class="n">experiment_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_experiment_name</span><span class="p">(</span><span class="n">experiment_prefix</span><span class="p">)</span>
         <span class="n">experiment_folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span> <span class="o">/</span> <span class="n">experiment_name</span>
-
-        <span class="k">if</span> <span class="n">experiment_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Experiment folder already exists at </span><span class="si">{</span><span class="n">experiment_folder</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
 
         <span class="n">experiment_folder</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -274,6 +275,35 @@
                 <span class="sa">f</span><span class="s2">&quot;Failed to save experiment &#39;</span><span class="si">{</span><span class="n">experiment_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_next_experiment_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the next available experiment folder name for a prefix.</span>
+
+<span class="sd">        Scans the root_data_folder for folders matching ``{prefix}_NNNN`` and</span>
+<span class="sd">        returns the next sequential name, starting at ``{prefix}_0001`` if none exist.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            prefix: The experiment prefix.</span>
+<span class="sd">            width: Zero-padding width for the counter (default: 4).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Next experiment folder name like ``prefix_0001``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;^</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span><span class="si">}</span><span class="s2">_(\d</span><span class="se">{{</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="se">}}</span><span class="s2">)$&quot;</span><span class="p">)</span>
+        <span class="n">max_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_data_folder</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                    <span class="n">m</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                            <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="n">max_idx</span><span class="p">:</span>
+                                <span class="n">max_idx</span> <span class="o">=</span> <span class="n">idx</span>
+                        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                            <span class="k">continue</span>
+        <span class="n">next_idx</span> <span class="o">=</span> <span class="n">max_idx</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">next_idx</span><span class="si">:</span><span class="s2">0</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">d</span><span class="si">}</span><span class="s2">&quot;</span>
 
 <div class="viewcode-block" id="DataSaver.load_experiment">
 <a class="viewcode-back" href="../../../api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver.load_experiment">[docs]</a>

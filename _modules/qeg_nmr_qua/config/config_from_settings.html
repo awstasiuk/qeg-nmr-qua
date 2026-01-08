@@ -114,7 +114,7 @@
     <span class="p">)</span>
     <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_analog_output</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_analog_input</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_analog_input</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+    <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_analog_input</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">gain_db</span><span class="o">=</span><span class="mi">26</span><span class="p">)</span>
     <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_digital_output</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;readout_switch&quot;</span><span class="p">)</span>
     <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_digital_output</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;amplifier_blank&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">lf_fem</span><span class="o">.</span><span class="n">add_digital_output</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;debug_marker&quot;</span><span class="p">)</span>
@@ -232,7 +232,7 @@
     <span class="p">)</span>
     <span class="c1"># needed for reasons that currently elude me</span>
     <span class="n">excitation</span> <span class="o">=</span> <span class="n">ControlPulse</span><span class="p">(</span>
-        <span class="n">length</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">excitation_len</span><span class="p">,</span>
+        <span class="n">length</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">excitation_length</span><span class="p">,</span>
         <span class="n">waveform</span><span class="o">=</span><span class="s2">&quot;excitation_wf&quot;</span><span class="p">,</span>
         <span class="n">digital_marker</span><span class="o">=</span><span class="s2">&quot;ON&quot;</span><span class="p">,</span>
     <span class="p">)</span>

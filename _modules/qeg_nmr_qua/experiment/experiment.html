@@ -90,13 +90,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qm</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumMachinesManager</span><span class="p">,</span> <span class="n">SimulationConfig</span><span class="p">,</span> <span class="n">QuantumMachine</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qm.jobs.running_qm_job</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunningQmJob</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">unit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">qm.qua</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">play</span><span class="p">,</span>
-    <span class="n">wait</span><span class="p">,</span>
-    <span class="n">frame_rotation_2pi</span><span class="p">,</span>
-    <span class="n">align</span><span class="p">,</span>
-    <span class="n">amp</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qm.qua</span><span class="w"> </span><span class="kn">import</span> <span class="n">play</span><span class="p">,</span> <span class="n">wait</span><span class="p">,</span> <span class="n">frame_rotation_2pi</span><span class="p">,</span> <span class="n">align</span><span class="p">,</span> <span class="n">amp</span><span class="p">,</span> <span class="n">for_</span>
 
 <span class="n">u</span> <span class="o">=</span> <span class="n">unit</span><span class="p">(</span><span class="n">coerce_to_integer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -135,7 +129,12 @@
 
 <div class="viewcode-block" id="Experiment.__init__">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">ExperimentSettings</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">OPXConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">settings</span><span class="p">:</span> <span class="n">ExperimentSettings</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">OPXConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">connect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize experiment with configuration and settings.</span>
 
@@ -162,7 +161,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rx_switch_key</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">sw_key</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">pre_scan_delay</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">settings</span><span class="o">.</span><span class="n">readout_delay</span> <span class="o">//</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">AMPLIFIER_BLANKING_TIME</span> <span class="o">-</span> <span class="n">RX_SWITCH_DELAY</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">readout_delay</span> <span class="o">//</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">AMPLIFIER_BLANKING_TIME</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">RX_SWITCH_DELAY</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_scan_delay</span> <span class="o">&lt;</span> <span class="mi">16</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Readout delay too short to accommodate switching times.&quot;</span><span class="p">)</span>
@@ -180,15 +179,19 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">wait_between_scans</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">thermal_reset</span> <span class="o">//</span> <span class="mi">4</span>  <span class="c1"># 5 T1 in clock cycles</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">qmm</span> <span class="o">=</span> <span class="n">QuantumMachinesManager</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">qop_ip</span><span class="p">,</span> <span class="n">cluster_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">connect</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qmm</span> <span class="o">=</span> <span class="n">QuantumMachinesManager</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">qop_ip</span><span class="p">,</span> <span class="n">cluster_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span>
+            <span class="p">)</span>
 
         <span class="c1"># command parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of commands to build the experiment, FIFO</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_fixed</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># whether to use fixed point for looping variables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># variable vector for looped experiments</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">start_with_wait</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># whether to start the experiment with a wait</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_frame_change</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_angle</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># angle for frame change compensation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_element</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># element for frame change compensation</span>
 
         <span class="c1"># ---- Data to save ---- #</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span> <span class="o">=</span> <span class="p">{</span>
@@ -225,7 +228,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Element </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s2"> not defined in config.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+
+        <span class="n">pulse</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pulse</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Operation </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not defined for element </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
         <span class="n">command</span> <span class="o">=</span> <span class="p">{</span>
@@ -233,25 +238,21 @@
             <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
             <span class="s2">&quot;element&quot;</span><span class="p">:</span> <span class="n">element</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="n">length</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
-            <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
-        <span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
-            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">length</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
                 <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">pulse</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
             <span class="p">)</span>
             <span class="n">command</span><span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">amplitude</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_loop</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span> <span class="o">/</span> <span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">use_fixed</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">amplitude</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
-            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">length</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
                 <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">pulse</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
             <span class="p">)</span>
             <span class="n">command</span><span class="p">[</span><span class="s2">&quot;phase&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">phase</span> <span class="o">/</span> <span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_loop</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">amplitude</span><span class="p">))</span>
@@ -264,10 +265,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">command</span><span class="p">[</span><span class="s2">&quot;phase&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">phase</span> <span class="o">/</span> <span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span>  <span class="c1"># convert to fraction of 2pi</span>
             <span class="n">command</span><span class="p">[</span><span class="s2">&quot;amplitude&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">amplitude</span>
-            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">length</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
                 <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="n">element</span><span class="p">]</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">pulses</span><span class="p">[</span><span class="n">pulse</span><span class="p">]</span><span class="o">.</span><span class="n">length</span> <span class="o">//</span> <span class="mi">4</span>
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span></div>
@@ -313,6 +314,80 @@
             <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="n">elements</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Experiment.add_floquet_sequence">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.add_floquet_sequence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_floquet_sequence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">phases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">delays</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">repetitions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            phases (list[float]): List of phases for the pulses in degrees.</span>
+<span class="sd">            delays (list[int]): List of delays in nanoseconds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">phases</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">delays</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;There must be one more delay than phase in a Floquet sequence.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">command</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;sequence&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;phases&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">phases</span><span class="p">)</span> <span class="o">/</span> <span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;delays&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">delays</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">repetitions</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_loop</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">repetitions</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_fixed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">command</span><span class="p">[</span><span class="s2">&quot;repetitions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">repetitions</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Experiment.add_z_rotation">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.add_z_rotation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_z_rotation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            angle (float): Angle of the Z rotation in degrees.</span>
+<span class="sd">            element (str): Element to which the Z rotation is applied. Must be defined in the config.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Element </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s2"> not defined in config.&quot;</span><span class="p">)</span>
+
+        <span class="n">command</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;pulse&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;virtual_z&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;element&quot;</span><span class="p">:</span> <span class="n">element</span><span class="p">,</span>
+            <span class="s2">&quot;phase&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">angle</span> <span class="o">/</span> <span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># convert to fraction of 2pi</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Experiment.add_frame_change">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.add_frame_change">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_frame_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds frame change compensation to the experiment, which is implemented as a frame rotation after</span>
+<span class="sd">        each applied pi-half pulse. This feature is useful for correcting out-of-phase overrotation errors</span>
+<span class="sd">        in pi-half only pulse sequences. In principle, any pulse sequence can be written with only pi-half</span>
+<span class="sd">        pulses and z-rotations, allowing for frame change compensation to be applied in all cases.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            angle (float): Angle of the frame change in degrees.</span>
+<span class="sd">            element (str): Element to which the frame change is applied. Must be defined in the config.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">element</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Element </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s2"> not defined in config.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_frame_change</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_angle</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">/</span> <span class="mi">360</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span>  <span class="c1"># convert to fraction of 2pi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_element</span> <span class="o">=</span> <span class="n">element</span></div>
 
 
 <div class="viewcode-block" id="Experiment.remove_initial_delay">
@@ -374,12 +449,17 @@
 
 <div class="viewcode-block" id="Experiment.translate_command">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.translate_command">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">translate_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">translate_command</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Translates a command dictionary into QUA code.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            command (dict): Command dictionary to translate.</span>
+<span class="sd">            var (Any, optional): QUA Variable to use for swept parameters.</span>
+<span class="sd">            m (QUAInt, optional): QUA Variable to use for Floquet loops.</span>
+<span class="sd">            l (QUAInt, optional): QUA Variable to use for 3D loops.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If the command type is unknown.</span>
@@ -397,13 +477,42 @@
             <span class="p">)</span>
             <span class="n">frame_rotation_2pi</span><span class="p">(</span><span class="o">-</span><span class="n">phase</span><span class="p">,</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;element&quot;</span><span class="p">])</span>
 
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_frame_change</span><span class="p">:</span>
+                <span class="n">frame_rotation_2pi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame_change_angle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_element</span><span class="p">)</span>
+
         <span class="k">elif</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;delay&quot;</span><span class="p">:</span>
             <span class="n">duration</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
 
             <span class="n">wait</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;z_rotation&quot;</span><span class="p">:</span>
+            <span class="n">phase</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
+            <span class="n">frame_rotation_2pi</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;element&quot;</span><span class="p">])</span>
+
         <span class="k">elif</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;align&quot;</span><span class="p">:</span>
 
             <span class="n">align</span><span class="p">(</span><span class="o">*</span><span class="n">command</span><span class="p">[</span><span class="s2">&quot;elements&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;elements&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">align</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="n">command</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sequence&quot;</span><span class="p">:</span>
+            <span class="n">phases</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;phases&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">delays</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;delays&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">repetitions</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repetitions&quot;</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">for_</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">m</span> <span class="o">&lt;</span> <span class="n">repetitions</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">wait</span><span class="p">(</span><span class="n">delays</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">phase</span><span class="p">,</span> <span class="n">delay</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">phases</span><span class="p">,</span> <span class="n">delays</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                    <span class="n">frame_rotation_2pi</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="p">)</span>
+                    <span class="n">play</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pi_half_pulse</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">frame_rotation_2pi</span><span class="p">(</span><span class="o">-</span><span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_frame_change</span><span class="p">:</span>
+                        <span class="n">frame_rotation_2pi</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_angle</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_change_element</span>
+                        <span class="p">)</span>
+                    <span class="n">wait</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown command type: </span><span class="si">{</span><span class="n">command</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
@@ -435,7 +544,7 @@
 
 <div class="viewcode-block" id="Experiment.simulate_experiment">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.simulate_experiment">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sim_length</span><span class="o">=</span><span class="mi">10_000</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sim_length</span><span class="o">=</span><span class="mi">40_000</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Simulates the experiment using the configured experiment defined by this class based on the current</span>
 <span class="sd">        config defined by this instance&#39;s ``config`` attribute. The simulation returns the generated waveforms</span>
@@ -457,12 +566,14 @@
         <span class="n">samples</span><span class="o">.</span><span class="n">con1</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
         <span class="c1"># Get the waveform report object</span>
         <span class="n">waveform_report</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_simulated_waveform_report</span><span class="p">()</span>
+        <span class="c1"># Cast the waveform report to a python dictionary</span>
+        <span class="n">waveform_dict</span> <span class="o">=</span> <span class="n">waveform_report</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
         <span class="c1"># Visualize and save the waveform report</span>
         <span class="n">waveform_report</span><span class="o">.</span><span class="n">create_plot</span><span class="p">(</span>
             <span class="n">samples</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">job</span></div>
+        <span class="p">)</span></div>
 
+        <span class="c1"># return job</span>
 
 <div class="viewcode-block" id="Experiment.execute_experiment">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment">[docs]</a>
@@ -505,11 +616,12 @@
 
 <div class="viewcode-block" id="Experiment.save_data">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.save_data">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;experiment_001&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;experiment&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Saves the experiment data to the specified directory using the DataSaver.</span>
 
-<span class="sd">        Creates a folder with the given experiment_name containing:</span>
+<span class="sd">        Creates a folder with an auto-incremented name based on ``experiment_prefix``</span>
+<span class="sd">        (e.g., ``prefix_0001``, ``prefix_0002``) containing:</span>
 <span class="sd">        - config.json: OPX configuration</span>
 <span class="sd">        - settings.json: Experiment settings</span>
 <span class="sd">        - commands.json: List of commands executed</span>
@@ -519,12 +631,11 @@
 <span class="sd">        for easy loading elsewhere.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            experiment_name (str): Name for the experiment folder. Defaults to &quot;experiment_001&quot;.</span>
-<span class="sd">                Should be a simple name without path separators (e.g., &quot;experiment_001&quot;, &quot;test_run&quot;).</span>
+<span class="sd">            experiment_prefix (str): Prefix for the experiment folder naming. Defaults to &quot;experiment&quot;.</span>
+<span class="sd">                The created folder name will be ``&lt;experiment_prefix&gt;_NNNN`` with a 4-digit counter.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            FileExistsError: If the experiment folder already exists.</span>
-<span class="sd">            ValueError: If experiment_name contains path separators or is invalid.</span>
+<span class="sd">            ValueError: If experiment_prefix contains path separators or is invalid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Prepare the data payload: include both metadata and results</span>
@@ -532,7 +643,7 @@
 
             <span class="c1"># Save the experiment using DataSaver</span>
             <span class="n">experiment_folder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_saver</span><span class="o">.</span><span class="n">save_experiment</span><span class="p">(</span>
-                <span class="n">experiment_name</span><span class="o">=</span><span class="n">experiment_name</span><span class="p">,</span>
+                <span class="n">experiment_prefix</span><span class="o">=</span><span class="n">experiment_prefix</span><span class="p">,</span>
                 <span class="n">config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
                 <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
                 <span class="n">commands</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">,</span>

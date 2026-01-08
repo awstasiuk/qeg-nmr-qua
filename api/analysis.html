@@ -174,9 +174,10 @@ if it doesn’t exist.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="qeg_nmr_qua.analysis.data_saver.DataSaver.save_experiment">
-<span class="sig-name descname"><span class="pre">save_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">experiment_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commands</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/analysis/data_saver.html#DataSaver.save_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.analysis.data_saver.DataSaver.save_experiment" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">save_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">experiment_prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commands</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/analysis/data_saver.html#DataSaver.save_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.analysis.data_saver.DataSaver.save_experiment" title="Link to this definition"></a></dt>
 <dd><p>Save experiment metadata and data to a structured directory.</p>
-<p>Creates a folder with the specified experiment_name and atomically saves
+<p>Creates a folder with an auto-incremented name based on <code class="docutils literal notranslate"><span class="pre">experiment_prefix</span></code>
+(e.g., <code class="docutils literal notranslate"><span class="pre">prefix_0001</span></code>, <code class="docutils literal notranslate"><span class="pre">prefix_0002</span></code>) and atomically saves
 OPX configuration, experiment settings, command sequence, and experimental
 results. Handles special data types (numpy arrays, matplotlib figures) and
 non-serializable objects gracefully.</p>
@@ -200,8 +201,10 @@ non-serializable objects gracefully.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>experiment_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name for the experiment folder (e.g., “experiment_001”).
-Must be a simple name without path separators or dots.</p></li>
+<li><p><strong>experiment_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Prefix for the experiment folder name (e.g., “experiment”).
+The actual folder created will be <code class="docutils literal notranslate"><span class="pre">&lt;experiment_prefix&gt;_NNNN</span></code> with a
+zero-padded 4-digit counter (starting at 0001). Must not contain path
+separators or be “.”.</p></li>
 <li><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – OPX configuration dictionary from
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">to_dict()</span></code>.</p></li>
 <li><p><strong>settings</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Experiment settings dictionary from
@@ -221,8 +224,7 @@ are handled automatically.</p></li>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If experiment_name contains path separators or is invalid.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.14)"><strong>FileExistsError</strong></a> – If the experiment folder already exists.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If experiment_prefix contains path separators or is invalid.</p></li>
 <li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If saving fails (folder is cleaned up on failure).</p></li>
 </ul>
 </dd>
@@ -230,14 +232,14 @@ are handled automatically.</p></li>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">saver</span> <span class="o">=</span> <span class="n">DataSaver</span><span class="p">(</span><span class="s2">&quot;./data&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">folder</span> <span class="o">=</span> <span class="n">saver</span><span class="o">.</span><span class="n">save_experiment</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="s2">&quot;exp_001&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;qop_ip&quot;</span><span class="p">:</span> <span class="s2">&quot;192.168.1.100&quot;</span><span class="p">},</span>
 <span class="gp">... </span>    <span class="n">settings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_avg&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
 <span class="gp">... </span>    <span class="n">commands</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;pulse&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;pi_half&quot;</span><span class="p">}],</span>
 <span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">])}</span>
 <span class="gp">... </span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">folder</span><span class="o">.</span><span class="n">name</span>
-<span class="go">&#39;exp_001&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">folder</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># first call</span>
+<span class="go">&#39;exp_0001&#39;</span>
 </pre></div>
 </div>
 </dd></dl>
