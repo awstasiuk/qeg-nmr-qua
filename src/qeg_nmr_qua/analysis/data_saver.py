@@ -7,6 +7,7 @@ figures, and other scientific computing types via :class:`QuantumEncoder`.
 """
 
 import json
+import re
 import warnings
 from pathlib import Path
 from typing import Any
@@ -80,7 +81,7 @@ class DataSaver:
 
     def save_experiment(
         self,
-        experiment_name: str,
+        experiment_prefix: str,
         config: dict[str, Any],
         settings: dict[str, Any],
         commands: list[dict[str, Any]],
@@ -88,7 +89,8 @@ class DataSaver:
     ) -> Path:
         """Save experiment metadata and data to a structured directory.
 
-        Creates a folder with the specified experiment_name and atomically saves
+        Creates a folder with an auto-incremented name based on ``experiment_prefix``
+        (e.g., ``prefix_0001``, ``prefix_0002``) and atomically saves
         OPX configuration, experiment settings, command sequence, and experimental
         results. Handles special data types (numpy arrays, matplotlib figures) and
         non-serializable objects gracefully.
@@ -111,8 +113,10 @@ class DataSaver:
         - Failed keys are tracked in ``_failed_keys`` in the saved data
 
         Args:
-            experiment_name (str): Name for the experiment folder (e.g., "experiment_001").
-                Must be a simple name without path separators or dots.
+            experiment_prefix (str): Prefix for the experiment folder name (e.g., "experiment").
+                The actual folder created will be ``<experiment_prefix>_NNNN`` with a
+                zero-padded 4-digit counter (starting at 0001). Must not contain path
+                separators or be ".".
             config (dict[str, Any]): OPX configuration dictionary from
                 :meth:`~OPXConfig.to_dict`.
             settings (dict[str, Any]): Experiment settings dictionary from
@@ -127,36 +131,33 @@ class DataSaver:
             Path: The path to the created experiment folder.
 
         Raises:
-            ValueError: If experiment_name contains path separators or is invalid.
-            FileExistsError: If the experiment folder already exists.
+            ValueError: If experiment_prefix contains path separators or is invalid.
             RuntimeError: If saving fails (folder is cleaned up on failure).
 
         Example:
             >>> saver = DataSaver("./data")
             >>> folder = saver.save_experiment(
-            ...     "exp_001",
+            ...     "exp",
             ...     config={"qop_ip": "192.168.1.100"},
             ...     settings={"n_avg": 8},
             ...     commands=[{"type": "pulse", "name": "pi_half"}],
             ...     data={"I": np.array([1, 2, 3]), "Q": np.array([4, 5, 6])}
             ... )
-            >>> folder.name
-            'exp_001'
+            >>> folder.name  # first call
+            'exp_0001'
         """
-        # Validate experiment name
-        if "/" in experiment_name or "\\" in experiment_name or experiment_name == ".":
+        # Validate experiment prefix
+        if not isinstance(experiment_prefix, str) or experiment_prefix == "":
+            raise ValueError("experiment_prefix must be a non-empty string.")
+        if "/" in experiment_prefix or "\\" in experiment_prefix or experiment_prefix == ".":
             raise ValueError(
-                f"Invalid experiment name '{experiment_name}'. "
+                f"Invalid experiment prefix '{experiment_prefix}'. "
                 "Must be a simple name without path separators."
             )
 
-        # Create experiment folder
+        # Determine next available experiment folder name for this prefix
+        experiment_name = self._next_experiment_name(experiment_prefix)
         experiment_folder = self.root_data_folder / experiment_name
-
-        if experiment_folder.exists():
-            raise FileExistsError(
-                f"Experiment folder already exists at {experiment_folder}"
-            )
 
         experiment_folder.mkdir(parents=True, exist_ok=False)
 
@@ -192,6 +193,35 @@ class DataSaver:
             raise RuntimeError(
                 f"Failed to save experiment '{experiment_name}': {e}"
             ) from e
+
+    def _next_experiment_name(self, prefix: str, width: int = 4) -> str:
+        """Compute the next available experiment folder name for a prefix.
+
+        Scans the root_data_folder for folders matching ``{prefix}_NNNN`` and
+        returns the next sequential name, starting at ``{prefix}_0001`` if none exist.
+
+        Args:
+            prefix: The experiment prefix.
+            width: Zero-padding width for the counter (default: 4).
+
+        Returns:
+            str: Next experiment folder name like ``prefix_0001``.
+        """
+        pattern = re.compile(rf"^{re.escape(prefix)}_(\d{{{width}}})$")
+        max_idx = 0
+        if self.root_data_folder.exists():
+            for entry in self.root_data_folder.iterdir():
+                if entry.is_dir():
+                    m = pattern.match(entry.name)
+                    if m:
+                        try:
+                            idx = int(m.group(1))
+                            if idx > max_idx:
+                                max_idx = idx
+                        except ValueError:
+                            continue
+        next_idx = max_idx + 1
+        return f"{prefix}_{next_idx:0{width}d}"
 
     def load_experiment(self, experiment_name: str) -> dict[str, Any]:
         """Load experiment metadata and data from a saved folder.

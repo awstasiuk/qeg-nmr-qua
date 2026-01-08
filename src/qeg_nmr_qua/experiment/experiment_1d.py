@@ -78,7 +78,7 @@ class Experiment1D(Experiment):
             t2 = declare(int)
 
             if self.start_with_wait:
-                wait(self.wait_between_scans, self.probe_key)
+                wait(self.wait_between_scans)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
@@ -88,7 +88,7 @@ class Experiment1D(Experiment):
 
                 # wait for ringdown to decay, blank amplifier, set to receive mode
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                wait(self.pre_scan_delay, self.probe_key)
+                wait(self.pre_scan_delay)
                 readout_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 # measure the FID signal via resonator and helper elements

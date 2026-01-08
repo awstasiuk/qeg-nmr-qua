@@ -16,13 +16,7 @@ from pathlib import Path
 from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qualang_tools.units import unit
-from qm.qua import (
-    play,
-    wait,
-    frame_rotation_2pi,
-    align,
-    amp,
-)
+from qm.qua import play, wait, frame_rotation_2pi, align, amp, for_
 
 u = unit(coerce_to_integer=True)
 
@@ -57,7 +51,12 @@ class Experiment:
         qmm: ``QuantumMachinesManager`` instance for managing connection to the OPX-1000
     """
 
-    def __init__(self, settings: ExperimentSettings, config: OPXConfig = None):
+    def __init__(
+        self,
+        settings: ExperimentSettings,
+        config: OPXConfig = None,
+        connect: bool = True,
+    ):
         """
         Initialize experiment with configuration and settings.
 
@@ -84,7 +83,7 @@ class Experiment:
         self.rx_switch_key = settings.sw_key
 
         self.pre_scan_delay = (
-            settings.readout_delay // 4 - 2 * AMPLIFIER_BLANKING_TIME - RX_SWITCH_DELAY
+            settings.readout_delay // 4 - AMPLIFIER_BLANKING_TIME - 2 * RX_SWITCH_DELAY
         )
         if self.pre_scan_delay < 16:
             raise ValueError("Readout delay too short to accommodate switching times.")
@@ -102,15 +101,19 @@ class Experiment:
 
         self.wait_between_scans = settings.thermal_reset // 4  # 5 T1 in clock cycles
 
-        self.qmm = QuantumMachinesManager(
-            self.config.qop_ip, cluster_name=self.config.cluster
-        )
+        if connect:
+            self.qmm = QuantumMachinesManager(
+                self.config.qop_ip, cluster_name=self.config.cluster
+            )
 
         # command parameters
         self._commands = []  # list of commands to build the experiment, FIFO
         self.use_fixed = False  # whether to use fixed point for looping variables
         self.var_vec = None  # variable vector for looped experiments
         self.start_with_wait = True  # whether to start the experiment with a wait
+        self.use_frame_change = False
+        self.frame_change_angle = 0.0  # angle for frame change compensation
+        self.frame_change_element = ""  # element for frame change compensation
 
         # ---- Data to save ---- #
         self.save_data_dict = {
@@ -144,7 +147,9 @@ class Experiment:
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
-        if name not in self.config.elements.elements[element].operations.keys():
+
+        pulse = self.config.elements.elements[element].operations.get(name, None)
+        if pulse is None:
             raise ValueError(f"Operation {name} not defined for element {element}.")
 
         command = {
@@ -152,25 +157,21 @@ class Experiment:
             "name": name,
             "element": element,
         }
-        length = (
-            length // 4
-            if length is not None
-            else self.config.elements.elements[element].operations[name].length // 4
-        )
+
         if isinstance(phase, Iterable):
-            command["length"] = (
+            command["length"] = length = (
                 length // 4
                 if length is not None
-                else self.config.elements.elements[element].operations[name].length // 4
+                else self.config.pulses.pulses[pulse].length // 4
             )
             command["amplitude"] = amplitude
             self.update_loop((np.array(phase) / 360) % 1)
             self.use_fixed = True
         elif isinstance(amplitude, Iterable):
-            command["length"] = (
+            command["length"] = length = (
                 length // 4
                 if length is not None
-                else self.config.elements.elements[element].operations[name].length // 4
+                else self.config.pulses.pulses[pulse].length // 4
             )
             command["phase"] = (phase / 360) % 1
             self.update_loop(np.array(amplitude))
@@ -183,10 +184,10 @@ class Experiment:
         else:
             command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
-            command["length"] = (
+            command["length"] = length = (
                 length // 4
                 if length is not None
-                else self.config.elements.elements[element].operations[name].length // 4
+                else self.config.pulses.pulses[pulse].length // 4
             )
 
         self._commands.append(command)
@@ -226,6 +227,71 @@ class Experiment:
             "elements": elements,
         }
         self._commands.append(command)
+
+    def add_floquet_sequence(
+        self, phases: list[float], delays: list[int], repetitions: int | list[int]
+    ):
+        """
+        Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
+
+        Args:
+            phases (list[float]): List of phases for the pulses in degrees.
+            delays (list[int]): List of delays in nanoseconds.
+        """
+        if len(phases) + 1 != len(delays):
+            raise ValueError(
+                "There must be one more delay than phase in a Floquet sequence."
+            )
+
+        command = {
+            "type": "sequence",
+            "phases": (np.array(phases) / 360) % 1,
+            "delays": np.array(delays, dtype=int) // 4,
+        }
+        if isinstance(repetitions, Iterable):
+            self.update_loop(np.array(repetitions))
+            self.use_fixed = False
+        else:
+            command["repetitions"] = repetitions
+
+        self._commands.append(command)
+
+    def add_z_rotation(self, angle: float, element: str):
+        """
+        Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.
+
+        Args:
+            angle (float): Angle of the Z rotation in degrees.
+            element (str): Element to which the Z rotation is applied. Must be defined in the config.
+        """
+        if element not in self.config.elements.elements.keys():
+            raise ValueError(f"Element {element} not defined in config.")
+
+        command = {
+            "type": "pulse",
+            "name": "virtual_z",
+            "element": element,
+            "phase": (angle / 360) % 1,  # convert to fraction of 2pi
+        }
+
+        self._commands.append(command)
+
+    def add_frame_change(self, angle: float, element: str):
+        """
+        Adds frame change compensation to the experiment, which is implemented as a frame rotation after
+        each applied pi-half pulse. This feature is useful for correcting out-of-phase overrotation errors
+        in pi-half only pulse sequences. In principle, any pulse sequence can be written with only pi-half
+        pulses and z-rotations, allowing for frame change compensation to be applied in all cases.
+
+        Args:
+            angle (float): Angle of the frame change in degrees.
+            element (str): Element to which the frame change is applied. Must be defined in the config.
+        """
+        if element not in self.config.elements.elements.keys():
+            raise ValueError(f"Element {element} not defined in config.")
+        self.use_frame_change = True
+        self.frame_change_angle = (angle / 360) % 1  # convert to fraction of 2pi
+        self.frame_change_element = element
 
     def remove_initial_delay(self, remove: bool = True):
         """
@@ -278,12 +344,17 @@ class Experiment:
 
         raise ValueError("Inconsistent loop variables.")
 
-    def translate_command(self, command: dict, var: Any = None):
+    def translate_command(
+        self, command: dict, var: Any = None, m: Any = None, l: Any = None
+    ):
         """
         Translates a command dictionary into QUA code.
 
         Args:
             command (dict): Command dictionary to translate.
+            var (Any, optional): QUA Variable to use for swept parameters.
+            m (QUAInt, optional): QUA Variable to use for Floquet loops.
+            l (QUAInt, optional): QUA Variable to use for 3D loops.
 
         Raises:
             ValueError: If the command type is unknown.
@@ -301,13 +372,42 @@ class Experiment:
             )
             frame_rotation_2pi(-phase, command["element"])
 
+            if self.use_frame_change:
+                frame_rotation_2pi(self.frame_change_angle, self.frame_change_element)
+
         elif command["type"] == "delay":
             duration = command.get("duration", var)
 
             wait(duration)
+
+        elif command["type"] == "z_rotation":
+            phase = command.get("phase", var)
+            frame_rotation_2pi(phase, command["element"])
+
         elif command["type"] == "align":
 
             align(*command["elements"]) if command["elements"] is not None else align()
+
+        elif command["type"] == "sequence":
+            phases = command.get("phases", None)
+            delays = command.get("delays", None)
+            repetitions = command.get("repetitions", var)
+
+            with for_(m, 0, m < repetitions, m + 1):
+                wait(delays[0])
+                for phase, delay in zip(phases, delays[1:]):
+                    frame_rotation_2pi(phase, self.probe_key)
+                    play(
+                        self.pi_half_pulse,
+                        self.probe_key,
+                    )
+                    frame_rotation_2pi(-phase, self.probe_key)
+                    if self.use_frame_change:
+                        frame_rotation_2pi(
+                            self.frame_change_angle, self.frame_change_element
+                        )
+                    wait(delay)
+
         else:
             raise ValueError(f"Unknown command type: {command['type']}")
 
@@ -330,7 +430,7 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
-    def simulate_experiment(self, sim_length=10_000):
+    def simulate_experiment(self, sim_length=40_000):
         """
         Simulates the experiment using the configured experiment defined by this class based on the current
         config defined by this instance's ``config`` attribute. The simulation returns the generated waveforms
@@ -352,11 +452,13 @@ class Experiment:
         samples.con1.plot()
         # Get the waveform report object
         waveform_report = job.get_simulated_waveform_report()
+        # Cast the waveform report to a python dictionary
+        waveform_dict = waveform_report.to_dict()
         # Visualize and save the waveform report
         waveform_report.create_plot(
             samples, plot=True, save_path=str(Path(__file__).resolve().parent)
         )
-        return job
+        # return job
 
     def execute_experiment(self):
         """
@@ -391,11 +493,12 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
-    def save_data(self, experiment_name: str = "experiment_001"):
+    def save_data(self, experiment_prefix: str = "experiment"):
         """
         Saves the experiment data to the specified directory using the DataSaver.
 
-        Creates a folder with the given experiment_name containing:
+        Creates a folder with an auto-incremented name based on ``experiment_prefix``
+        (e.g., ``prefix_0001``, ``prefix_0002``) containing:
         - config.json: OPX configuration
         - settings.json: Experiment settings
         - commands.json: List of commands executed
@@ -405,12 +508,11 @@ class Experiment:
         for easy loading elsewhere.
 
         Args:
-            experiment_name (str): Name for the experiment folder. Defaults to "experiment_001".
-                Should be a simple name without path separators (e.g., "experiment_001", "test_run").
+            experiment_prefix (str): Prefix for the experiment folder naming. Defaults to "experiment".
+                The created folder name will be ``<experiment_prefix>_NNNN`` with a 4-digit counter.
 
         Raises:
-            FileExistsError: If the experiment folder already exists.
-            ValueError: If experiment_name contains path separators or is invalid.
+            ValueError: If experiment_prefix contains path separators or is invalid.
         """
         try:
             # Prepare the data payload: include both metadata and results
@@ -418,7 +520,7 @@ class Experiment:
 
             # Save the experiment using DataSaver
             experiment_folder = self.data_saver.save_experiment(
-                experiment_name=experiment_name,
+                experiment_prefix=experiment_prefix,
                 config=self.config.to_dict(),
                 settings=self.settings.to_dict(),
                 commands=self._commands,

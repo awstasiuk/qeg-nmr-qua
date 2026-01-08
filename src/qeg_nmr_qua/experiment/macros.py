@@ -32,10 +32,10 @@ def readout_mode(switch, amplifier):
     align()
     play("voltage_off", amplifier)  # Ensure Amplifier is off
     align()
-    wait(AMPLIFIER_BLANKING_TIME)
+    wait(RX_SWITCH_DELAY)
     play("voltage_on", switch)  # Close the switch
     align()
-    wait(RX_SWITCH_DELAY)
+    wait(AMPLIFIER_BLANKING_TIME)
     align()
 
 
@@ -47,8 +47,7 @@ def safe_mode(switch, amplifier):
     """
     align()
     play("voltage_off", switch)  # Ensure Switch is open
-    align()
     play("voltage_off", amplifier)  # Turn off the amplifier
     align()
-    wait(AMPLIFIER_BLANKING_TIME)
+    wait(RX_SWITCH_DELAY)
     align()

@@ -39,7 +39,7 @@ class TestDataSaver:
         data = {"results": [1, 2, 3]}
 
         result_path = saver.save_experiment(
-            experiment_name="test_exp_001",
+            experiment_prefix="test_exp",
             config=config,
             settings=settings,
             commands=commands,
@@ -48,7 +48,7 @@ class TestDataSaver:
 
         # Check folder was created
         assert result_path.exists()
-        assert result_path.name == "test_exp_001"
+        assert result_path.name == "test_exp_0001"
 
         # Check all required files exist
         assert (result_path / "config.json").exists()
@@ -66,7 +66,7 @@ class TestDataSaver:
         data = {"results": np.array([1.0, 2.0, 3.0])}
 
         result_path = saver.save_experiment(
-            experiment_name="test_exp_002",
+            experiment_prefix="test_exp",
             config=config,
             settings=settings,
             commands=commands,
@@ -90,8 +90,8 @@ class TestDataSaver:
             loaded_data = json.load(f)
         assert loaded_data["results"] == [1.0, 2.0, 3.0]  # numpy array converted
 
-    def test_save_experiment_rejects_invalid_names(self, temp_dir):
-        """Test that save_experiment rejects invalid experiment names."""
+    def test_save_experiment_rejects_invalid_prefix(self, temp_dir):
+        """Test that save_experiment rejects invalid experiment prefixes."""
         saver = DataSaver(temp_dir)
 
         invalid_names = [
@@ -103,35 +103,37 @@ class TestDataSaver:
         for invalid_name in invalid_names:
             with pytest.raises(ValueError):
                 saver.save_experiment(
-                    experiment_name=invalid_name,
+                    experiment_prefix=invalid_name,
                     config={},
                     settings={},
                     commands=[],
                     data={},
                 )
 
-    def test_save_experiment_prevents_overwrite(self, temp_dir):
-        """Test that save_experiment prevents overwriting existing experiments."""
+    def test_save_experiment_auto_increments(self, temp_dir):
+        """Test that save_experiment auto-increments experiment folders for the same prefix."""
         saver = DataSaver(temp_dir)
 
-        # Create first experiment
-        saver.save_experiment(
-            experiment_name="existing_exp",
+        # Create first experiment with prefix
+        p1 = saver.save_experiment(
+            experiment_prefix="existing_exp",
             config={},
             settings={},
             commands=[],
             data={},
         )
 
-        # Try to create with same name
-        with pytest.raises(FileExistsError):
-            saver.save_experiment(
-                experiment_name="existing_exp",
-                config={},
-                settings={},
-                commands=[],
-                data={},
-            )
+        # Create second experiment with same prefix; should auto-increment
+        p2 = saver.save_experiment(
+            experiment_prefix="existing_exp",
+            config={},
+            settings={},
+            commands=[],
+            data={},
+        )
+
+        assert p1.name == "existing_exp_0001"
+        assert p2.name == "existing_exp_0002"
 
     def test_load_experiment(self, temp_dir):
         """Test loading a saved experiment."""
@@ -143,8 +145,8 @@ class TestDataSaver:
         commands = [{"type": "pulse"}]
         data = {"results": [1, 2, 3]}
 
-        saver.save_experiment(
-            experiment_name="test_load",
+        result_path = saver.save_experiment(
+            experiment_prefix="test_load",
             config=config,
             settings=settings,
             commands=commands,
@@ -152,7 +154,7 @@ class TestDataSaver:
         )
 
         # Load experiment
-        loaded = saver.load_experiment("test_load")
+        loaded = saver.load_experiment(result_path.name)
 
         assert loaded["config"] == config
         assert loaded["settings"] == settings
@@ -174,9 +176,9 @@ class TestDataSaver:
         assert saver.list_experiments() == []
 
         # Add some experiments
-        for i in range(3):
+        for _ in range(3):
             saver.save_experiment(
-                experiment_name=f"experiment_{i:03d}",
+                experiment_prefix="experiment",
                 config={},
                 settings={},
                 commands=[],
@@ -185,7 +187,7 @@ class TestDataSaver:
 
         experiments = saver.list_experiments()
         assert len(experiments) == 3
-        assert experiments == ["experiment_000", "experiment_001", "experiment_002"]
+        assert experiments == ["experiment_0001", "experiment_0002", "experiment_0003"]
 
     def test_numpy_array_serialization(self, temp_dir):
         """Test that numpy arrays are properly serialized."""
@@ -199,15 +201,15 @@ class TestDataSaver:
             "path": Path("/some/data/path"),
         }
 
-        saver.save_experiment(
-            experiment_name="numpy_test",
+        result_path = saver.save_experiment(
+            experiment_prefix="numpy_test",
             config={},
             settings={},
             commands=[],
             data=numpy_data,
         )
 
-        loaded = saver.load_experiment("numpy_test")
+        loaded = saver.load_experiment(result_path.name)
 
         # Check conversions
         assert loaded["data"]["array"] == [1.5, 2.5, 3.5]
@@ -236,8 +238,8 @@ class TestDataSaver:
             "description": "test experiment",
         }
 
-        saver.save_experiment(
-            experiment_name="figure_test",
+        result_path = saver.save_experiment(
+            experiment_prefix="figure_test",
             config={},
             settings={},
             commands=[],
@@ -247,11 +249,11 @@ class TestDataSaver:
         plt.close(fig)
 
         # Check that figure was saved
-        figure_path = temp_dir / "figure_test" / "figure_my_plot.png"
+        figure_path = temp_dir / result_path.name / "figure_my_plot.png"
         assert figure_path.exists()
 
         # Check that data.json has reference instead of figure
-        loaded = saver.load_experiment("figure_test")
+        loaded = saver.load_experiment(result_path.name)
         assert "my_plot" in loaded["data"]
         assert "figure saved as" in loaded["data"]["my_plot"]
         assert loaded["data"]["result"] == [1, 2, 3]
@@ -274,8 +276,8 @@ class TestDataSaver:
 
         # This should not raise an exception
         with pytest.warns(UserWarning, match="Could not serialize"):
-            saver.save_experiment(
-                experiment_name="mixed_test",
+            result_path = saver.save_experiment(
+                experiment_prefix="mixed_test",
                 config={},
                 settings={},
                 commands=[],
@@ -283,7 +285,7 @@ class TestDataSaver:
             )
 
         # Check that good data was saved
-        loaded = saver.load_experiment("mixed_test")
+        loaded = saver.load_experiment(result_path.name)
         assert loaded["data"]["good_data"] == [1, 2, 3]
         assert loaded["data"]["more_good_data"] == "test"
         assert "non-serializable" in loaded["data"]["bad_data"]
@@ -304,7 +306,7 @@ class TestDataSaver:
 
         with pytest.warns(UserWarning):
             result_path = saver.save_experiment(
-                experiment_name="partial_test",
+                experiment_prefix="partial_test",
                 config={},
                 settings={},
                 commands=[],
@@ -314,7 +316,7 @@ class TestDataSaver:
         assert result_path.exists()
 
         # Verify the good data was saved
-        loaded = saver.load_experiment("partial_test")
+        loaded = saver.load_experiment(result_path.name)
         assert loaded["data"]["array"] == [1, 2, 3]
         assert loaded["data"]["string"] == "hello"
         assert loaded["data"]["number"] == 42

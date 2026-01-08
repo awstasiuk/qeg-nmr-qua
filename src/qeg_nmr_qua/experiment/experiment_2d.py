@@ -4,6 +4,8 @@ from qeg_nmr_qua.experiment.macros import (
     drive_mode,
 )
 from qeg_nmr_qua.experiment.experiment import Experiment
+from qeg_nmr_qua.config.config import OPXConfig
+from qeg_nmr_qua.config.settings import ExperimentSettings
 
 
 import matplotlib.pyplot as plt
@@ -42,6 +44,36 @@ class Experiment2D(Experiment):
     experiments, this ordering should help mitigate the effects of slow drifts in system parameters.
     """
 
+    def __init__(
+        self,
+        settings: ExperimentSettings,
+        config: OPXConfig = None,
+        connect: bool = True,
+    ):
+        super().__init__(settings=settings, config=config, connect=connect)
+        self.sweep_axis = None  # Axis for live plotting and data saving
+        self.sweep_label = "Swept Variable"  # Label for sweep axis
+
+    def update_sweep_axis(self, new_axis):
+        """
+        Updates the sweep axis for live plotting and data saving. If this method is not called, the
+        variable vector :attr:`var_vec` will be used as the sweep axis by default. It can be convienient
+        to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude
+        rescaling factor physical Vpp units).
+        """
+        if len(new_axis) != len(self.var_vec):
+            raise ValueError(
+                "New sweep axis must have the same length as the variable vector."
+            )
+        self.sweep_axis = new_axis
+
+    def update_sweep_label(self, new_label):
+        """
+        Updates the label for the sweep axis in live plotting. If this method is not called, the
+        default label "Swept Variable" will be used.
+        """
+        self.sweep_label = new_label
+
     def validate_experiment(self):
         """
         Checks to make sure that the experiment contains variable operations,
@@ -71,6 +103,7 @@ class Experiment2D(Experiment):
 
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
+            m = declare(int)  # QUA variable for floquet loops
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
             I1 = declare(fixed)
             Q1 = declare(fixed)
@@ -80,7 +113,10 @@ class Experiment2D(Experiment):
             Q_st = declare_stream()
             t1 = declare(int)
             t2 = declare(int)
-            var = declare(fixed)
+            if self.use_fixed:
+                var = declare(fixed)
+            else:
+                var = declare(int)
 
             if self.start_with_wait:
                 wait(self.wait_between_scans, self.probe_key)
@@ -93,11 +129,11 @@ class Experiment2D(Experiment):
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:
-                        self.translate_command(command, var)
+                        self.translate_command(command, var, m)
 
                     # wait for ringdown to decay, blank amplifier, set to receive mode
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    wait(self.readout)
+                    wait(self.pre_scan_delay)
                     readout_mode(
                         switch=self.rx_switch_key, amplifier=self.amplifier_key
                     )
@@ -150,11 +186,12 @@ class Experiment2D(Experiment):
             mode="live",
         )
 
-        fig_live, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex=False, figsize=(12, 4))
+        fig_live, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex=False, figsize=(16, 6.4))
         interrupt_on_close(fig_live, job)
         try:
             while results.is_processing():
                 I, Q, iteration = results.fetch_all()
+                axis = self.sweep_axis if self.sweep_axis is not None else self.var_vec
                 progress_counter(iteration, self.n_avg, start_time=results.start_time)
 
                 # Convert results into Volts
@@ -164,14 +201,14 @@ class Experiment2D(Experiment):
                 # 2D color plot: pulse amplitude vs I
                 ax1.cla()
                 im1 = ax1.pcolormesh(
-                    self.var_vec,
+                    axis,
                     self.tau_sweep / u.us,
                     I.T * 1e6,
                     shading="auto",
                     cmap="viridis",
                 )
                 ax1.set_ylabel("Delay (µs)")
-                ax1.set_xlabel("Swept Variable")
+                ax1.set_xlabel(self.sweep_label)
                 ax1.set_title("I")
                 if not hasattr(ax1, "_colorbar"):
                     ax1._colorbar = plt.colorbar(im1, ax=ax1, label="I (V)")
@@ -181,14 +218,14 @@ class Experiment2D(Experiment):
                 # 2D color plot: pulse amplitude vs tau for Q
                 ax2.cla()
                 im2 = ax2.pcolormesh(
-                    self.var_vec,
+                    axis,
                     self.tau_sweep / u.us,
                     Q.T * 1e6,
                     shading="auto",
                     cmap="viridis",
                 )
                 ax2.set_ylabel("Delay (µs)")
-                ax2.set_xlabel("Swept Variable")
+                ax2.set_xlabel(self.sweep_label)
                 ax2.set_title("Q")
                 if not hasattr(ax2, "_colorbar"):
                     ax2._colorbar = plt.colorbar(im2, ax=ax2, label="Q (µV)")
@@ -196,11 +233,15 @@ class Experiment2D(Experiment):
                     ax2._colorbar.update_normal(im2)
 
                 ax3.cla()
-                ax3.plot(self.var_vec, I.T[0] * 1e6, label="I")
-                ax3.set_xlabel("Swept Variable")
+                ax3.plot(axis, I.T[0] * 1e6, label="I")
+                ax3.set_xlabel(self.sweep_label)
                 ax3.set_ylabel("I (µV)")
                 ax3.set_title("Primary signal")
                 ax3.legend()
+
+                fig_live.tight_layout()
+                fig_live.canvas.draw_idle()
+                plt.pause(0.1)
 
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
@@ -227,6 +268,9 @@ class Experiment2D(Experiment):
 
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
+        self.save_data_dict.update({"swept_variable": self.var_vec})
+        self.save_data_dict.update({"sweep_axis": axis})
+        self.save_data_dict.update({"sweep_label": self.sweep_label})
         self.save_data_dict.update({"fig_live": fig_live})
 
         self.save_data()
