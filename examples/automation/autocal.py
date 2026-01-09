@@ -34,5 +34,21 @@ saver.save_settings(settings, "autocal_settings", overwrite=True)
 
 cfg = qnmr.cfg_from_settings(settings)
 if check_offset(settings, cfg) != 0:
-    bisection_offset_calibration(settings, cfg)
-saver.save_settings(settings, "autocal_settings", overwrite=True)
+    success = bisection_offset_calibration(settings, cfg)
+
+if success:
+    # calibrate pulse power
+    settings.n_avg = 4
+    saver.save_settings(settings, "autocal_settings", overwrite=True)
+
+    cfg = qnmr.cfg_from_settings(settings)
+    pulse_amp_calibration(settings, cfg, n_wraps=2)
+    saver.save_settings(settings, "autocal_settings", overwrite=True)
+
+    cfg = qnmr.cfg_from_settings(settings)
+    pulse_amp_calibration(settings, cfg, n_wraps=3)
+    saver.save_settings(settings, "autocal_settings", overwrite=True)
+
+    cfg = qnmr.cfg_from_settings(settings)
+    pulse_amp_calibration(settings, cfg, n_wraps=2)
+    saver.save_settings(settings, "autocal_settings", overwrite=True)

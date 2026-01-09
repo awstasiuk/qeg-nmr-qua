@@ -23,7 +23,7 @@ def phase_calibration(settings, config):
     """
     expt = qnmr.Experiment1D(config, settings)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
-    expt.execute_experiment()
+    expt.execute_experiment(live=False)
 
     I = expt.save_data_dict["I"]
     Q = expt.save_data_dict["Q"]
@@ -49,7 +49,7 @@ def check_offset(settings, config):
     """
     expt = qnmr.Experiment1D(config, settings)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
-    expt.execute_experiment()
+    expt.execute_experiment(live=False)
 
     Q = expt.save_data_dict["Q"]
 
@@ -82,7 +82,7 @@ def bisection_offset_calibration(
         max_iters (int): Maximum number of iterations for the bisection method.
 
     Returns:
-        float: Estimated optimal offset frequency in Hz.
+        bool: If we successfully calibrated the offset frequency.
     """
     a = settings.offset_freq
     b = settings.offset_freq + delta
@@ -93,27 +93,28 @@ def bisection_offset_calibration(
         phase_calibration(settings, config)
         result = check_offset(settings, config)
         if result == 0:
-            return b  # we are calibrated sufficiently
+            print("Offset frequency calibrated to {:.2f} Hz".format(b))
+            return True  # we are calibrated sufficiently
         elif result == 1:
             b += delta
         else:
             break  # b is on the other side
 
     for _ in range(max_iters):
-        mid_offset = (lower_bound + upper_bound) / 2
+        mid_offset = (a + b) / 2
         settings.offset_freq = mid_offset
         phase_calibration(settings, config)
         result = check_offset(settings, config)
 
         if result == 0:
             print("Offset frequency calibrated to {:.2f} Hz".format(mid_offset))
-            return mid_offset
+            return True
         elif result == 1:
-            lower_bound = mid_offset
+            a = mid_offset
         else:
-            upper_bound = mid_offset
+            b = mid_offset
 
-        if abs(upper_bound - lower_bound) < tol:
+        if abs(b - a) < tol:
             print(
                 "Offset frequency calibration too narrow, check autocorrelation manually."
             )
@@ -123,4 +124,37 @@ def bisection_offset_calibration(
         "Offset Calibration failed - final offset frequency is {:.2f} Hz".format(
             mid_offset
         )
+    )
+    return False
+
+
+def pulse_amp_calibration(settings, config, n_wraps=2):
+    """
+    Placeholder for pulse amplitude calibration function.
+    """
+    amp_scaling = np.arange(0.94, 1.06, 0.01)
+    expt = qnmr.Experiment2D(settings=settings, config=config)
+
+    expt.add_pulse(
+        name=settings.pi_half_key, element=settings.res_key, amplitude=amp_scaling
+    )
+
+    for i in range(n_wraps * 4):
+        expt.add_pulse(
+            name=settings.pi_half_key, element=settings.res_key, amplitude=amp_scaling
+        )
+        expt.add_delay(2 * u.us)
+
+    expt.update_sweep_axis(amp_scaling * settings.pulse_amplitude)
+    expt.execute_experiment(live=False)
+
+    re = np.array(expt.save_data_dict["I"]) * 1e6
+    sig = re[:, 0]
+    power = np.array(expt.save_data_dict["sweep_axis"])
+    coefficients = np.polyfit(power, sig, 2)
+
+    max_amp = -coefficients[1] / (2 * coefficients[0])
+    settings.pulse_amplitude = max_amp
+    print(
+        f"Updated pulse amplitude to {max_amp:.3f} Vpp after maxing over {n_wraps} Bloch sphere wraps."
     )
