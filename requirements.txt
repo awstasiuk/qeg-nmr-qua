@@ -5,3 +5,5 @@ matplotlib
 qualang-tools
 pytest
 setuptools
+statsmodels
+pandas

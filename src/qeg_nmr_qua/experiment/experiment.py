@@ -460,11 +460,15 @@ class Experiment:
         )
         # return job
 
-    def execute_experiment(self):
+    def execute_experiment(self, live: bool = True):
         """
         Executes the experiment using the configured experiment defined by this class based on the current
         config defined by this instance's `config` attribute. The method handles the execution on hardware,
         data fetching, and basic plotting of results.
+
+        Args:
+            live (bool): Passed into `data_processing` to determine whether to display data live during execution
+                or only after completion, depending on the subclass implementation.
 
         Raises:
             ValueError: Throws an error if insufficient details about the experiment are defined.
@@ -475,10 +479,10 @@ class Experiment:
         expt = self.create_experiment()
         qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
         job = qm.execute(expt)
-        self.live_data_processing(qm, job)
+        self.data_processing(qm, job, live=live)
         qm.close()
 
-    def live_data_processing(self, qm: QuantumMachine, job: RunningQmJob):
+    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool = True):
         """
         Grabs the results of the experiment as it is being executed. This method must be
         implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
@@ -486,10 +490,14 @@ class Experiment:
         this method can (and should) update the `save_data_dict` attribute with relevant raw data for saving to
         disk after the experiment completes.
 
+        Subclass implementations should make use of the `live` argument to determine whether to plot data
+        live during execution or only after the experiment completes. Autonomous experiments will typically
+        want to set `live` to `False` to avoid blocking execution when waiting for user input to close plots.
 
         Args:
             qm (QuantumMachine): The quantum machine executing the experiment.
             job (RunningQmJob): The job running the experiment.
+            live (bool): Whether to display data live during execution or only after completion.
         """
         pass  # to be implemented by subclasses
 

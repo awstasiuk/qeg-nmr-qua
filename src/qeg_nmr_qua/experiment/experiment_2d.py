@@ -13,6 +13,8 @@ from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
 from qualang_tools.loops import from_array
+from qm import QuantumMachine
+from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
     wait,
     measure,
@@ -178,93 +180,118 @@ class Experiment2D(Experiment):
 
         return experiment
 
-    def live_data_processing(self, qm, job):
-        # Fetching tool
+    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool):
+        """
+        Handles live data processing for a 2D experiment during execution. This method fetches
+        data from the Quantum Machine job, processes it into voltage units via digital demodulation,
+        and generates live plots when `live` is set to `True`. The plot includes 2D color plots of the I
+        and Q signals as functions of the swept variable and acquisition time, as well as a line plot of
+        the primary signal, determined to be the first element of each FID's I data. This captures the essential
+        observable for 2D NMR experiments, such as calibrations of T1, T2, pulse amplitude sweeps, and
+        Hamiltonian engineering measurements of two-point correlations.
+
+        After the experiment completes, the final data is saved into the :attr:`save_data_dict` for
+        later analysis and storage.
+
+        Args:
+            qm (QuantumMachine): The Quantum Machine instance used to run the experiment.
+            job (RunningQmJob): The job object representing the running experiment.
+            live (bool): Flag indicating whether to generate live plots during data acquisition.
+        """
+        # Fetching tool -- even if we aren't doing live plotting, we use it to fetch data
+        # continually during the experiment's execution
         results = fetching_tool(
             job,
             data_list=["I", "Q", "iteration"],
             mode="live",
         )
-
-        fig_live, (ax1, ax2, ax3) = plt.subplots(1, 3, sharex=False, figsize=(16, 6.4))
-        interrupt_on_close(fig_live, job)
+        if live:
+            fig_live, (ax1, ax2, ax3) = plt.subplots(
+                1, 3, sharex=False, figsize=(16, 6.4)
+            )
+            interrupt_on_close(fig_live, job)
         try:
             while results.is_processing():
                 I, Q, iteration = results.fetch_all()
-                axis = self.sweep_axis if self.sweep_axis is not None else self.var_vec
+
                 progress_counter(iteration, self.n_avg, start_time=results.start_time)
 
                 # Convert results into Volts
                 I = u.demod2volts(I, self.readout_len)
                 Q = u.demod2volts(Q, self.readout_len)
 
-                # 2D color plot: pulse amplitude vs I
-                ax1.cla()
-                im1 = ax1.pcolormesh(
-                    axis,
-                    self.tau_sweep / u.us,
-                    I.T * 1e6,
-                    shading="auto",
-                    cmap="viridis",
-                )
-                ax1.set_ylabel("Delay (µs)")
-                ax1.set_xlabel(self.sweep_label)
-                ax1.set_title("I")
-                if not hasattr(ax1, "_colorbar"):
-                    ax1._colorbar = plt.colorbar(im1, ax=ax1, label="I (V)")
-                else:
-                    ax1._colorbar.update_normal(im1)
+                if live:
+                    # 2D color plot: pulse amplitude vs I
+                    axis = (
+                        self.sweep_axis if self.sweep_axis is not None else self.var_vec
+                    )
+                    ax1.cla()
+                    im1 = ax1.pcolormesh(
+                        axis,
+                        self.tau_sweep / u.us,
+                        I.T * 1e6,
+                        shading="auto",
+                        cmap="viridis",
+                    )
+                    ax1.set_ylabel("Delay (µs)")
+                    ax1.set_xlabel(self.sweep_label)
+                    ax1.set_title("I")
+                    if not hasattr(ax1, "_colorbar"):
+                        ax1._colorbar = plt.colorbar(im1, ax=ax1, label="I (V)")
+                    else:
+                        ax1._colorbar.update_normal(im1)
 
-                # 2D color plot: pulse amplitude vs tau for Q
-                ax2.cla()
-                im2 = ax2.pcolormesh(
-                    axis,
-                    self.tau_sweep / u.us,
-                    Q.T * 1e6,
-                    shading="auto",
-                    cmap="viridis",
-                )
-                ax2.set_ylabel("Delay (µs)")
-                ax2.set_xlabel(self.sweep_label)
-                ax2.set_title("Q")
-                if not hasattr(ax2, "_colorbar"):
-                    ax2._colorbar = plt.colorbar(im2, ax=ax2, label="Q (µV)")
-                else:
-                    ax2._colorbar.update_normal(im2)
+                    # 2D color plot: pulse amplitude vs tau for Q
+                    ax2.cla()
+                    im2 = ax2.pcolormesh(
+                        axis,
+                        self.tau_sweep / u.us,
+                        Q.T * 1e6,
+                        shading="auto",
+                        cmap="viridis",
+                    )
+                    ax2.set_ylabel("Delay (µs)")
+                    ax2.set_xlabel(self.sweep_label)
+                    ax2.set_title("Q")
+                    if not hasattr(ax2, "_colorbar"):
+                        ax2._colorbar = plt.colorbar(im2, ax=ax2, label="Q (µV)")
+                    else:
+                        ax2._colorbar.update_normal(im2)
 
-                ax3.cla()
-                ax3.plot(axis, I.T[0] * 1e6, label="I")
-                ax3.set_xlabel(self.sweep_label)
-                ax3.set_ylabel("I (µV)")
-                ax3.set_title("Primary signal")
-                ax3.legend()
+                    ax3.cla()
+                    ax3.plot(axis, I.T[0] * 1e6, label="I")
+                    ax3.set_xlabel(self.sweep_label)
+                    ax3.set_ylabel("I (µV)")
+                    ax3.set_title("Primary signal")
+                    ax3.legend()
 
-                fig_live.tight_layout()
-                fig_live.canvas.draw_idle()
-                plt.pause(0.1)
+                    fig_live.tight_layout()
+                    fig_live.canvas.draw_idle()
+                    plt.pause(0.1)
 
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
 
-        # Keep the interactive plot open after acquisition until the user closes it
-        message = "Acquisition finished. Close the plot window to continue."
-        print(message)
-        try:
-            # Add a centered text box on the figure (figure coordinates)
-            fig_live.text(
-                0.04,
-                0.02,
-                message,
-                ha="left",
-                va="bottom",
-                fontsize=8,
-                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
-            )
-            fig_live.canvas.draw_idle()
-        except Exception as e:
-            print(e)
-        while plt.fignum_exists(fig_live.number):
-            plt.pause(0.5)
+        if live:
+            # Keep the interactive plot open after acquisition until the user closes it
+            message = "Acquisition finished. Close the plot window to continue."
+            print(message)
+            try:
+                # Add a centered text box on the figure (figure coordinates)
+                fig_live.text(
+                    0.04,
+                    0.02,
+                    message,
+                    ha="left",
+                    va="bottom",
+                    fontsize=8,
+                    bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+                )
+                fig_live.canvas.draw_idle()
+            except Exception as e:
+                print(e)
+            while plt.fignum_exists(fig_live.number):
+                plt.pause(0.5)
 
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
