@@ -21,12 +21,12 @@ def phase_calibration(settings, config):
     Returns:
         float: Estimated phase drift in degrees.
     """
-    expt = qnmr.Experiment1D(config, settings)
+    expt = qnmr.Experiment1D(settings, config)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
     expt.execute_experiment(live=False)
 
-    I = expt.save_data_dict["I"]
-    Q = expt.save_data_dict["Q"]
+    I = expt.save_data_dict["I_data"]
+    Q = expt.save_data_dict["Q_data"]
 
     delphi = np.arctan2(Q[0], I[0]) * (180 / np.pi)
     settings.rotation_angle += delphi
@@ -47,11 +47,11 @@ def check_offset(settings, config):
         int: Either 0 if the offset frequency is acceptable, 1 if it needs to be increase,
             or -1 if it needs to be decreased.
     """
-    expt = qnmr.Experiment1D(config, settings)
+    expt = qnmr.Experiment1D(settings, config)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
     expt.execute_experiment(live=False)
 
-    Q = expt.save_data_dict["Q"]
+    Q = expt.save_data_dict["Q_data"]
 
     # Calculate the autocorrelation of the signal
     autocorr = acf(Q, nlags=len(Q) - 1, fft=True)
@@ -148,7 +148,7 @@ def pulse_amp_calibration(settings, config, n_wraps=2):
     expt.update_sweep_axis(amp_scaling * settings.pulse_amplitude)
     expt.execute_experiment(live=False)
 
-    re = np.array(expt.save_data_dict["I"]) * 1e6
+    re = np.array(expt.save_data_dict["I_data"]) * 1e6
     sig = re[:, 0]
     power = np.array(expt.save_data_dict["sweep_axis"])
     coefficients = np.polyfit(power, sig, 2)
