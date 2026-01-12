@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from qeg_nmr_qua.analysis.encoder import QuantumEncoder
+from qeg_nmr_qua.config.settings import ExperimentSettings
+from qeg_nmr_qua.config.config import OPXConfig
 
 
 class DataSaver:
@@ -82,8 +84,8 @@ class DataSaver:
     def save_experiment(
         self,
         experiment_prefix: str,
-        config: dict[str, Any],
-        settings: dict[str, Any],
+        config: OPXConfig,
+        settings: ExperimentSettings,
         commands: list[dict[str, Any]],
         data: dict[str, Any],
     ) -> Path:
@@ -117,10 +119,8 @@ class DataSaver:
                 The actual folder created will be ``<experiment_prefix>_NNNN`` with a
                 zero-padded 4-digit counter (starting at 0001). Must not contain path
                 separators or be ".".
-            config (dict[str, Any]): OPX configuration dictionary from
-                :meth:`~OPXConfig.to_dict`.
-            settings (dict[str, Any]): Experiment settings dictionary from
-                :meth:`~ExperimentSettings.to_dict`.
+            config (OPXConfig): OPX configuration object.
+            settings (ExperimentSettings): Experiment settings object.
             commands (list[dict[str, Any]]): List of command dictionaries defining
                 the pulse sequence.
             data (dict[str, Any]): Experimental data dictionary. Can contain numpy arrays,
@@ -149,7 +149,11 @@ class DataSaver:
         # Validate experiment prefix
         if not isinstance(experiment_prefix, str) or experiment_prefix == "":
             raise ValueError("experiment_prefix must be a non-empty string.")
-        if "/" in experiment_prefix or "\\" in experiment_prefix or experiment_prefix == ".":
+        if (
+            "/" in experiment_prefix
+            or "\\" in experiment_prefix
+            or experiment_prefix == "."
+        ):
             raise ValueError(
                 f"Invalid experiment prefix '{experiment_prefix}'. "
                 "Must be a simple name without path separators."
@@ -314,6 +318,134 @@ class DataSaver:
         """
         with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
+
+    def _prepare_settings_for_save(self, settings: Any) -> Any:
+        """Convert a settings object to a JSON-serializable dict.
+
+        Accepts either a dict or an object that implements ``to_dict()`` (e.g.
+        :class:`ExperimentSettings`). On failure returns a safe fallback dict
+        containing a string representation and the error message.
+        """
+        try:
+            if isinstance(settings, dict):
+                sdict = dict(settings)
+            elif hasattr(settings, "to_dict") and callable(
+                getattr(settings, "to_dict")
+            ):
+                try:
+                    sdict = settings.to_dict()
+                except Exception as e:
+                    warnings.warn(
+                        f"settings.to_dict() raised an exception: {e}. Using repr fallback.",
+                        UserWarning,
+                    )
+                    return {"_repr": repr(settings), "_error": str(e)}
+            elif hasattr(settings, "__dict__"):
+                sdict = dict(getattr(settings, "__dict__"))
+            else:
+                return {"_repr": repr(settings)}
+
+            # Convert Path objects to strings
+            for k, v in list(sdict.items()):
+                if isinstance(v, Path):
+                    sdict[k] = str(v)
+
+            # Ensure serializable with QuantumEncoder
+            try:
+                json.dumps(sdict, cls=QuantumEncoder)
+            except Exception as e:
+                warnings.warn(
+                    f"Settings not JSON-serializable: {e}. Saving repr instead.",
+                    UserWarning,
+                )
+                return {"_repr": repr(settings), "_error": str(e)}
+
+            return sdict
+
+        except Exception as e:
+            warnings.warn(
+                f"Unexpected error preparing settings for save: {e}. Using repr fallback.",
+                UserWarning,
+            )
+            return {"_repr": repr(settings), "_error": str(e)}
+
+    def save_settings(
+        self, settings: ExperimentSettings, name: str, overwrite: bool = False
+    ) -> Path:
+        """Save settings independently for later reuse.
+
+        The settings are stored under the `settings/` subfolder in the root
+        data folder as a JSON file named ``<name>.json``. Accepts either
+        a dict or an object that implements ``to_dict()``. By default this
+        method will not overwrite an existing settings file unless
+        ``overwrite=True``.
+
+        Args:
+            name: Simple name for the settings (no path separators).
+            settings: Settings object or dict.
+            overwrite: Whether to overwrite an existing settings file.
+
+        Returns:
+            Path: Path to the saved settings JSON file.
+
+        Raises:
+            ValueError: If `name` is invalid or the file exists and overwrite is False.
+            RuntimeError: On I/O or serialization failures.
+        """
+        if not isinstance(name, str) or name == "":
+            raise ValueError("name must be a non-empty string")
+        if "/" in name or "\\" in name or name == ".":
+            raise ValueError(
+                "The parameter 'name' must be a simple filename without path separators"
+            )
+
+        settings_folder = self.root_data_folder / "settings"
+        settings_folder.mkdir(parents=True, exist_ok=True)
+
+        filename = f"{name}.json"
+        filepath = settings_folder / filename
+
+        if filepath.exists() and not overwrite:
+            raise ValueError(
+                f"Settings file '{filename}' already exists. Pass overwrite=True to replace it."
+            )
+
+        prepared = self._prepare_settings_for_save(settings)
+
+        try:
+            self._save_json(filepath, prepared)
+        except Exception as e:
+            raise RuntimeError(f"Failed to save settings '{name}': {e}") from e
+
+        return filepath
+
+    def load_settings(self, name: str) -> dict[str, Any]:
+        """Load a previously saved settings JSON by name.
+
+        Returns the deserialized dict as saved. Raises FileNotFoundError if not found.
+        """
+        if not isinstance(name, str) or name == "":
+            raise ValueError("name must be a non-empty string")
+        if "/" in name or "\\" in name or name == ".":
+            raise ValueError(
+                "The parameter 'name' must be a simple filename without path separators"
+            )
+
+        filepath = self.root_data_folder / "settings" / f"{name}.json"
+        if not filepath.exists():
+            raise FileNotFoundError(f"Settings file not found: {filepath}")
+
+        return self._load_json(filepath)
+
+    def list_saved_settings(self) -> list[str]:
+        """Return list of saved settings names (without .json extension)."""
+        folder = self.root_data_folder / "settings"
+        if not folder.exists():
+            return []
+        names = [
+            p.stem for p in folder.iterdir() if p.is_file() and p.suffix == ".json"
+        ]
+        return sorted(names)
 
     def _process_data_payload(
         self, data: dict[str, Any], experiment_folder: Path

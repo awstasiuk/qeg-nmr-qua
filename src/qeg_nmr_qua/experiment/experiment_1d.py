@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
+from qm import QuantumMachine
+from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
     wait,
     measure,
@@ -128,68 +130,97 @@ class Experiment1D(Experiment):
 
         return experiment
 
-    def live_data_processing(self, qm, job):
-        # Fetching tool
+    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
+        """
+        Handles live data processing for a 1D experiment during execution.
+
+        This method fetches data from the Quantum Machine job, processes it into
+        voltage units via digital demodulation, and generates a live plot when
+        `live` is set to `True`. The plot shows I and Q as a function of
+        acquisition time. After the experiment completes, the final data is
+        saved into :attr:`save_data_dict` for later analysis and storage.
+
+        Args:
+            qm (QuantumMachine): The Quantum Machine instance used to run the experiment.
+            job (RunningQmJob): The job object representing the running experiment.
+            live (bool): Flag indicating whether to generate live plots during data acquisition.
+            wait_on_close (bool): Whether to wait for user to close plot after completion.
+            title_prefix (str): Prefix to add to plot title.
+        """
+        # Fetching tool -- used in live mode to stream results during execution
         results = fetching_tool(
             job,
             data_list=["I", "Q", "iteration"],
             mode="live",
         )
 
-        fig_live, (ax1, ax2) = plt.subplots(2, 1, sharex=True, height_ratios=[0, 1])
-        ax1.set_visible(False)
-        interrupt_on_close(fig_live, job)
+        fig_live = None
+        if live:
+            fig_live, ax = plt.subplots(1, 1, figsize=(10, 4))
+            # Only interrupt on close if we're waiting for user input
+            if wait_on_close:
+                interrupt_on_close(fig_live, job)
+
         try:
             while results.is_processing():
                 I, Q, iteration = results.fetch_all()
+
                 progress_counter(iteration, self.n_avg, start_time=results.start_time)
 
                 # Convert results into Volts
                 I = u.demod2volts(I, self.readout_len)
                 Q = u.demod2volts(Q, self.readout_len)
 
-                ax2.cla()
-                fig_live.suptitle(f"Good title, scan {iteration+1}/{self.n_avg}")
-                ax2.plot(
-                    (self.tau_sweep) / u.us,
-                    I * 1e6,
-                    label=f"I Resonator {self.probe_key}",
-                )
-                ax2.plot(
-                    (self.tau_sweep) / u.us,
-                    Q * 1e6,
-                    label=f"Q Resonator {self.probe_key}",
-                )
-                ax2.set_ylabel("I&Q (µV)")
-                ax2.set_xlabel("Acquisition time (µs)")
-                ax2.legend()
-                fig_live.tight_layout()
-                fig_live.canvas.draw_idle()
-                plt.pause(0.25)
+                if live and fig_live is not None:
+                    ax.cla()
+                    title = f"{title_prefix}Scan {iteration+1}/{self.n_avg}" if title_prefix else f"Scan {iteration+1}/{self.n_avg}"
+                    fig_live.suptitle(title)
+                    ax.plot(
+                        self.tau_sweep / u.us,
+                        I * 1e6,
+                        label=f"I Resonator {self.probe_key}",
+                    )
+                    ax.plot(
+                        self.tau_sweep / u.us,
+                        Q * 1e6,
+                        label=f"Q Resonator {self.probe_key}",
+                    )
+                    ax.set_ylabel("I&Q (µV)")
+                    ax.set_xlabel("Acquisition time (µs)")
+                    ax.legend()
+                    fig_live.tight_layout()
+                    fig_live.canvas.draw_idle()
+                    plt.pause(0.25)
 
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
 
         # Keep the interactive plot open after acquisition until the user closes it
-        message = "Acquisition finished. Close the plot window to continue."
-        print(message)
-        try:
-            # Add a centered text box on the figure (figure coordinates)
-            fig_live.text(
-                0.04,
-                0.02,
-                message,
-                ha="left",
-                va="bottom",
-                fontsize=8,
-                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
-            )
-            fig_live.canvas.draw_idle()
-        except Exception as e:
-            print(e)
-        while plt.fignum_exists(fig_live.number):
-            plt.pause(0.5)
+        if live and fig_live is not None and wait_on_close:
+            message = "Acquisition finished. Close the plot window to continue."
+            print(message)
+            try:
+                fig_live.text(
+                    0.04,
+                    0.02,
+                    message,
+                    ha="left",
+                    va="bottom",
+                    fontsize=8,
+                    bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+                )
+                fig_live.canvas.draw_idle()
+            except Exception as e:
+                print(e)
+            while plt.fignum_exists(fig_live.number):
+                plt.pause(0.5)
 
+        # Close the figure if we're not waiting for user to close it
+        if live and fig_live is not None and not wait_on_close:
+            plt.close(fig_live)
+            fig_live = None
+
+        # Save final arrays (I, Q) and figure handle (if any)
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
         self.save_data_dict.update({"fig_live": fig_live})
