@@ -9,6 +9,9 @@ from statsmodels.tsa.stattools import acf
 
 u = unit(coerce_to_integer=True)
 
+# Enable interactive plotting mode for responsive plots
+plt.ion()
+
 # create a starting point for the automated calibration script
 settings = qnmr.ExperimentSettings(
     n_avg=2,

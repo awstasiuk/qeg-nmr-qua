@@ -211,7 +211,9 @@ class Experiment2D(Experiment):
             fig_live, (ax1, ax2, ax3) = plt.subplots(
                 1, 3, sharex=False, figsize=(16, 6.4)
             )
-            interrupt_on_close(fig_live, job)
+            # Only interrupt on close if we're waiting for user input
+            if wait_on_close:
+                interrupt_on_close(fig_live, job)
         try:
             while results.is_processing():
                 I, Q, iteration = results.fetch_all()
@@ -296,6 +298,11 @@ class Experiment2D(Experiment):
                 print(e)
             while plt.fignum_exists(fig_live.number):
                 plt.pause(0.5)
+
+        # Close the figure if we're not waiting for user to close it
+        if live and not wait_on_close:
+            plt.close(fig_live)
+            fig_live = None
 
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
