@@ -28,27 +28,30 @@ settings = qnmr.ExperimentSettings(
 saver = qnmr.DataSaver(settings.save_dir)
 saver.save_settings(settings, "autocal_settings", overwrite=True)
 
-cfg = qnmr.cfg_from_settings(settings)
-phase_calibration(settings, cfg)
+phase_calibration(settings)
+print(f"[AUTOCAL] After phase_calibration: rotation_angle = {settings.rotation_angle:.2f}°")
 saver.save_settings(settings, "autocal_settings", overwrite=True)
 
-cfg = qnmr.cfg_from_settings(settings)
-if check_offset(settings, cfg) != 0:
-    success = bisection_offset_calibration(settings, cfg)
+if check_offset(settings) != 0:
+    success = bisection_offset_calibration(settings)
+    print(f"[AUTOCAL] After offset calibration: offset_freq = {settings.offset_freq:.2f} Hz")
+else:
+    success = True
+    print(f"[AUTOCAL] Offset already calibrated: offset_freq = {settings.offset_freq:.2f} Hz")
 
 if success:
     # calibrate pulse power
     settings.n_avg = 4
     saver.save_settings(settings, "autocal_settings", overwrite=True)
 
-    cfg = qnmr.cfg_from_settings(settings)
-    pulse_amp_calibration(settings, cfg, n_wraps=2)
+    pulse_amp_calibration(settings, n_wraps=2)
+    print(f"[AUTOCAL] After 1st pulse cal (2 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}")
     saver.save_settings(settings, "autocal_settings", overwrite=True)
 
-    cfg = qnmr.cfg_from_settings(settings)
-    pulse_amp_calibration(settings, cfg, n_wraps=3)
+    pulse_amp_calibration(settings, n_wraps=3)
+    print(f"[AUTOCAL] After 2nd pulse cal (3 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}")
     saver.save_settings(settings, "autocal_settings", overwrite=True)
 
-    cfg = qnmr.cfg_from_settings(settings)
-    pulse_amp_calibration(settings, cfg, n_wraps=2)
+    pulse_amp_calibration(settings, n_wraps=2)
+    print(f"[AUTOCAL] After 3rd pulse cal (2 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}")
     saver.save_settings(settings, "autocal_settings", overwrite=True)

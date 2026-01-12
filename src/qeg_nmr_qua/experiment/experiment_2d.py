@@ -180,7 +180,7 @@ class Experiment2D(Experiment):
 
         return experiment
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool):
+    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
         """
         Handles live data processing for a 2D experiment during execution. This method fetches
         data from the Quantum Machine job, processes it into voltage units via digital demodulation,
@@ -197,6 +197,8 @@ class Experiment2D(Experiment):
             qm (QuantumMachine): The Quantum Machine instance used to run the experiment.
             job (RunningQmJob): The job object representing the running experiment.
             live (bool): Flag indicating whether to generate live plots during data acquisition.
+            wait_on_close (bool): Whether to wait for user to close plot after completion.
+            title_prefix (str): Prefix to add to plot title.
         """
         # Fetching tool -- even if we aren't doing live plotting, we use it to fetch data
         # continually during the experiment's execution
@@ -225,6 +227,8 @@ class Experiment2D(Experiment):
                     axis = (
                         self.sweep_axis if self.sweep_axis is not None else self.var_vec
                     )
+                    if title_prefix:
+                        fig_live.suptitle(title_prefix, fontsize=12, fontweight='bold')
                     ax1.cla()
                     im1 = ax1.pcolormesh(
                         axis,
@@ -272,7 +276,7 @@ class Experiment2D(Experiment):
         except KeyboardInterrupt:
             print("Experiment interrupted by user.")
 
-        if live:
+        if live and wait_on_close:
             # Keep the interactive plot open after acquisition until the user closes it
             message = "Acquisition finished. Close the plot window to continue."
             print(message)

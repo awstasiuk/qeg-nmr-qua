@@ -130,7 +130,7 @@ class Experiment1D(Experiment):
 
         return experiment
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool):
+    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
         """
         Handles live data processing for a 1D experiment during execution.
 
@@ -144,6 +144,8 @@ class Experiment1D(Experiment):
             qm (QuantumMachine): The Quantum Machine instance used to run the experiment.
             job (RunningQmJob): The job object representing the running experiment.
             live (bool): Flag indicating whether to generate live plots during data acquisition.
+            wait_on_close (bool): Whether to wait for user to close plot after completion.
+            title_prefix (str): Prefix to add to plot title.
         """
         # Fetching tool -- used in live mode to stream results during execution
         results = fetching_tool(
@@ -169,7 +171,8 @@ class Experiment1D(Experiment):
 
                 if live and fig_live is not None:
                     ax.cla()
-                    fig_live.suptitle(f"Scan {iteration+1}/{self.n_avg}")
+                    title = f"{title_prefix}Scan {iteration+1}/{self.n_avg}" if title_prefix else f"Scan {iteration+1}/{self.n_avg}"
+                    fig_live.suptitle(title)
                     ax.plot(
                         self.tau_sweep / u.us,
                         I * 1e6,
@@ -191,7 +194,7 @@ class Experiment1D(Experiment):
             print("Experiment interrupted by user.")
 
         # Keep the interactive plot open after acquisition until the user closes it
-        if live and fig_live is not None:
+        if live and fig_live is not None and wait_on_close:
             message = "Acquisition finished. Close the plot window to continue."
             print(message)
             try:

@@ -9,47 +9,47 @@ from statsmodels.tsa.stattools import acf
 u = unit(coerce_to_integer=True)
 
 
-def phase_calibration(settings, config):
+def phase_calibration(settings):
     """
     Perform phase calibration using a 1D FID experiment to determine the phase drift
     of the nuclear spin frequency reference.
 
     Args:
         settings (ExperimentSettings): Experiment settings object.
-        config (OPXConfig): OPX configuration object.
 
     Returns:
         float: Estimated phase drift in degrees.
     """
+    config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
-    expt.execute_experiment(live=False)
+    expt.execute_experiment(live=True, wait_on_close=False, title_prefix="[Phase Calibration] ")
 
     I = expt.save_data_dict["I_data"]
     Q = expt.save_data_dict["Q_data"]
 
     delphi = np.arctan2(Q[0], I[0]) * (180 / np.pi)
-    settings.rotation_angle += delphi
+    settings.rotation_angle += round(delphi, 2)
     print("Incrementing phase reference by {:.2f} degrees".format(delphi))
     # return delphi
 
 
-def check_offset(settings, config):
+def check_offset(settings):
     """
     Perform offset frequency calibration using a 1D FID experiment to determine
     the optimal offset frequency.
 
     Args:
         settings (ExperimentSettings): Experiment settings object.
-        config (OPXConfig): OPX configuration object.
 
     Returns:
         int: Either 0 if the offset frequency is acceptable, 1 if it needs to be increase,
             or -1 if it needs to be decreased.
     """
+    config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
-    expt.execute_experiment(live=False)
+    expt.execute_experiment(live=True, wait_on_close=False, title_prefix="[Offset Check] ")
 
     Q = expt.save_data_dict["Q_data"]
 
@@ -70,14 +70,13 @@ def check_offset(settings, config):
 
 
 def bisection_offset_calibration(
-    settings, config, delta=500 * u.Hz, max_iters=10, tol=50 * u.Hz
+    settings, delta=500 * u.Hz, max_iters=10, tol=50 * u.Hz
 ):
     """
     Perform offset frequency calibration using a bisection method to find the optimal offset frequency.
 
     Args:
         settings (ExperimentSettings): Experiment settings object.
-        config (OPXConfig): OPX configuration object.
         tol (int): Tolerance for the offset frequency in Hz.
         max_iters (int): Maximum number of iterations for the bisection method.
 
@@ -90,8 +89,8 @@ def bisection_offset_calibration(
     # check that b is actually on the other side of the root
     for _ in range(max_iters):
         settings.offset_freq = b
-        phase_calibration(settings, config)
-        result = check_offset(settings, config)
+        phase_calibration(settings)
+        result = check_offset(settings)
         if result == 0:
             print("Offset frequency calibrated to {:.2f} Hz".format(b))
             return True  # we are calibrated sufficiently
@@ -103,8 +102,8 @@ def bisection_offset_calibration(
     for _ in range(max_iters):
         mid_offset = (a + b) / 2
         settings.offset_freq = mid_offset
-        phase_calibration(settings, config)
-        result = check_offset(settings, config)
+        phase_calibration(settings)
+        result = check_offset(settings)
 
         if result == 0:
             print("Offset frequency calibrated to {:.2f} Hz".format(mid_offset))
@@ -128,10 +127,11 @@ def bisection_offset_calibration(
     return False
 
 
-def pulse_amp_calibration(settings, config, n_wraps=2):
+def pulse_amp_calibration(settings, n_wraps=2):
     """
     Placeholder for pulse amplitude calibration function.
     """
+    config = qnmr.cfg_from_settings(settings)
     amp_scaling = np.arange(0.94, 1.06, 0.01)
     expt = qnmr.Experiment2D(settings=settings, config=config)
 
@@ -146,7 +146,7 @@ def pulse_amp_calibration(settings, config, n_wraps=2):
         expt.add_delay(2 * u.us)
 
     expt.update_sweep_axis(amp_scaling * settings.pulse_amplitude)
-    expt.execute_experiment(live=False)
+    expt.execute_experiment(live=True, wait_on_close=False, title_prefix=f"[Pulse Amplitude Cal - {n_wraps} wraps] ")
 
     re = np.array(expt.save_data_dict["I_data"]) * 1e6
     sig = re[:, 0]
