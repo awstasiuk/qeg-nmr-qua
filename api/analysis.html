@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analysis Module &mdash; qeg-nmr-qua 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/api/analysis.html" />
@@ -205,10 +205,8 @@ non-serializable objects gracefully.</p>
 The actual folder created will be <code class="docutils literal notranslate"><span class="pre">&lt;experiment_prefix&gt;_NNNN</span></code> with a
 zero-padded 4-digit counter (starting at 0001). Must not contain path
 separators or be “.”.</p></li>
-<li><p><strong>config</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – OPX configuration dictionary from
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">to_dict()</span></code>.</p></li>
-<li><p><strong>settings</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Experiment settings dictionary from
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">to_dict()</span></code>.</p></li>
+<li><p><strong>config</strong> (<em>OPXConfig</em>) – OPX configuration object.</p></li>
+<li><p><strong>settings</strong> (<a class="reference internal" href="config.html#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><em>ExperimentSettings</em></a>) – Experiment settings object.</p></li>
 <li><p><strong>commands</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em><em>]</em>) – List of command dictionaries defining
 the pulse sequence.</p></li>
 <li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Experimental data dictionary. Can contain numpy arrays,
@@ -281,6 +279,61 @@ saved data including configuration, settings, commands, and results.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.analysis.data_saver.DataSaver.save_settings">
+<span class="sig-name descname"><span class="pre">save_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/analysis/data_saver.html#DataSaver.save_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.analysis.data_saver.DataSaver.save_settings" title="Link to this definition"></a></dt>
+<dd><p>Save settings independently for later reuse.</p>
+<p>The settings are stored under the <cite>settings/</cite> subfolder in the root
+data folder as a JSON file named <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.json</span></code>. Accepts either
+a dict or an object that implements <code class="docutils literal notranslate"><span class="pre">to_dict()</span></code>. By default this
+method will not overwrite an existing settings file unless
+<code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Simple name for the settings (no path separators).</p></li>
+<li><p><strong>settings</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="config.html#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a></span>) – Settings object or dict.</p></li>
+<li><p><strong>overwrite</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – Whether to overwrite an existing settings file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the saved settings JSON file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <cite>name</cite> is invalid or the file exists and overwrite is False.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – On I/O or serialization failures.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.analysis.data_saver.DataSaver.load_settings">
+<span class="sig-name descname"><span class="pre">load_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/analysis/data_saver.html#DataSaver.load_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.analysis.data_saver.DataSaver.load_settings" title="Link to this definition"></a></dt>
+<dd><p>Load a previously saved settings JSON by name.</p>
+<p>Returns the deserialized dict as saved. Raises FileNotFoundError if not found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qeg_nmr_qua.analysis.data_saver.DataSaver.list_saved_settings">
+<span class="sig-name descname"><span class="pre">list_saved_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/analysis/data_saver.html#DataSaver.list_saved_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.analysis.data_saver.DataSaver.list_saved_settings" title="Link to this definition"></a></dt>
+<dd><p>Return list of saved settings names (without .json extension).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>qeg_nmr_qua.experiment.experiment &mdash; qeg-nmr-qua 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/_modules/qeg_nmr_qua/experiment/experiment.html" />
@@ -577,11 +577,18 @@
 
 <div class="viewcode-block" id="Experiment.execute_experiment">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">execute_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_experiment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">live</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">wait_on_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">title_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Executes the experiment using the configured experiment defined by this class based on the current</span>
 <span class="sd">        config defined by this instance&#39;s `config` attribute. The method handles the execution on hardware,</span>
 <span class="sd">        data fetching, and basic plotting of results.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            live (bool): Passed into `data_processing` to determine whether to display data live during execution</span>
+<span class="sd">                or only after completion, depending on the subclass implementation.</span>
+<span class="sd">            wait_on_close (bool): Whether to wait for user to close plot window after experiment completes.</span>
+<span class="sd">                Only relevant when live=True. Defaults to True.</span>
+<span class="sd">            title_prefix (str): Prefix to add to plot title for identification. Defaults to empty string.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: Throws an error if insufficient details about the experiment are defined.</span>
@@ -592,13 +599,13 @@
         <span class="n">expt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">()</span>
         <span class="n">qm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qmm</span><span class="o">.</span><span class="n">open_qm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">to_opx_config</span><span class="p">(),</span> <span class="n">close_other_machines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">job</span> <span class="o">=</span> <span class="n">qm</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">expt</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">live_data_processing</span><span class="p">(</span><span class="n">qm</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_processing</span><span class="p">(</span><span class="n">qm</span><span class="p">,</span> <span class="n">job</span><span class="p">,</span> <span class="n">live</span><span class="o">=</span><span class="n">live</span><span class="p">,</span> <span class="n">wait_on_close</span><span class="o">=</span><span class="n">wait_on_close</span><span class="p">,</span> <span class="n">title_prefix</span><span class="o">=</span><span class="n">title_prefix</span><span class="p">)</span>
         <span class="n">qm</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="Experiment.live_data_processing">
-<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">live_data_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qm</span><span class="p">:</span> <span class="n">QuantumMachine</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">RunningQmJob</span><span class="p">):</span>
+<div class="viewcode-block" id="Experiment.data_processing">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.data_processing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qm</span><span class="p">:</span> <span class="n">QuantumMachine</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">RunningQmJob</span><span class="p">,</span> <span class="n">live</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">wait_on_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">title_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Grabs the results of the experiment as it is being executed. This method must be</span>
 <span class="sd">        implemented by subclasses to determine how to fetch and plot the data specific to the experiment.</span>
@@ -606,10 +613,16 @@
 <span class="sd">        this method can (and should) update the `save_data_dict` attribute with relevant raw data for saving to</span>
 <span class="sd">        disk after the experiment completes.</span>
 
+<span class="sd">        Subclass implementations should make use of the `live` argument to determine whether to plot data</span>
+<span class="sd">        live during execution or only after the experiment completes. Autonomous experiments will typically</span>
+<span class="sd">        want to set `live` to `False` to avoid blocking execution when waiting for user input to close plots.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            qm (QuantumMachine): The quantum machine executing the experiment.</span>
 <span class="sd">            job (RunningQmJob): The job running the experiment.</span>
+<span class="sd">            live (bool): Whether to display data live during execution or only after completion.</span>
+<span class="sd">            wait_on_close (bool): Whether to wait for user to close plot after completion. Only relevant when live=True.</span>
+<span class="sd">            title_prefix (str): Prefix to add to plot titles for identification.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>  <span class="c1"># to be implemented by subclasses</span></div>
 

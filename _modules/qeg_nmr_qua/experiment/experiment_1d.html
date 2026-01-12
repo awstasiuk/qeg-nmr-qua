@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>qeg_nmr_qua.experiment.experiment_1d &mdash; qeg-nmr-qua 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/_modules/qeg_nmr_qua/experiment/experiment_1d.html" />
@@ -83,6 +83,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">fetching_tool</span><span class="p">,</span> <span class="n">progress_counter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">interrupt_on_close</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">unit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qm</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumMachine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qm.jobs.running_qm_job</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunningQmJob</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qm.qua</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">wait</span><span class="p">,</span>
     <span class="n">measure</span><span class="p">,</span>
@@ -210,70 +212,99 @@
         <span class="k">return</span> <span class="n">experiment</span></div>
 
 
-<div class="viewcode-block" id="Experiment1D.live_data_processing">
-<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.live_data_processing">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">live_data_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qm</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
-        <span class="c1"># Fetching tool</span>
+<div class="viewcode-block" id="Experiment1D.data_processing">
+<a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.data_processing">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qm</span><span class="p">:</span> <span class="n">QuantumMachine</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">RunningQmJob</span><span class="p">,</span> <span class="n">live</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">wait_on_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">title_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles live data processing for a 1D experiment during execution.</span>
+
+<span class="sd">        This method fetches data from the Quantum Machine job, processes it into</span>
+<span class="sd">        voltage units via digital demodulation, and generates a live plot when</span>
+<span class="sd">        `live` is set to `True`. The plot shows I and Q as a function of</span>
+<span class="sd">        acquisition time. After the experiment completes, the final data is</span>
+<span class="sd">        saved into :attr:`save_data_dict` for later analysis and storage.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qm (QuantumMachine): The Quantum Machine instance used to run the experiment.</span>
+<span class="sd">            job (RunningQmJob): The job object representing the running experiment.</span>
+<span class="sd">            live (bool): Flag indicating whether to generate live plots during data acquisition.</span>
+<span class="sd">            wait_on_close (bool): Whether to wait for user to close plot after completion.</span>
+<span class="sd">            title_prefix (str): Prefix to add to plot title.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Fetching tool -- used in live mode to stream results during execution</span>
         <span class="n">results</span> <span class="o">=</span> <span class="n">fetching_tool</span><span class="p">(</span>
             <span class="n">job</span><span class="p">,</span>
             <span class="n">data_list</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;Q&quot;</span><span class="p">,</span> <span class="s2">&quot;iteration&quot;</span><span class="p">],</span>
             <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;live&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">fig_live</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">height_ratios</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-        <span class="n">ax1</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
-        <span class="n">interrupt_on_close</span><span class="p">(</span><span class="n">fig_live</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+        <span class="n">fig_live</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">live</span><span class="p">:</span>
+            <span class="n">fig_live</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+            <span class="c1"># Only interrupt on close if we&#39;re waiting for user input</span>
+            <span class="k">if</span> <span class="n">wait_on_close</span><span class="p">:</span>
+                <span class="n">interrupt_on_close</span><span class="p">(</span><span class="n">fig_live</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="k">while</span> <span class="n">results</span><span class="o">.</span><span class="n">is_processing</span><span class="p">():</span>
                 <span class="n">I</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">iteration</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">fetch_all</span><span class="p">()</span>
+
                 <span class="n">progress_counter</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
 
                 <span class="c1"># Convert results into Volts</span>
                 <span class="n">I</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">demod2volts</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_len</span><span class="p">)</span>
                 <span class="n">Q</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">demod2volts</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_len</span><span class="p">)</span>
 
-                <span class="n">ax2</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
-                <span class="n">fig_live</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Good title, scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span><span class="p">)</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
-                    <span class="n">I</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
-                    <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;I Resonator </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span><span class="p">)</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
-                    <span class="n">Q</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
-                    <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Q Resonator </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;I&amp;Q (µV)&quot;</span><span class="p">)</span>
-                <span class="n">ax2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Acquisition time (µs)&quot;</span><span class="p">)</span>
-                <span class="n">ax2</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-                <span class="n">fig_live</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-                <span class="n">fig_live</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">live</span> <span class="ow">and</span> <span class="n">fig_live</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+                    <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title_prefix</span><span class="si">}</span><span class="s2">Scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">title_prefix</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">fig_live</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+                        <span class="n">I</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
+                        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;I Resonator </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+                        <span class="n">Q</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span>
+                        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Q Resonator </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;I&amp;Q (µV)&quot;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Acquisition time (µs)&quot;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+                    <span class="n">fig_live</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+                    <span class="n">fig_live</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)</span>
 
         <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment interrupted by user.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Keep the interactive plot open after acquisition until the user closes it</span>
-        <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;Acquisition finished. Close the plot window to continue.&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Add a centered text box on the figure (figure coordinates)</span>
-            <span class="n">fig_live</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
-                <span class="mf">0.04</span><span class="p">,</span>
-                <span class="mf">0.02</span><span class="p">,</span>
-                <span class="n">message</span><span class="p">,</span>
-                <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
-                <span class="n">va</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
-                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-                <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="n">fig_live</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="k">while</span> <span class="n">plt</span><span class="o">.</span><span class="n">fignum_exists</span><span class="p">(</span><span class="n">fig_live</span><span class="o">.</span><span class="n">number</span><span class="p">):</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">live</span> <span class="ow">and</span> <span class="n">fig_live</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">wait_on_close</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;Acquisition finished. Close the plot window to continue.&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">fig_live</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+                    <span class="mf">0.04</span><span class="p">,</span>
+                    <span class="mf">0.02</span><span class="p">,</span>
+                    <span class="n">message</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+                    <span class="n">va</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                    <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">fig_live</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw_idle</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">plt</span><span class="o">.</span><span class="n">fignum_exists</span><span class="p">(</span><span class="n">fig_live</span><span class="o">.</span><span class="n">number</span><span class="p">):</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
 
+        <span class="c1"># Close the figure if we&#39;re not waiting for user to close it</span>
+        <span class="k">if</span> <span class="n">live</span> <span class="ow">and</span> <span class="n">fig_live</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">wait_on_close</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_live</span><span class="p">)</span>
+            <span class="n">fig_live</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Save final arrays (I, Q) and figure handle (if any)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;I_data&quot;</span><span class="p">:</span> <span class="n">I</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Q_data&quot;</span><span class="p">:</span> <span class="n">Q</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;fig_live&quot;</span><span class="p">:</span> <span class="n">fig_live</span><span class="p">})</span>

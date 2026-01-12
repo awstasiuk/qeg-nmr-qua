@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Experiment Module &mdash; qeg-nmr-qua 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/api/experiment.html" />
@@ -106,7 +106,7 @@
 <p>The experiment module provides classes for running a variety of standard NMR experiments. The base class,
 <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="qeg_nmr_qua.experiment.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a>, contains common functionality for all experiments, while the <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D" title="qeg_nmr_qua.experiment.experiment_1d.Experiment1D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment1D</span></code></a> and <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D" title="qeg_nmr_qua.experiment.experiment_2d.Experiment2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment2D</span></code></a>
 classes implement specific logic for one-dimensional and two-dimensional experiments, respectively. Each base class
-needs to implement three main methods: <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code></a>, <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.create_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.create_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code></a>, and <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code></a>.</p>
+needs to implement three main methods: <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code></a>, <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.create_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.create_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code></a>, and <code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code>.</p>
 <p><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.validate_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_experiment()</span></code></a> checks that the provided parameters are valid for the specific experiment type, and is useful
 for catching user errors before running the experiment. Generally, this should catch what would otherwise be runtime
 errors in the QUA program.</p>
@@ -116,9 +116,9 @@ within the QUA program, all variables will be QUA variables, and so are subject 
 computations (such as division) can over 20 clock cycles, and lead to unexpected behavior if not handled properly. Further,
 QUA functions usually expect timings in terms of clock cycles (4 ns), so users should convert from seconds to clock cycles
 as needed, which is usually handled in the <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment" title="qeg_nmr_qua.experiment.experiment.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a> base class. The extracted data must be buffered in accordance to
-the expected <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code></a> behavior. Finally, the QUA program should ensure judicious use of the safety macros
+the expected <code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code> behavior. Finally, the QUA program should ensure judicious use of the safety macros
 provided in <a class="reference internal" href="#module-qeg_nmr_qua.experiment.macros" title="qeg_nmr_qua.experiment.macros"><code class="xref py py-mod docutils literal notranslate"><span class="pre">macros</span></code></a> to prevent hardware damage.</p>
-<p><a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing"><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code></a> defines how to process and visualize the data as it is acquired. This method is called
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">live_data_processing()</span></code> defines how to process and visualize the data as it is acquired. This method is called
 periodically during the experiment, and should handle fetching the data from the OPX, processing it (e.g., averaging,
 Fourier transforming), and updating any plots or visualizations. Data the needs to be saved should be added to the class’
 <a class="reference internal" href="#qeg_nmr_qua.experiment.experiment.Experiment.save_data_dict" title="qeg_nmr_qua.experiment.experiment.Experiment.save_data_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">save_data_dict</span></code></a> attribute, which is saved to file at the end of the experiment.</p>
@@ -376,30 +376,45 @@ on hardware.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment">
-<span class="sig-name descname"><span class="pre">execute_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.execute_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">execute_experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">live</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_on_close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.execute_experiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment" title="Link to this definition"></a></dt>
 <dd><p>Executes the experiment using the configured experiment defined by this class based on the current
 config defined by this instance’s <cite>config</cite> attribute. The method handles the execution on hardware,
 data fetching, and basic plotting of results.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – Throws an error if insufficient details about the experiment are defined.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>live</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Passed into <cite>data_processing</cite> to determine whether to display data live during execution
+or only after completion, depending on the subclass implementation.</p></li>
+<li><p><strong>wait_on_close</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to wait for user to close plot window after experiment completes.
+Only relevant when live=True. Defaults to True.</p></li>
+<li><p><strong>title_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Prefix to add to plot title for identification. Defaults to empty string.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – Throws an error if insufficient details about the experiment are defined.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing">
-<span class="sig-name descname"><span class="pre">live_data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.live_data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.live_data_processing" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.data_processing">
+<span class="sig-name descname"><span class="pre">data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">live</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_on_close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.data_processing" title="Link to this definition"></a></dt>
 <dd><p>Grabs the results of the experiment as it is being executed. This method must be
 implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
 The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
 this method can (and should) update the <cite>save_data_dict</cite> attribute with relevant raw data for saving to
 disk after the experiment completes.</p>
+<p>Subclass implementations should make use of the <cite>live</cite> argument to determine whether to plot data
+live during execution or only after the experiment completes. Autonomous experiments will typically
+want to set <cite>live</cite> to <cite>False</cite> to avoid blocking execution when waiting for user input to close plots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The quantum machine executing the experiment.</p></li>
 <li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job running the experiment.</p></li>
+<li><p><strong>live</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to display data live during execution or only after completion.</p></li>
+<li><p><strong>wait_on_close</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to wait for user to close plot after completion. Only relevant when live=True.</p></li>
+<li><p><strong>title_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Prefix to add to plot titles for identification.</p></li>
 </ul>
 </dd>
 </dl>
@@ -474,18 +489,22 @@ experiment object as a qua <code class="docutils literal notranslate"><span clas
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_1d.Experiment1D.live_data_processing">
-<span class="sig-name descname"><span class="pre">live_data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_1d.html#Experiment1D.live_data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.live_data_processing" title="Link to this definition"></a></dt>
-<dd><p>Grabs the results of the experiment as it is being executed. This method must be
-implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
-The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
-this method can (and should) update the <cite>save_data_dict</cite> attribute with relevant raw data for saving to
-disk after the experiment completes.</p>
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_1d.Experiment1D.data_processing">
+<span class="sig-name descname"><span class="pre">data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">live</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_on_close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_1d.html#Experiment1D.data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.data_processing" title="Link to this definition"></a></dt>
+<dd><p>Handles live data processing for a 1D experiment during execution.</p>
+<p>This method fetches data from the Quantum Machine job, processes it into
+voltage units via digital demodulation, and generates a live plot when
+<cite>live</cite> is set to <cite>True</cite>. The plot shows I and Q as a function of
+acquisition time. After the experiment completes, the final data is
+saved into <code class="xref py py-attr docutils literal notranslate"><span class="pre">save_data_dict</span></code> for later analysis and storage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The quantum machine executing the experiment.</p></li>
-<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job running the experiment.</p></li>
+<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The Quantum Machine instance used to run the experiment.</p></li>
+<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job object representing the running experiment.</p></li>
+<li><p><strong>live</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Flag indicating whether to generate live plots during data acquisition.</p></li>
+<li><p><strong>wait_on_close</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to wait for user to close plot after completion.</p></li>
+<li><p><strong>title_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Prefix to add to plot title.</p></li>
 </ul>
 </dd>
 </dl>
@@ -573,18 +592,25 @@ experiment object as a qua <code class="docutils literal notranslate"><span clas
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_2d.Experiment2D.live_data_processing">
-<span class="sig-name descname"><span class="pre">live_data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_2d.html#Experiment2D.live_data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.live_data_processing" title="Link to this definition"></a></dt>
-<dd><p>Grabs the results of the experiment as it is being executed. This method must be
-implemented by subclasses to determine how to fetch and plot the data specific to the experiment.
-The specific handles for the quantum machine and the active job are provided for data fetching. Additionally,
-this method can (and should) update the <cite>save_data_dict</cite> attribute with relevant raw data for saving to
-disk after the experiment completes.</p>
+<dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment_2d.Experiment2D.data_processing">
+<span class="sig-name descname"><span class="pre">data_processing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">live</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_on_close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment_2d.html#Experiment2D.data_processing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment_2d.Experiment2D.data_processing" title="Link to this definition"></a></dt>
+<dd><p>Handles live data processing for a 2D experiment during execution. This method fetches
+data from the Quantum Machine job, processes it into voltage units via digital demodulation,
+and generates live plots when <cite>live</cite> is set to <cite>True</cite>. The plot includes 2D color plots of the I
+and Q signals as functions of the swept variable and acquisition time, as well as a line plot of
+the primary signal, determined to be the first element of each FID’s I data. This captures the essential
+observable for 2D NMR experiments, such as calibrations of T1, T2, pulse amplitude sweeps, and
+Hamiltonian engineering measurements of two-point correlations.</p>
+<p>After the experiment completes, the final data is saved into the <code class="xref py py-attr docutils literal notranslate"><span class="pre">save_data_dict</span></code> for
+later analysis and storage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The quantum machine executing the experiment.</p></li>
-<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job running the experiment.</p></li>
+<li><p><strong>qm</strong> (<em>QuantumMachine</em>) – The Quantum Machine instance used to run the experiment.</p></li>
+<li><p><strong>job</strong> (<em>RunningQmJob</em>) – The job object representing the running experiment.</p></li>
+<li><p><strong>live</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Flag indicating whether to generate live plots during data acquisition.</p></li>
+<li><p><strong>wait_on_close</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to wait for user to close plot after completion.</p></li>
+<li><p><strong>title_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Prefix to add to plot title.</p></li>
 </ul>
 </dd>
 </dl>
