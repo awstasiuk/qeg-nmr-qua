@@ -1,9 +1,7 @@
 import qeg_nmr_qua as qnmr
 
 from qualang_tools.units import unit
-from pathlib import Path
 import numpy as np
-import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import acf
 
 u = unit(coerce_to_integer=True)
@@ -23,7 +21,9 @@ def phase_calibration(settings):
     config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
-    expt.execute_experiment(live=True, wait_on_close=False, title_prefix="[Phase Calibration] ")
+    expt.execute_experiment(
+        live=True, wait_on_close=False, title_prefix="[Phase Calibration] "
+    )
 
     I = expt.save_data_dict["I_data"]
     Q = expt.save_data_dict["Q_data"]
@@ -49,7 +49,9 @@ def check_offset(settings):
     config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
     expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
-    expt.execute_experiment(live=True, wait_on_close=False, title_prefix="[Offset Check] ")
+    expt.execute_experiment(
+        live=True, wait_on_close=False, title_prefix="[Offset Check] "
+    )
 
     Q = expt.save_data_dict["Q_data"]
 
@@ -146,7 +148,11 @@ def pulse_amp_calibration(settings, n_wraps=2):
         expt.add_delay(2 * u.us)
 
     expt.update_sweep_axis(amp_scaling * settings.pulse_amplitude)
-    expt.execute_experiment(live=True, wait_on_close=False, title_prefix=f"[Pulse Amplitude Cal - {n_wraps} wraps] ")
+    expt.execute_experiment(
+        live=True,
+        wait_on_close=False,
+        title_prefix=f"[Pulse Amplitude Cal - {n_wraps} wraps] ",
+    )
 
     re = np.array(expt.save_data_dict["I_data"]) * 1e6
     sig = re[:, 0]

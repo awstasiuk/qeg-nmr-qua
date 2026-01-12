@@ -1,11 +1,14 @@
 import qeg_nmr_qua as qnmr
-from calibrations import *
+from calibrations import (
+    phase_calibration,
+    check_offset,
+    bisection_offset_calibration,
+    pulse_amp_calibration,
+)
 
 from qualang_tools.units import unit
 from pathlib import Path
-import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import acf
 
 u = unit(coerce_to_integer=True)
 
@@ -32,15 +35,21 @@ saver = qnmr.DataSaver(settings.save_dir)
 saver.save_settings(settings, "autocal_settings", overwrite=True)
 
 phase_calibration(settings)
-print(f"[AUTOCAL] After phase_calibration: rotation_angle = {settings.rotation_angle:.2f}°")
+print(
+    f"[AUTOCAL] After phase_calibration: rotation_angle = {settings.rotation_angle:.2f}°"
+)
 saver.save_settings(settings, "autocal_settings", overwrite=True)
 
 if check_offset(settings) != 0:
     success = bisection_offset_calibration(settings)
-    print(f"[AUTOCAL] After offset calibration: offset_freq = {settings.offset_freq:.2f} Hz")
+    print(
+        f"[AUTOCAL] After offset calibration: offset_freq = {settings.offset_freq:.2f} Hz"
+    )
 else:
     success = True
-    print(f"[AUTOCAL] Offset already calibrated: offset_freq = {settings.offset_freq:.2f} Hz")
+    print(
+        f"[AUTOCAL] Offset already calibrated: offset_freq = {settings.offset_freq:.2f} Hz"
+    )
 
 if success:
     # calibrate pulse power
@@ -48,13 +57,19 @@ if success:
     saver.save_settings(settings, "autocal_settings", overwrite=True)
 
     pulse_amp_calibration(settings, n_wraps=2)
-    print(f"[AUTOCAL] After 1st pulse cal (2 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}")
+    print(
+        f"[AUTOCAL] After 1st pulse cal (2 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}"
+    )
     saver.save_settings(settings, "autocal_settings", overwrite=True)
 
     pulse_amp_calibration(settings, n_wraps=3)
-    print(f"[AUTOCAL] After 2nd pulse cal (3 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}")
+    print(
+        f"[AUTOCAL] After 2nd pulse cal (3 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}"
+    )
     saver.save_settings(settings, "autocal_settings", overwrite=True)
 
     pulse_amp_calibration(settings, n_wraps=2)
-    print(f"[AUTOCAL] After 3rd pulse cal (2 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}")
+    print(
+        f"[AUTOCAL] After 3rd pulse cal (2 wraps): pulse_amplitude = {settings.pulse_amplitude:.4f}"
+    )
     saver.save_settings(settings, "autocal_settings", overwrite=True)

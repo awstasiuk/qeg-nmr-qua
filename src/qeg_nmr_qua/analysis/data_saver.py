@@ -375,13 +375,13 @@ class DataSaver:
         """Save settings independently for later reuse.
 
         The settings are stored under the `settings/` subfolder in the root
-        data folder as a JSON file named ``<settings_name>.json``. Accepts either
+        data folder as a JSON file named ``<name>.json``. Accepts either
         a dict or an object that implements ``to_dict()``. By default this
         method will not overwrite an existing settings file unless
         ``overwrite=True``.
 
         Args:
-            settings_name: Simple name for the settings (no path separators).
+            name: Simple name for the settings (no path separators).
             settings: Settings object or dict.
             overwrite: Whether to overwrite an existing settings file.
 
@@ -389,14 +389,14 @@ class DataSaver:
             Path: Path to the saved settings JSON file.
 
         Raises:
-            ValueError: If `settings_name` is invalid or file exists and overwrite is False.
+            ValueError: If `name` is invalid or the file exists and overwrite is False.
             RuntimeError: On I/O or serialization failures.
         """
         if not isinstance(name, str) or name == "":
-            raise ValueError("settings_name must be a non-empty string")
+            raise ValueError("name must be a non-empty string")
         if "/" in name or "\\" in name or name == ".":
             raise ValueError(
-                "Filename, name, of settings must be a simple name without path separators"
+                "The parameter 'name' must be a simple filename without path separators"
             )
 
         settings_folder = self.root_data_folder / "settings"
@@ -419,19 +419,19 @@ class DataSaver:
 
         return filepath
 
-    def load_settings(self, settings_name: str) -> dict[str, Any]:
+    def load_settings(self, name: str) -> dict[str, Any]:
         """Load a previously saved settings JSON by name.
 
         Returns the deserialized dict as saved. Raises FileNotFoundError if not found.
         """
-        if not isinstance(settings_name, str) or settings_name == "":
-            raise ValueError("settings_name must be a non-empty string")
-        if "/" in settings_name or "\\" in settings_name or settings_name == ".":
+        if not isinstance(name, str) or name == "":
+            raise ValueError("name must be a non-empty string")
+        if "/" in name or "\\" in name or name == ".":
             raise ValueError(
-                "settings_name must be a simple name without path separators"
+                "The parameter 'name' must be a simple filename without path separators"
             )
 
-        filepath = self.root_data_folder / "settings" / f"{settings_name}.json"
+        filepath = self.root_data_folder / "settings" / f"{name}.json"
         if not filepath.exists():
             raise FileNotFoundError(f"Settings file not found: {filepath}")
 
