@@ -3,6 +3,8 @@ It was last updated 1/22/26 10:25am
 
 git checkout mason/gitsandbox
 git commit -m "message"
+git push origin mason/gitsandbox
+
 If its been a while since the last calibration:
 Step 0: Calibrate the "wobb" (wobble?) (a.k.a. resonator spectroscopy)
 	a. Turn off the big amplifier.
