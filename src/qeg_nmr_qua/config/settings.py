@@ -106,6 +106,7 @@ class ExperimentSettings:
     dwell_time: int = 4 * u.us
     readout_start: int = 0 * u.us
     readout_end: int = 256 * u.us
+    resonator_relaxation: int = 250 * u.us
 
     # resonator excitation
     excitation_length: int = 5 * u.us
