@@ -20,11 +20,11 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.4095,  # amplitude is 0.5*Vpp
-    rotation_angle=250.94,  # degrees
+    pulse_amplitude=0.455,  # amplitude is 0.5*Vpp
+    rotation_angle=244.77,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=4500 * u.Hz,
+    offset_freq=5675 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -51,7 +51,7 @@ if fit:
     im = np.array(expt.save_data_dict["Q_data"])*1e6
     ph_ref = np.arctan2(im[0], re[0]) * (180 / np.pi)  # phase reference from first point
     times = np.arange(settings.readout_start, settings.readout_end, settings.dwell_time)
-    if abs(ph_ref) > 0.5:
+    if abs(ph_ref) > 0.05:
         print(f"Increment phase reference by {ph_ref:.2f} degrees")
 
     plt.figure(figsize=(10, 5))

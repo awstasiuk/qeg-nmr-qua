@@ -72,6 +72,7 @@ digital_operations = {
 
 # this is important for later when we want to refer to the pi/2 pulse
 settings.update(pi_half_key="pi_half")
+settings.update(gaussian_pi_half_key="gaussian_pi_half")
 
 # define the elements, aka, lab objects controlled by opx
 probe = Element(

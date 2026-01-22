@@ -71,6 +71,7 @@ class ExperimentSettings:
     - ``helper_key``: Helper element name (default: "helper")
     - ``sw_key``: Switch control element name (default: "switch")
     - ``pi_half_key``: π/2 pulse operation name (default: "pi_half")
+    - ``gaussian_pi_half_key``: Gaussian π/2 pulse operation name (default: "gaussian_pi_half")
 
     **Validation:**
 
@@ -120,6 +121,7 @@ class ExperimentSettings:
     helper_key: str = "helper"
     sw_key: str = "switch"
     pi_half_key: str = "pi_half"
+    gaussian_pi_half_key: str = "gaussian_pi_half"
 
     # Internal: callbacks (no thread locking - updates are not synchronized)
     _callbacks: List[UpdateCallback] = field(

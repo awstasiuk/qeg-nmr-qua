@@ -15,20 +15,20 @@ u = unit(coerce_to_integer=True)
 # Enable interactive plotting mode for responsive plots
 plt.ion()
 
-# create a starting point for the automated calibration script
+# create base settings object for experiments
 settings = qnmr.ExperimentSettings(
-    n_avg=2,
+    n_avg=4,
     pulse_length=1.1 * u.us,
     pulse_amplitude=0.4095,  # amplitude is 0.5*Vpp
-    rotation_angle=250.94,  # degrees
+    rotation_angle=244.50,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=4500 * u.Hz,
+    offset_freq=5670 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path(__file__).parent / "data",
+    save_dir=Path(__file__).parent / "test_results",
 )
 
 saver = qnmr.DataSaver(settings.save_dir)
