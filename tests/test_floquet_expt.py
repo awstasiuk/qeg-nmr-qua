@@ -32,7 +32,7 @@ t0 = 5*u.us
 p1 = settings.pulse_length
 thlf = (t0 - p1) / 2
 t1 = t0 - p1
-t2 = 2 * t1 - p1
+t2 = 2 * t0 - p1
 
 # Pine-8 sequence pattern for engineering DQ
 pine8_phases = np.array([0,0,0,0,180,180,180,180])

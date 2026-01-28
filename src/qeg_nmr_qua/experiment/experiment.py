@@ -136,7 +136,7 @@ class Experiment:
     ):
         """
         Adds a pulse command to the experiment. Stores the data to control the pulse in the experiment's command list,
-        and ensures the command is well defined
+        and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).
 
         Args:
             name (str): Name of the pulse operation, must be defined in the element's config.
@@ -159,8 +159,8 @@ class Experiment:
         }
 
         if isinstance(phase, Iterable):
-            command["length"] = length = (
-                length // 4
+            command["length"] = (
+                length // 4 # clock cycle = 4ns
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
             )
@@ -168,7 +168,7 @@ class Experiment:
             self.update_loop((np.array(phase) / 360) % 1)
             self.use_fixed = True
         elif isinstance(amplitude, Iterable):
-            command["length"] = length = (
+            command["length"] = (
                 length // 4
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
@@ -184,7 +184,7 @@ class Experiment:
         else:
             command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
-            command["length"] = length = (
+            command["length"] = (
                 length // 4
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
@@ -229,7 +229,7 @@ class Experiment:
         self._commands.append(command)
 
     def add_floquet_sequence(
-        self, phases: list[float], delays: list[int], repetitions: int | list[int]
+        self, phases: list[float], delays: list[int], repetitions: int | list[int], name: str = "pi_half"
     ):
         """
         Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
@@ -237,7 +237,9 @@ class Experiment:
         Args:
             phases (list[float]): List of phases for the pulses in degrees.
             delays (list[int]): List of delays in nanoseconds.
+            name (str): Name of the pulse operation, must be defined in the element's config.
         """
+
         if len(phases) + 1 != len(delays):
             raise ValueError(
                 "There must be one more delay than phase in a Floquet sequence."
@@ -245,6 +247,7 @@ class Experiment:
 
         command = {
             "type": "sequence",
+            "name": name,
             "phases": (np.array(phases) / 360) % 1,
             "delays": np.array(delays, dtype=int) // 4,
         }
@@ -392,13 +395,14 @@ class Experiment:
             phases = command.get("phases", None)
             delays = command.get("delays", None)
             repetitions = command.get("repetitions", var)
+            name = command.get("name", self.pi_half_pulse)
 
             with for_(m, 0, m < repetitions, m + 1):
                 wait(delays[0])
                 for phase, delay in zip(phases, delays[1:]):
                     frame_rotation_2pi(phase, self.probe_key)
                     play(
-                        self.pi_half_pulse,
+                        name,
                         self.probe_key,
                     )
                     frame_rotation_2pi(-phase, self.probe_key)

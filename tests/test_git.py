@@ -1,6 +1,8 @@
 """This file is for git testing purposes, for Mason to become familiar with branches, push & pull requests.
 It was last updated 1/22/26 5:42pm
 
+Todo: fit bessel function to data from floquet_expt_gaus.py
+
 git checkout mason/gitsandbox
 git commit -a -m "message"
 git push origin mason/gitsandbox
