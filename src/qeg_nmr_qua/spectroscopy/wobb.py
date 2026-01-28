@@ -209,7 +209,7 @@ if verified:
 
     # Save results
     save_dir = (
-        Path(__file__).resolve().parent / "data"
+        Path(__file__).resolve().parent / "wobb_data"
         if settings.save_dir is None
         else settings.save_dir
     )
