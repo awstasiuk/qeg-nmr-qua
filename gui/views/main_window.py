@@ -5,12 +5,15 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QMainWindow, QDockWidget, QWidget, QVBoxLayout,
     QMenuBar, QMenu, QToolBar, QStatusBar, QLabel,
-    QMessageBox, QFileDialog, QTextEdit
+    QMessageBox, QFileDialog, QTextEdit, QDialog
 )
 from PyQt6.QtCore import Qt, pyqtSlot, QSize
 from PyQt6.QtGui import QAction, QIcon, QKeySequence
 
 from gui.views.settings_editor import SettingsEditor
+from gui.views.experiment_browser import ExperimentBrowser
+from gui.views.new_experiment_dialog import NewExperimentDialog
+from gui.widgets.recent_experiments_widget import RecentExperimentsWidget
 from gui.widgets.console_widget import ConsoleWidget
 from gui.models.settings_model import SettingsModel
 
@@ -72,12 +75,6 @@ class MainWindow(QMainWindow):
         self.new_action.setStatusTip("Create a new experiment")
         self.new_action.triggered.connect(self._new_experiment)
         file_menu.addAction(self.new_action)
-        
-        self.open_action = QAction("&Open Experiment...", self)
-        self.open_action.setShortcut(QKeySequence.StandardKey.Open)
-        self.open_action.setStatusTip("Open an existing experiment")
-        self.open_action.triggered.connect(self._open_experiment)
-        file_menu.addAction(self.open_action)
         
         file_menu.addSeparator()
         
@@ -170,7 +167,6 @@ class MainWindow(QMainWindow):
         
         # Add main actions to toolbar
         toolbar.addAction(self.new_action)
-        toolbar.addAction(self.open_action)
         toolbar.addAction(self.save_action)
         toolbar.addSeparator()
         toolbar.addAction(self.execute_action)
@@ -218,43 +214,155 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.console_dock)
         self.view_menu.addAction(self.console_dock.toggleViewAction())
         
-        # Left Dock: Experiment Browser (placeholder for Phase 2)
+        # Left Dock: Recent Experiments + Browser
         self.browser_dock = QDockWidget("Experiment Browser", self)
         self.browser_dock.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea
         )
         
-        browser_placeholder = QLabel("Experiment Browser\n(Coming in Phase 2)")
-        browser_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        browser_placeholder.setStyleSheet("color: #888888; font-style: italic;")
-        self.browser_dock.setWidget(browser_placeholder)
+        # Get data directory from settings
+        data_dir = self.settings_model.settings.save_dir or Path("data")
+        
+        # Create a container with recent experiments and browser
+        browser_container = QWidget()
+        browser_layout = QVBoxLayout(browser_container)
+        browser_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Add recent experiments widget
+        self.recent_experiments = RecentExperimentsWidget()
+        self.recent_experiments.experiment_selected.connect(self._on_recent_experiment_selected)
+        browser_layout.addWidget(self.recent_experiments, stretch=1)
+        
+        # Add browser
+        self.browser = ExperimentBrowser(data_dir)
+        self.browser.experiment_selected.connect(self._on_experiment_selected)
+        self.browser.experiment_double_clicked.connect(self._on_experiment_double_clicked)
+        browser_layout.addWidget(self.browser, stretch=2)
+        
+        self.browser_dock.setWidget(browser_container)
         
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.browser_dock)
         self.view_menu.addAction(self.browser_dock.toggleViewAction())
         
+        # Update recent experiments list
+        recent_exps = self.browser.model.get_recent_experiments(5)
+        self.recent_experiments.update_recent_experiments(recent_exps)
+        
+        # Connect browser refresh to update recent experiments
+        self.browser.model.experiments_updated.connect(self._update_recent_experiments_list)
+        
         # Log welcome message
         self.console.log_info("QEG NMR QUA GUI initialized")
         self.console.log_info("Phase 1: Core Structure - Complete")
+        self.console.log_info("Phase 2: Experiment Management - Complete")
+    
+    def _update_recent_experiments_list(self):
+        """Update the recent experiments list when experiments change."""
+        recent_exps = self.browser.model.get_recent_experiments(5)
+        self.recent_experiments.update_recent_experiments(recent_exps)
+    
+    # Experiment browser handlers
+    
+    @pyqtSlot(object)
+    def _on_experiment_selected(self, metadata):
+        """Handle experiment selection from browser."""
+        if metadata:
+            self.console.log_info(f"Selected experiment: {metadata.name}")
+    
+    @pyqtSlot(object)
+    def _on_recent_experiment_selected(self, metadata):
+        """Handle experiment selection from recent experiments widget."""
+        if metadata:
+            self.console.log_info(f"Loading recent experiment: {metadata.name}")
+            self._load_experiment_from_metadata(metadata)
+        else:
+            self.console.log_info("Experiment deselected")
+    
+    @pyqtSlot(object)
+    def _on_experiment_double_clicked(self, metadata):
+        """Handle double-click on experiment - load it."""
+        if not metadata:
+            return
+        self._load_experiment_from_metadata(metadata)
+    
+    def _load_experiment_from_metadata(self, metadata):
+        """Load experiment settings from metadata."""
+        if not metadata:
+            return
+        
+        self.console.log_info(f"Loading experiment: {metadata.name}")
+        
+        try:
+            # Load experiment data using the browser model
+            exp_data = self.browser.model.load_experiment(metadata.name)
+            
+            if not exp_data:
+                self.console.log_error(f"Failed to load experiment data")
+                return
+            
+            # Load settings into the settings editor
+            if "settings" in exp_data:
+                from qeg_nmr_qua.config.settings import ExperimentSettings
+                settings = ExperimentSettings.from_dict(exp_data["settings"])
+                self.settings_editor.set_settings(settings)
+                self.console.log_success(f"Loaded settings from {metadata.name}")
+            
+            self.console.log_info(f"Experiment loaded: {metadata.name}")
+            
+        except Exception as e:
+            self.console.log_error(f"Error loading experiment: {str(e)}")
     
     # Menu action handlers
     
     @pyqtSlot()
     def _new_experiment(self):
         """Create a new experiment."""
-        self.console.log_info("New experiment - Coming in Phase 2")
-        QMessageBox.information(
-            self, "New Experiment",
-            "New experiment functionality will be implemented in Phase 2."
-        )
-    
-    @pyqtSlot()
-    def _open_experiment(self):
-        """Open an existing experiment."""
-        self.console.log_info("Open experiment - Coming in Phase 2")
-        QMessageBox.information(
-            self, "Open Experiment",
-            "Open experiment functionality will be implemented in Phase 2."
-        )
+        dialog = NewExperimentDialog(self)
+        
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            self.console.log_info("New experiment cancelled")
+            return
+        
+        if not dialog.is_valid():
+            QMessageBox.warning(
+                self, "Invalid Name",
+                "Please enter a valid experiment name.\n"
+                "Use only letters, numbers, underscores, and hyphens.\n"
+                "Do not end with numbers (reserved for auto-numbering)."
+            )
+            return
+        
+        # Get values
+        values = dialog.get_values()
+        name_prefix = values["name"]
+        exp_type = values["type"]
+        
+        # Get current settings
+        settings = self.settings_editor.get_settings()
+        config = self._get_current_config()
+        
+        try:
+            # Create the experiment
+            exp_name = self._create_and_save_experiment(
+                name_prefix, exp_type, settings, config
+            )
+            
+            self.console.log_success(f"Created experiment: {exp_name}")
+            self.console.log_info(f"Type: {exp_type}, Averages: {settings.n_avg}")
+            
+            # Refresh browser to show new experiment
+            self.browser.model.refresh()
+            
+            # Show the browser
+            self.browser_dock.show()
+            self.browser_dock.raise_()
+            
+        except Exception as e:
+            self.console.log_error(f"Failed to create experiment: {str(e)}")
+            QMessageBox.critical(
+                self, "Error",
+                f"Failed to create experiment:\n{str(e)}"
+            )
     
     @pyqtSlot()
     def _save_experiment(self):
@@ -352,6 +460,63 @@ class MainWindow(QMainWindow):
         """Handle settings updates."""
         self.console.log_debug("Settings updated")
         self.status_label.setText("Settings modified")
+    
+    # Helper methods
+    
+    def _get_current_config(self):
+        """Get the current OPX configuration."""
+        try:
+            from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
+            settings = self.settings_editor.get_settings()
+            return cfg_from_settings(settings)
+        except Exception as e:
+            self.console.log_warning(f"Could not generate config: {e}")
+            return None
+    
+    def _create_and_save_experiment(self, name_prefix: str, exp_type: str, settings, config) -> str:
+        """
+        Create a new experiment and save it to disk.
+        
+        Args:
+            name_prefix: Experiment prefix (e.g., 'calibration')
+            exp_type: Experiment type ('1D', '2D', 'Custom')
+            settings: ExperimentSettings object
+            config: OPXConfig object
+            
+        Returns:
+            The created experiment folder name (e.g., 'calibration_0001')
+        """
+        from qeg_nmr_qua.analysis.data_saver import DataSaver
+        
+        # Get save directory
+        save_dir = settings.save_dir or Path("data")
+        
+        # Create DataSaver and initialize with empty data
+        saver = DataSaver(save_dir)
+        
+        # Convert config and settings to dicts for serialization
+        config_dict = config.to_dict() if config else {}
+        settings_dict = settings.to_dict() if hasattr(settings, 'to_dict') else {}
+        commands = []  # Empty commands list for new experiment
+        data = {
+            "experiment_type": exp_type,
+            "metadata": {
+                "created_from": "GUI",
+                "initial_n_avg": settings.n_avg,
+            }
+        }
+        
+        # Save the experiment - pass serialized dicts instead of objects
+        experiment_path = saver.save_experiment(
+            name_prefix,
+            config_dict,  # Pass serialized config dict
+            settings_dict,  # Pass serialized settings dict
+            commands,
+            data
+        )
+        
+        # Extract the folder name from the path
+        return experiment_path.name
     
     def closeEvent(self, event):
         """Handle window close event."""
