@@ -1,0 +1,181 @@
+/* QEG NMR QUA GUI Stylesheet */
+
+/* Main Window */
+QMainWindow {
+    background-color: #2b2b2b;
+}
+
+/* Dock Widgets */
+QDockWidget {
+    titlebar-close-icon: url(close.png);
+    titlebar-normal-icon: url(float.png);
+}
+
+QDockWidget::title {
+    background-color: #3c3c3c;
+    color: #e0e0e0;
+    padding: 6px;
+    border: 1px solid #555555;
+}
+
+/* Group Boxes */
+QGroupBox {
+    border: 2px solid #555555;
+    border-radius: 5px;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
+    background-color: #2b2b2b;
+}
+
+/* Labels */
+QLabel {
+    color: #e0e0e0;
+}
+
+/* Line Edits */
+QLineEdit {
+    background-color: #3c3c3c;
+    color: #e0e0e0;
+    border: 1px solid #555555;
+    border-radius: 3px;
+    padding: 4px;
+}
+
+QLineEdit:focus {
+    border: 1px solid #0078d7;
+}
+
+QLineEdit[invalid="true"] {
+    border: 2px solid #d73a49;
+    background-color: #3d2020;
+}
+
+/* Spin Boxes */
+QSpinBox, QDoubleSpinBox {
+    background-color: #3c3c3c;
+    color: #e0e0e0;
+    border: 1px solid #555555;
+    border-radius: 3px;
+    padding: 4px;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #0078d7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #1084d8;
+}
+
+QPushButton:pressed {
+    background-color: #006cbd;
+}
+
+QPushButton:disabled {
+    background-color: #555555;
+    color: #888888;
+}
+
+/* Tool Buttons */
+QToolButton {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 4px;
+}
+
+QToolButton:hover {
+    background-color: #3c3c3c;
+    border: 1px solid #555555;
+}
+
+/* Scroll Bars */
+QScrollBar:vertical {
+    background-color: #2b2b2b;
+    width: 12px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #555555;
+    min-height: 20px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #666666;
+}
+
+/* Text Edit / Console */
+QTextEdit {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #555555;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 10pt;
+}
+
+/* Menu Bar */
+QMenuBar {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+}
+
+QMenuBar::item:selected {
+    background-color: #3c3c3c;
+}
+
+QMenu {
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+    border: 1px solid #555555;
+}
+
+QMenu::item:selected {
+    background-color: #0078d7;
+}
+
+/* Status Bar */
+QStatusBar {
+    background-color: #007acc;
+    color: white;
+}
+
+/* Toolbar */
+QToolBar {
+    background-color: #2b2b2b;
+    border: 1px solid #555555;
+    spacing: 4px;
+    padding: 4px;
+}
+
+/* Tab Widget */
+QTabWidget::pane {
+    border: 1px solid #555555;
+    background-color: #2b2b2b;
+}
+
+QTabBar::tab {
+    background-color: #3c3c3c;
+    color: #e0e0e0;
+    padding: 6px 12px;
+    border: 1px solid #555555;
+}
+
+QTabBar::tab:selected {
+    background-color: #0078d7;
+}

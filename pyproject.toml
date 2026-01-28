@@ -44,13 +44,25 @@ docs = [
     "sphinx-autodoc-typehints>=1.25.0",
     "myst-parser>=2.0.0",
 ]
+gui = [
+    "PyQt6>=6.6.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.24.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/awstasiuk/qeg-nmr-qua"
 "Bug Tracker" = "https://github.com/awstasiuk/qeg-nmr-qua/issues"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[project.scripts]
+qnmr-gui = "gui.main:main"
+
+[tool.setuptools]
+packages = ["qeg_nmr_qua", "gui"]
+
+[tool.setuptools.package-dir]
+qeg_nmr_qua = "src/qeg_nmr_qua"
+gui = "gui"
 
 [tool.ruff]
 line-length = 100
