@@ -1,5 +1,6 @@
 """Model for managing ExperimentSettings with Qt integration."""
 
+import json
 from pathlib import Path
 from typing import Any, Dict
 
@@ -13,15 +14,26 @@ class SettingsModel(QObject):
     Qt-friendly wrapper around ExperimentSettings.
     
     Provides signals for change notification and validation.
+    Auto-saves to active-settings.json on changes.
     """
     
     settings_changed = pyqtSignal()
     validation_error = pyqtSignal(str, str)  # field_name, error_message
     
+    ACTIVE_SETTINGS_FILE = Path("active-settings.json")
+    
     def __init__(self, settings: ExperimentSettings = None, parent=None):
         super().__init__(parent)
         self._settings = settings if settings is not None else ExperimentSettings()
         self._modified = False
+        self._auto_save_enabled = True
+        
+        # Load active settings if they exist
+        if self.ACTIVE_SETTINGS_FILE.exists():
+            try:
+                self._load_from_file(self.ACTIVE_SETTINGS_FILE)
+            except Exception as e:
+                print(f"Warning: Could not load active settings: {e}")
     
     @property
     def settings(self) -> ExperimentSettings:
@@ -32,6 +44,10 @@ class SettingsModel(QObject):
     def is_modified(self) -> bool:
         """Check if settings have been modified."""
         return self._modified
+    
+    def set_auto_save(self, enabled: bool):
+        """Enable or disable auto-save functionality."""
+        self._auto_save_enabled = enabled
     
     def get_value(self, key: str) -> Any:
         """Get a settings value by key."""
@@ -57,6 +73,11 @@ class SettingsModel(QObject):
             setattr(self._settings, key, value)
             self._modified = True
             self.settings_changed.emit()
+            
+            # Auto-save to active settings file
+            if self._auto_save_enabled:
+                self._save_to_file(self.ACTIVE_SETTINGS_FILE)
+            
             return True
             
         except Exception as e:
@@ -121,6 +142,20 @@ class SettingsModel(QObject):
         self._modified = False
         self.settings_changed.emit()
     
+    def _save_to_file(self, filepath: Path):
+        """Save settings to a JSON file."""
+        try:
+            with open(filepath, 'w') as f:
+                json.dump(self._settings.to_dict(), f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not save settings to {filepath}: {e}")
+    
+    def _load_from_file(self, filepath: Path):
+        """Load settings from a JSON file."""
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+        self.from_dict(data)
+    
     def reset_modified(self):
         """Reset the modified flag."""
         self._modified = False
@@ -130,3 +165,7 @@ class SettingsModel(QObject):
         self._settings = ExperimentSettings()
         self._modified = True
         self.settings_changed.emit()
+        
+        # Auto-save defaults
+        if self._auto_save_enabled:
+            self._save_to_file(self.ACTIVE_SETTINGS_FILE)

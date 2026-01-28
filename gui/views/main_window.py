@@ -5,7 +5,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QMainWindow, QDockWidget, QWidget, QVBoxLayout,
     QMenuBar, QMenu, QToolBar, QStatusBar, QLabel,
-    QMessageBox, QFileDialog, QTextEdit, QDialog
+    QMessageBox, QFileDialog, QTextEdit, QDialog, QTabWidget
 )
 from PyQt6.QtCore import Qt, pyqtSlot, QSize
 from PyQt6.QtGui import QAction, QIcon, QKeySequence
@@ -13,9 +13,12 @@ from PyQt6.QtGui import QAction, QIcon, QKeySequence
 from gui.views.settings_editor import SettingsEditor
 from gui.views.experiment_browser import ExperimentBrowser
 from gui.views.new_experiment_dialog import NewExperimentDialog
+from gui.views.script_editor import ScriptEditor
+from gui.views.sequence_builder import SequenceBuilderWidget
 from gui.widgets.recent_experiments_widget import RecentExperimentsWidget
 from gui.widgets.console_widget import ConsoleWidget
 from gui.models.settings_model import SettingsModel
+from gui.templates import get_template
 
 
 class MainWindow(QMainWindow):
@@ -45,23 +48,47 @@ class MainWindow(QMainWindow):
     
     def _setup_ui(self):
         """Set up the central widget and basic UI."""
-        # Central widget - placeholder for now
-        central_widget = QWidget()
-        central_layout = QVBoxLayout(central_widget)
+        # Central widget with tabs
+        self.central_tabs = QTabWidget()
+        self.central_tabs.setDocumentMode(True)
         
-        placeholder = QTextEdit()
-        placeholder.setReadOnly(True)
-        placeholder.setPlaceholderText(
-            "Script Editor / Plot Viewer will appear here\n\n"
-            "Phase 1: Core Structure\n"
-            "Phase 2: Experiment Management\n"
-            "Phase 3: Script Editor\n"
-            "Phase 4: Plotting\n"
-            "Phase 5: Polish"
+        # Sequence Builder Tab (Primary)
+        self.sequence_builder = SequenceBuilderWidget()
+        self.sequence_builder.sequence_changed.connect(self._on_sequence_changed)
+        self.sequence_builder.sequence_changed.connect(self._sync_code_from_sequence)
+        self.central_tabs.addTab(self.sequence_builder, "Sequence Builder")
+        
+        # Script Editor Tab (Advanced)
+        self.script_editor = ScriptEditor()
+        self.script_editor.content_modified.connect(self._on_script_modified)
+        self.central_tabs.addTab(self.script_editor, "Script Editor (Advanced)")
+        
+        # Plot Viewer Tab (placeholder for Phase 4)
+        plot_placeholder = QTextEdit()
+        plot_placeholder.setReadOnly(True)
+        plot_placeholder.setPlaceholderText(
+            "Plot Viewer - Coming in Phase 4\n\n"
+            "Will display:\n"
+            "- Real-time experiment data\n"
+            "- Signal traces (I/Q)\n"
+            "- FFT spectra\n"
+            "- 2D contour plots"
         )
+        self.central_tabs.addTab(plot_placeholder, "Plot Viewer")
         
-        central_layout.addWidget(placeholder)
-        self.setCentralWidget(central_widget)
+        self.setCentralWidget(self.central_tabs)
+    
+    def _on_sequence_changed(self):
+        """Handle sequence changes."""
+        self.console.log_debug("Sequence updated")
+    
+    def _on_script_modified(self, is_modified):
+        """Handle script modification status changes."""
+        # Update window title to show unsaved changes
+        title = "QEG NMR QUA - Experiment Manager"
+        if is_modified:
+            title += " *"
+        self.setWindowTitle(title)
     
     def _create_menus(self):
         """Create the menu bar and menus."""
@@ -78,14 +105,39 @@ class MainWindow(QMainWindow):
         
         file_menu.addSeparator()
         
-        self.save_action = QAction("&Save Experiment", self)
-        self.save_action.setShortcut(QKeySequence.StandardKey.Save)
+        # Script file operations
+        self.new_script_action = QAction("New &Script", self)
+        self.new_script_action.setShortcut(QKeySequence("Ctrl+Shift+N"))
+        self.new_script_action.setStatusTip("Create a new script")
+        self.new_script_action.triggered.connect(self._new_script)
+        file_menu.addAction(self.new_script_action)
+        
+        self.open_script_action = QAction("&Open Script...", self)
+        self.open_script_action.setShortcut(QKeySequence("Ctrl+Shift+O"))
+        self.open_script_action.setStatusTip("Open an existing script file")
+        self.open_script_action.triggered.connect(self._open_script)
+        file_menu.addAction(self.open_script_action)
+        
+        self.save_script_action = QAction("&Save Script", self)
+        self.save_script_action.setShortcut(QKeySequence("Ctrl+S"))
+        self.save_script_action.setStatusTip("Save current script")
+        self.save_script_action.triggered.connect(self._save_script)
+        file_menu.addAction(self.save_script_action)
+        
+        self.save_script_as_action = QAction("Save Script &As...", self)
+        self.save_script_as_action.setShortcut(QKeySequence("Ctrl+Shift+S"))
+        self.save_script_as_action.setStatusTip("Save script with new name")
+        self.save_script_as_action.triggered.connect(self._save_script_as)
+        file_menu.addAction(self.save_script_as_action)
+        
+        file_menu.addSeparator()
+        
+        self.save_action = QAction("Save &Experiment", self)
         self.save_action.setStatusTip("Save current experiment")
         self.save_action.triggered.connect(self._save_experiment)
         file_menu.addAction(self.save_action)
         
-        self.save_as_action = QAction("Save &As...", self)
-        self.save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
+        self.save_as_action = QAction("Save E&xperiment As...", self)
         self.save_as_action.setStatusTip("Save experiment with new name")
         self.save_as_action.triggered.connect(self._save_experiment_as)
         file_menu.addAction(self.save_as_action)
@@ -169,6 +221,14 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self.new_action)
         toolbar.addAction(self.save_action)
         toolbar.addSeparator()
+        
+        # Sync code button (for sequence builder)
+        self.sync_code_action = QAction("🔄 Sync Code", self)
+        self.sync_code_action.setStatusTip("Update script from sequence builder")
+        self.sync_code_action.triggered.connect(self._sync_code_from_sequence)
+        toolbar.addAction(self.sync_code_action)
+        toolbar.addSeparator()
+        
         toolbar.addAction(self.execute_action)
         toolbar.addAction(self.simulate_action)
         toolbar.addAction(self.stop_action)
@@ -255,6 +315,7 @@ class MainWindow(QMainWindow):
         self.console.log_info("QEG NMR QUA GUI initialized")
         self.console.log_info("Phase 1: Core Structure - Complete")
         self.console.log_info("Phase 2: Experiment Management - Complete")
+        self.console.log_info("Phase 3: Sequence Builder - Ready")
     
     def _update_recent_experiments_list(self):
         """Update the recent experiments list when experiments change."""
@@ -347,15 +408,17 @@ class MainWindow(QMainWindow):
                 name_prefix, exp_type, settings, config
             )
             
+            # Initialize sequence builder with basic template
+            self._init_sequence_template(exp_type)
+            
             self.console.log_success(f"Created experiment: {exp_name}")
-            self.console.log_info(f"Type: {exp_type}, Averages: {settings.n_avg}")
+            self.console.log_info(f"Type: {exp_type}, Ready to build sequence")
             
             # Refresh browser to show new experiment
             self.browser.model.refresh()
             
-            # Show the browser
-            self.browser_dock.show()
-            self.browser_dock.raise_()
+            # Switch to sequence builder tab
+            self.central_tabs.setCurrentIndex(0)
             
         except Exception as e:
             self.console.log_error(f"Failed to create experiment: {str(e)}")
@@ -473,6 +536,49 @@ class MainWindow(QMainWindow):
             self.console.log_warning(f"Could not generate config: {e}")
             return None
     
+    def _generate_script_from_template(self, exp_type: str, settings) -> str:
+        """Generate a script from template."""
+        template = get_template(exp_type)
+        
+        # Fill in only the description
+        script = template.format(
+            description=f"{exp_type} Experiment - Generated from GUI"
+        )
+        
+        return script
+    
+    def _init_sequence_template(self, exp_type: str):
+        """Initialize sequence builder with a basic template."""
+        from gui.models.sequence_step import PulseStep, StepType
+        
+        # Clear existing sequence
+        self.sequence_builder.clear()
+        
+        # Add basic pulse for 1D experiments
+        if exp_type == "1D":
+            pulse = PulseStep(
+                step_type=StepType.PULSE,
+                pulse_name="pi_half",
+                element="resonator"
+            )
+            self.sequence_builder.steps.append(pulse)
+            self.sequence_builder._update_tree()
+        
+        # Add sweep pulse for 2D experiments
+        elif exp_type == "2D":
+            pulse = PulseStep(
+                step_type=StepType.PULSE,
+                pulse_name="pi_half",
+                element="resonator",
+                amplitude_sweep=True,
+                sweep_start=0.5,
+                sweep_end=1.5,
+                sweep_points=50
+            )
+            self.sequence_builder.steps.append(pulse)
+            self.sequence_builder._update_tree()
+
+    
     def _create_and_save_experiment(self, name_prefix: str, exp_type: str, settings, config) -> str:
         """
         Create a new experiment and save it to disk.
@@ -518,8 +624,116 @@ class MainWindow(QMainWindow):
         # Extract the folder name from the path
         return experiment_path.name
     
+    # Script file operation handlers
+    
+    @pyqtSlot()
+    def _new_script(self):
+        """Create a new script."""
+        if self.script_editor.is_modified():
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "Current script has unsaved changes. Continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return
+        
+        self.script_editor.set_content("")
+        self.script_editor.set_current_file(None)
+        self.console.log_info("New script created")
+    
+    @pyqtSlot()
+    def _open_script(self):
+        """Open an existing script file."""
+        if self.script_editor.is_modified():
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "Current script has unsaved changes. Continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return
+        
+        filepath, _ = QFileDialog.getOpenFileName(
+            self, "Open Script",
+            str(Path.home()),
+            "Python Files (*.py);;All Files (*)"
+        )
+        
+        if filepath:
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                self.script_editor.set_content(content)
+                self.script_editor.set_current_file(filepath)
+                self.console.log_success(f"Opened script: {Path(filepath).name}")
+            except Exception as e:
+                self.console.log_error(f"Failed to open script: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to open script:\n{str(e)}")
+    
+    @pyqtSlot()
+    def _save_script(self):
+        """Save the current script."""
+        current_file = self.script_editor.get_current_file()
+        
+        if current_file:
+            self._save_script_to_file(current_file)
+        else:
+            self._save_script_as()
+    
+    @pyqtSlot()
+    def _save_script_as(self):
+        """Save the script with a new name."""
+        filepath, _ = QFileDialog.getSaveFileName(
+            self, "Save Script As",
+            str(Path.home()),
+            "Python Files (*.py);;All Files (*)"
+        )
+        
+        if filepath:
+            if not filepath.endswith('.py'):
+                filepath += '.py'
+            self._save_script_to_file(filepath)
+    
+    def _save_script_to_file(self, filepath: str):
+        """Save script content to a file."""
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(self.script_editor.get_content())
+            
+            self.script_editor.set_current_file(filepath)
+            self.script_editor.clear_modified()
+            self.console.log_success(f"Saved script: {Path(filepath).name}")
+        except Exception as e:
+            self.console.log_error(f"Failed to save script: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save script:\n{str(e)}")
+    
+    def _sync_code_from_sequence(self):
+        """Generate Python code from sequence builder and update script editor."""
+        from gui.models.code_generator import generate_code_from_sequence
+        
+        # Generate code from sequence
+        code = generate_code_from_sequence(self.sequence_builder.steps)
+        
+        # Update script editor
+        self.script_editor.set_content(code)
+        self.script_editor.clear_modified()
+    
     def closeEvent(self, event):
         """Handle window close event."""
+        # Check for unsaved script changes
+        if self.script_editor.is_modified():
+            reply = QMessageBox.question(
+                self, "Unsaved Changes",
+                "Script has unsaved changes. Do you want to exit anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                event.ignore()
+                return
+        
+        # Check for unsaved settings changes
         if self.settings_model.is_modified:
             reply = QMessageBox.question(
                 self, "Unsaved Changes",
