@@ -21,7 +21,9 @@ Step 1: Calibrate the offset-freq & phase
 As time goes on, the magnet demagnetizes slowly, leading to a small detuning (right now ~5000Hz) of the frequency from our expected center (282.1901 MHz). We also must shift phase (right now, ~245° but varies).
 	a. Zero-go: zg.py. Will spit out the I and Q vs t curves.
 	b. Script uses simple trigonometry to tune the phase.
-	c. The Q and auto-correlation will tell you how you must tune the offset-freq. If the Q concavity is positive, offset-freq is too high. If Q concavity is negative, offset-freq is too low.
+	c. The Q and auto-correlation will tell you how you must tune the offset-freq. 
+        If the Q concavity is positive, offset-freq is too high. 
+        If Q concavity is negative, offset-freq is too low.
 	d. Repeat steps a-c and gradually adjust until Q approaches noise. Alternatively, autocal.py is meant to do this automatically
 
 Step 2: Calibrate the pulse amplitude

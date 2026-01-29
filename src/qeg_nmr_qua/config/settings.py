@@ -88,6 +88,7 @@ class ExperimentSettings:
     n_avg: int = 4
     pulse_length: int = 1.100 * u.us  # nanoseconds
     pulse_amplitude: float = 0.25  # 0.5*Vpp
+    pulse_shape: str = "pi_half"
     rotation_angle: float = 90.0  # degrees
 
     # cw params

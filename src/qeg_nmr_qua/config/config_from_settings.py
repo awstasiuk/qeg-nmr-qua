@@ -57,6 +57,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         "pi": "pi_half_pulse",
         "pi_half": "pi_half_pulse",
         "gaussian_pi_half": "gaussian_pi_half_pulse",
+        "mason": "mason_pulse",
     }
     digital_operations = {
         "voltage_on": "voltage_on_pulse",
@@ -184,6 +185,12 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         waveform="gaussian_pi_half_wf",
         digital_marker="ON",
     )
+    mason = ControlPulse(
+        length=settings.pulse_length,
+        waveform="mason_wf",
+        digital_marker="ON",
+    )
+
     # tll high
     voltage_on = ControlPulse(
         length=40 * u.ns,  # short, length is not important b/c sticky
@@ -204,6 +211,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     cfg.add_pulse("pi_half_pulse", sqr_pi_half)
     cfg.add_pulse("pi_pulse", sqr_pi)
     cfg.add_pulse("gaussian_pi_half_pulse", gaussian_pi_half)
+    cfg.add_pulse("mason_pulse", mason)
     cfg.add_pulse("voltage_on_pulse", voltage_on)
     cfg.add_pulse("voltage_off_pulse", voltage_off)
 
@@ -219,6 +227,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         -0.5 * (np.linspace(-3, 3, settings.pulse_length) ** 2)
     )
     cfg.add_waveform("gaussian_pi_half_wf", waveform=gauss_awg.tolist())
+    cfg.add_waveform("mason_wf", waveform=(settings.pulse_amplitude * np.random.uniform(0, 1, settings.pulse_length)).tolist())
 
     # define digital waveforms (markers)
     cfg.add_digital_waveform("ON", state=1, length=0)

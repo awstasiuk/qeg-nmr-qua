@@ -10,20 +10,38 @@ from scipy.special import jn
 u = unit(coerce_to_integer=True)
 
 # create base settings object for experiments
+# settings = qnmr.ExperimentSettings(
+#     n_avg=4,
+#     pulse_length=1.1 * u.us,
+#     pulse_amplitude=0.475,  # amplitude is 0.5*Vpp
+#     pulse_shape="pi_half",
+#     rotation_angle=239.8,  # degrees
+#     thermal_reset=4 * u.s,
+#     center_freq=282.1901 * u.MHz,
+#     offset_freq=6350 * u.Hz,
+#     readout_delay=20 * u.us,
+#     dwell_time=4 * u.us,
+#     readout_start=0 * u.us,
+#     readout_end=256 * u.us,
+#     save_dir=Path(__file__).parent / "test_results",
+# )
+# create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
-    pulse_amplitude=0.461,  # amplitude is 0.5*Vpp
-    rotation_angle=244.77,  # degrees
+    pulse_length=2.64 * u.us,
+    pulse_amplitude=0.437,  # amplitude is 0.5*Vpp
+    pulse_shape="gaussian_pi_half",
+    rotation_angle=232.6,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=5675 * u.Hz,
+    offset_freq=6350 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
     save_dir=Path(__file__).parent / "test_results",
 )
+
 
 cfg = qnmr.cfg_from_settings(settings)
 
@@ -44,13 +62,13 @@ period_list = np.arange(0,25,1)
 # define experiment object
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-expt.add_frame_change(angle=-5.50, element=settings.res_key)
+expt.add_frame_change(angle=5.58, element=settings.res_key)
 
 expt.add_floquet_sequence(phases=pine8_phases, delays=pine8_delays, repetitions=period_list)
 
 expt.add_delay(1*u.ms)
 
-expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+expt.add_pulse(element=settings.res_key)
 
 expt.update_sweep_axis(period_list)
 expt.update_sweep_label("Pine-8 Periods")
@@ -67,7 +85,8 @@ if fit:
         return A * jn(0, k * x) * np.exp(-(x / tau)) + b
     
     # Fit the signal to the Bessel function
-    popt, pcov = curve_fit(damped_bessel, periods, signal, p0=[1, 0.1, 1, 0])
+    popt, pcov = curve_fit(damped_bessel, periods, signal, p0=[1, 1.4, 12, 0], 
+                           bounds = ([0.5, 0.5, 1.0, -0.5], [2.0, 3.0, 30.0, 0.5]) )
 
     # Extract the fitted parameters
     amplitude_fit, scale_fit, tau_fit, b_fit = popt

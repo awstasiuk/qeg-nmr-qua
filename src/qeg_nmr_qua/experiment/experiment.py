@@ -75,7 +75,9 @@ class Experiment:
 
         # ---- Experiment parameters ---- #
         self.n_avg = settings.n_avg
+        self.pulse_shape = settings.pulse_shape
         self.pi_half_pulse = settings.pi_half_key
+        self.gaussian_pi_half_pulse = settings.gaussian_pi_half_key
 
         self.probe_key = settings.res_key
         self.helper_key = settings.helper_key
@@ -128,8 +130,8 @@ class Experiment:
 
     def add_pulse(
         self,
-        name: str,
         element: str,
+        name: str = None,
         phase: float = 0.0,
         amplitude: float = 1.0,
         length: int | Iterable | None = None,
@@ -139,7 +141,7 @@ class Experiment:
         and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).
 
         Args:
-            name (str): Name of the pulse operation, must be defined in the element's config.
+            name (str): Name of the pulse operation, defaults to settings.pulse_shape if not defined.
             element (str): Element to which the pulse is applied. Must be defined in the config.
             phase (float | Iterable): Phase of the pulse in degrees. Saves as a fraction of 2pi.
             amplitude (float | Iterable): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
@@ -150,7 +152,9 @@ class Experiment:
 
         pulse = self.config.elements.elements[element].operations.get(name, None)
         if pulse is None:
-            raise ValueError(f"Operation {name} not defined for element {element}.")
+            name = self.pulse_shape
+            pulse = self.config.elements.elements[element].operations.get(name, None)
+            print(f"No shape specified in add_pulse, Using default settings.pulse_shape: {self.pulse_shape}")
 
         command = {
             "type": "pulse",
@@ -229,7 +233,7 @@ class Experiment:
         self._commands.append(command)
 
     def add_floquet_sequence(
-        self, phases: list[float], delays: list[int], repetitions: int | list[int], name: str = "pi_half"
+        self, phases: list[float], delays: list[int], repetitions: int | list[int], name: str = None
     ):
         """
         Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
@@ -237,13 +241,16 @@ class Experiment:
         Args:
             phases (list[float]): List of phases for the pulses in degrees.
             delays (list[int]): List of delays in nanoseconds.
-            name (str): Name of the pulse operation, must be defined in the element's config.
+            name (str): Name of the pulse operation, defaults to settings.pulse_shape if not defined.
         """
 
         if len(phases) + 1 != len(delays):
             raise ValueError(
                 "There must be one more delay than phase in a Floquet sequence."
             )
+        if name is None:
+            name = self.pulse_shape
+            #print(f"No shape specified in add_floquet_sequence, Using default settings.pulse_shape: {self.pulse_shape}")
 
         command = {
             "type": "sequence",

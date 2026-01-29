@@ -21,11 +21,12 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=2.64 * u.us,
-    pulse_amplitude=0.431,  # amplitude is 0.5*Vpp
-    rotation_angle=234.7,  # degrees
+    pulse_amplitude=0.437,  # amplitude is 0.5*Vpp
+    pulse_shape="gaussian_pi_half",
+    rotation_angle=232.6,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=5700 * u.Hz,
+    offset_freq=6350 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -39,14 +40,14 @@ overrot_ang = np.arange(-8,3,1)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
 corrected_y = 90-overrot_ang
-expt.add_pulse(name=settings.gaussian_pi_half_key, element=settings.res_key, phase=corrected_y)
+expt.add_pulse(element=settings.res_key, phase=corrected_y)
 expt.add_delay(4*u.us)
-expt.add_pulse(name=settings.gaussian_pi_half_key, element=settings.res_key, phase=180)
+expt.add_pulse(element=settings.res_key, phase=180)
 
 #T1 filter
 expt.add_delay(1*u.ms)
 
-expt.add_pulse(name=settings.gaussian_pi_half_key, element=settings.res_key)
+expt.add_pulse(element=settings.res_key)
 
 expt.update_sweep_axis(overrot_ang)
 expt.update_sweep_label("Over-rotation Angle (deg)")

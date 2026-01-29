@@ -20,7 +20,7 @@ def phase_calibration(settings):
     """
     config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
-    expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+    expt.add_pulse(element=settings.res_key)
     expt.execute_experiment(
         live=True, wait_on_close=False, title_prefix="[Phase Calibration] "
     )
@@ -31,6 +31,7 @@ def phase_calibration(settings):
     delphi = np.arctan2(Q[0], I[0]) * (180 / np.pi)
     settings.rotation_angle += round(delphi, 2)
     print("Incrementing phase reference by {:.2f} degrees".format(delphi))
+    print("Updated rotation angle to {:.2f} degrees".format(settings.rotation_angle))
     # return delphi
 
 
@@ -48,7 +49,7 @@ def check_offset(settings):
     """
     config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
-    expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+    expt.add_pulse(element=settings.res_key)
     expt.execute_experiment(
         live=True, wait_on_close=False, title_prefix="[Offset Check] "
     )
@@ -62,7 +63,7 @@ def check_offset(settings):
     # Compute the number of entries in autocorr greater than confidence_95
     num_entries_above_threshold = np.sum(abs(autocorr) > confidence_95)
 
-    if num_entries_above_threshold <= 2:
+    if num_entries_above_threshold <= 4:
         return 0  # offset frequency is acceptable
     else:
         if np.mean(Q[:5]) > 0:
@@ -137,14 +138,10 @@ def pulse_amp_calibration(settings, n_wraps=2):
     amp_scaling = np.arange(0.94, 1.06, 0.01)
     expt = qnmr.Experiment2D(settings=settings, config=config)
 
-    expt.add_pulse(
-        name=settings.pi_half_key, element=settings.res_key, amplitude=amp_scaling
-    )
+    expt.add_pulse(element=settings.res_key, amplitude=amp_scaling)
 
     for i in range(n_wraps * 4):
-        expt.add_pulse(
-            name=settings.pi_half_key, element=settings.res_key, amplitude=amp_scaling
-        )
+        expt.add_pulse(element=settings.res_key, amplitude=amp_scaling)
         expt.add_delay(2 * u.us)
 
     expt.update_sweep_axis(amp_scaling * settings.pulse_amplitude)
