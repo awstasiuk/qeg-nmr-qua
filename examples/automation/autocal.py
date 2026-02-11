@@ -20,11 +20,12 @@ settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
     pulse_amplitude=0.45,  # amplitude is 0.5*Vpp
-    pulse_shape="pi_half",
-    rotation_angle=239.8,  # degrees
+    pulse_shape="square",
+    pulse_rise_fall=0.0,  # 0% rise/fall time
+    rotation_angle=238.60,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=6350 * u.Hz,
+    offset_freq=7350 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -40,6 +41,7 @@ print(
     f"[AUTOCAL] After phase_calibration: rotation_angle = {settings.rotation_angle:.2f}°"
 )
 saver.save_settings(settings, "autocal_settings", overwrite=True)
+
 
 if check_offset(settings) != 0:
     success = bisection_offset_calibration(settings)

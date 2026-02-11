@@ -19,13 +19,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=2.64 * u.us,
-    pulse_amplitude=0.437,  # amplitude is 0.5*Vpp
-    pulse_shape="gaussian_pi_half",
-    rotation_angle=232.6,  # degrees
+    pulse_length=1.1 * u.us,
+    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_shape="square",
+    pulse_rise_fall=0.0,  # 0% rise/fall time
+    rotation_angle=243.10,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=6350 * u.Hz,
+    offset_freq=7350 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -33,18 +34,19 @@ settings = qnmr.ExperimentSettings(
     save_dir=Path(__file__).parent / "test_results",
 )
 
+
 cfg = qnmr.cfg_from_settings(settings)
 
-# amp_list = np.arange(.93,1.05,.01)
-# amp_list = np.arange(.975,1.025,.005)
-amp_list = np.arange(0.9, 1.05, .03)
+# amp_list = np.arange(.93,1.05,.025)
+amp_list = np.arange(.975,1.025,.005)
+# amp_list = np.arange(0.55, 1.1, .05)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-n_wraps = 0
+n_wraps = 3
 
 expt.add_pulse(element=settings.res_key, amplitude=amp_list)
 
-for i in range(n_wraps * 2):
+for i in range(n_wraps * 4):
     expt.add_pulse(element=settings.res_key, amplitude=amp_list)
     expt.add_delay(2*u.us)
 

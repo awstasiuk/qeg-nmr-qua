@@ -54,10 +54,13 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         "excitation": "excitation_pulse",
         "readout": "readout_pulse",
         "no_pulse_readout": "no_pulse_readout",
-        "pi": "pi_half_pulse",
-        "pi_half": "pi_half_pulse",
-        "gaussian_pi_half": "gaussian_pi_half_pulse",
-        "mason": "mason_pulse",
+        "square_pi": "square_pi_pulse",
+        # unless rotation otherwise noted, refers to pi/2 pulse
+        "square": "square_pulse",
+        "gaussian": "gaussian_pulse",
+        "gaussian_square": "gaussian_square_pulse",
+        "lowpass_square": "lowpass_square_pulse",
+        "tukey": "tukey_pulse",
     }
     digital_operations = {
         "voltage_on": "voltage_on_pulse",
@@ -65,7 +68,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     }
 
     # this is important for later when we want to refer to the pi/2 pulse
-    settings.update(pi_half_key="pi_half")
+    settings.update(square_key="square")
 
     # define the elements, aka, lab objects controlled by opx
     probe = Element(
@@ -168,26 +171,39 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         digital_marker="ON",
     )
     # square pi/2 pulse
-    sqr_pi_half = ControlPulse(
+    square = ControlPulse(
         length=settings.pulse_length,
-        waveform="square_pi_half_wf",
+        waveform="square_wf",
         digital_marker="ON",
     )
     # square pi pulse
-    sqr_pi = ControlPulse(
+    square_pi = ControlPulse(
         length=2 * settings.pulse_length,
-        waveform="square_pi_wf",
+        waveform="square_wf",
         digital_marker="ON",
     )
     # Gaussian pi/2 pulse
-    gaussian_pi_half = ControlPulse(
+    gaussian = ControlPulse(
         length=settings.pulse_length,
-        waveform="gaussian_pi_half_wf",
+        waveform="gaussian_wf",
         digital_marker="ON",
     )
-    mason = ControlPulse(
+    # Gaussian square (smooth rise + flat region) pi/2 pulse
+    gaussian_square = ControlPulse(
         length=settings.pulse_length,
-        waveform="mason_wf",
+        waveform="gaussian_square_wf",
+        digital_marker="ON",
+    )
+    # Lowpass-approximated square pi/2 pulse
+    lowpass_square = ControlPulse(
+        length=settings.pulse_length, # 2x longer to account for preshoot/overshoot
+        waveform="lowpass_square_wf",
+        digital_marker="ON",
+    )
+    # Tukey window pi/2 pulse
+    tukey = ControlPulse(
+        length=settings.pulse_length, # 2x longer to account for preshoot/overshoot
+        waveform="tukey_wf",
         digital_marker="ON",
     )
 
@@ -208,10 +224,12 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     cfg.add_pulse("readout_pulse", readout)
     cfg.add_pulse("excitation_pulse", excitation)
     cfg.add_pulse("no_pulse_readout", no_pulse_readout)
-    cfg.add_pulse("pi_half_pulse", sqr_pi_half)
-    cfg.add_pulse("pi_pulse", sqr_pi)
-    cfg.add_pulse("gaussian_pi_half_pulse", gaussian_pi_half)
-    cfg.add_pulse("mason_pulse", mason)
+    cfg.add_pulse("square_pulse", square)
+    cfg.add_pulse("square_pi_pulse", square_pi)
+    cfg.add_pulse("gaussian_pulse", gaussian)
+    cfg.add_pulse("gaussian_square_pulse", gaussian_square)
+    cfg.add_pulse("lowpass_square_pulse", lowpass_square)
+    cfg.add_pulse("tukey_pulse", tukey)
     cfg.add_pulse("voltage_on_pulse", voltage_on)
     cfg.add_pulse("voltage_off_pulse", voltage_off)
 
@@ -220,14 +238,46 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     cfg.add_waveform("zero_wf", waveform=0.0)
     cfg.add_waveform("readout_wf", waveform=settings.readout_amp)
     cfg.add_waveform("excitation_wf", waveform=settings.excitation_amp)
-    cfg.add_waveform("square_pi_half_wf", waveform=settings.pulse_amplitude)
-    cfg.add_waveform("square_pi_wf", waveform=settings.pulse_amplitude)
-    # Gaussian waveform samples for shaped pi/2 pulse
-    gauss_awg = settings.pulse_amplitude * np.exp(
-        -0.5 * (np.linspace(-3, 3, settings.pulse_length) ** 2)
+    cfg.add_waveform("square_wf", waveform=settings.pulse_amplitude)
+    
+    # Gaussian waveform samples for shaped pi/2 pulse out to 3 stddev
+    gaussian_awg = settings.pulse_amplitude * np.exp(
+        -0.5 * (np.linspace(-3, 3, settings.pulse_length) ** 2))
+    cfg.add_waveform("gaussian_wf", waveform=gaussian_awg.tolist())
+    
+    # Gaussian square waveform samples for shaped pi/2 pulse out to 3 stddev
+    gaussian_square_width = int(settings.pulse_length * settings.pulse_rise_fall / 2)
+    gaussian_square_awg = settings.pulse_amplitude * np.r_[
+        np.exp(-0.5 * np.linspace(-3, 0, gaussian_square_width)**2),
+        np.ones(int(settings.pulse_length*(1 - settings.pulse_rise_fall))),
+        np.exp(-0.5 * np.linspace(0, -3, gaussian_square_width)**2)
+    ]
+    cfg.add_waveform("gaussian_square_wf", waveform=gaussian_square_awg.tolist())
+
+    # Low-pass (Butterworth-filtered) square pulse for shaped pi/2 pulse
+    n_harmonics   = 30 # number of harmonics to approximate square wave
+    lowpass_order  = 10 # order of oscillations
+    lowpass_t = np.linspace(-.5, 1.5, settings.pulse_length) # plots the pulse from t=-0.5 to 1.5
+    lowpass_square_awg = settings.pulse_amplitude * (
+        0.5+(2/np.pi) * sum(
+            np.sin((2*k-1)*np.pi*lowpass_t) /
+            ((2*k-1) * np.sqrt(1 + ((2*k-1)/n_harmonics)**(2*lowpass_order)))
+            for k in range(1, n_harmonics+1)
+        )
     )
-    cfg.add_waveform("gaussian_pi_half_wf", waveform=gauss_awg.tolist())
-    cfg.add_waveform("mason_wf", waveform=(settings.pulse_amplitude * np.random.uniform(0, 1, settings.pulse_length)).tolist())
+    lowpass_square_awg = np.clip(lowpass_square_awg, -0.5, 0.5)
+    cfg.add_waveform("lowpass_square_wf", waveform=lowpass_square_awg.tolist())
+
+    # Tukey windowed waveform samples for shaped pi/2 pulse
+    tukey_x = np.linspace(-1, 1, settings.pulse_length)
+    tukey_awg = settings.pulse_amplitude * (
+        np.ones(settings.pulse_length) if settings.pulse_rise_fall == 0 else np.where(
+            np.abs(tukey_x) < 1 - settings.pulse_rise_fall,
+            1.0,
+            0.5 * (1 + np.cos(np.pi * (np.abs(tukey_x) - 1 + settings.pulse_rise_fall) / settings.pulse_rise_fall))
+        )
+    )
+    cfg.add_waveform("tukey_wf", waveform=tukey_awg.tolist())
 
     # define digital waveforms (markers)
     cfg.add_digital_waveform("ON", state=1, length=0)

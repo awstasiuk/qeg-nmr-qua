@@ -76,8 +76,7 @@ class Experiment:
         # ---- Experiment parameters ---- #
         self.n_avg = settings.n_avg
         self.pulse_shape = settings.pulse_shape
-        self.pi_half_pulse = settings.pi_half_key
-        self.gaussian_pi_half_pulse = settings.gaussian_pi_half_key
+        self.pi_half_pulse = settings.square_key
 
         self.probe_key = settings.res_key
         self.helper_key = settings.helper_key

@@ -10,31 +10,16 @@ from scipy.special import jn
 u = unit(coerce_to_integer=True)
 
 # create base settings object for experiments
-# settings = qnmr.ExperimentSettings(
-#     n_avg=4,
-#     pulse_length=1.1 * u.us,
-#     pulse_amplitude=0.475,  # amplitude is 0.5*Vpp
-#     pulse_shape="pi_half",
-#     rotation_angle=239.8,  # degrees
-#     thermal_reset=4 * u.s,
-#     center_freq=282.1901 * u.MHz,
-#     offset_freq=6350 * u.Hz,
-#     readout_delay=20 * u.us,
-#     dwell_time=4 * u.us,
-#     readout_start=0 * u.us,
-#     readout_end=256 * u.us,
-#     save_dir=Path(__file__).parent / "test_results",
-# )
-# create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=2.64 * u.us,
-    pulse_amplitude=0.437,  # amplitude is 0.5*Vpp
-    pulse_shape="gaussian_pi_half",
-    rotation_angle=232.6,  # degrees
+    pulse_length=2.2 * u.us,
+    pulse_amplitude=0.47,  # amplitude is 0.5*Vpp
+    pulse_shape="lowpass_square",
+    pulse_rise_fall=0.0,  # 50% rise/fall time
+    rotation_angle=238.60,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=6350 * u.Hz,
+    offset_freq=7350 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -84,7 +69,7 @@ if fit:
     def damped_bessel(x, A, k, tau, b):
         return A * jn(0, k * x) * np.exp(-(x / tau)) + b
     
-    # Fit the signal to the Bessel function
+    # Fit the signal to the Bessel function; expected values listed in p0
     popt, pcov = curve_fit(damped_bessel, periods, signal, p0=[1, 1.4, 12, 0], 
                            bounds = ([0.5, 0.5, 1.0, -0.5], [2.0, 3.0, 30.0, 0.5]) )
 

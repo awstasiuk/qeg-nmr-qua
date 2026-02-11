@@ -63,7 +63,7 @@ def check_offset(settings):
     # Compute the number of entries in autocorr greater than confidence_95
     num_entries_above_threshold = np.sum(abs(autocorr) > confidence_95)
 
-    if num_entries_above_threshold <= 4:
+    if num_entries_above_threshold <= 3:
         return 0  # offset frequency is acceptable
     else:
         if np.mean(Q[:5]) > 0:

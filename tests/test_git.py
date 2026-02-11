@@ -7,6 +7,10 @@ git checkout mason/gitsandbox
 git commit -a -m "message"
 git push origin mason/gitsandbox
 
+git stash push -m "Description of changes"
+git stash list
+git stash apply "stash@{0}"
+
 If its been a while since the last calibration:
 Step 0: Calibrate the "wobb" (wobble?) (a.k.a. resonator spectroscopy)
 	a. Turn off the big amplifier.
