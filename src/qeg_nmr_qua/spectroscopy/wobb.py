@@ -38,11 +38,13 @@ plt.ion()
 settings = ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.4095,  # amplitude is 0.5*Vpp
-    rotation_angle=250.94,  # degrees
+    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_shape="square",
+    pulse_rise_fall=0.0,  # 0% rise/fall time
+    rotation_angle=243.10,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=5000 * u.Hz,
+    offset_freq=7350 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -68,7 +70,7 @@ res_spec_df = 10 * u.kHz
 res_spec_sweep_dfs = np.arange(-res_spec_span, res_spec_span + res_spec_df, res_spec_df)
 res_spec_frequency = res_spec_sweep_dfs + res_frequency
 
-window_max = 80  # expected max signal with default settings in microvolts
+window_max = 160  # expected max signal with default settings in microvolts
 
 # ---- Data to save ---- #
 save_data_dict = {
@@ -101,7 +103,7 @@ with program() as prog:
                     "readout",
                     res_key,
                     demod.full("cos", I, "out1"),
-                    demod.full("sin", Q, "out1"),
+                    demod.full("sin", Q, "out1")
                 )
                 assign(I_avg, I_avg + I >> avg_bit_shift)
                 assign(Q_avg, Q_avg + Q >> avg_bit_shift)
@@ -147,10 +149,10 @@ if verified:
             # Fetch results
             I, Q = res_handles.fetch_all()
             # Convert results into Volts
-            I = u.demod2volts(I, settings.dwell_time)
-            Q = u.demod2volts(Q, settings.dwell_time)
+            I = u.demod2volts(I, settings.dwell_time) * 1e6
+            Q = u.demod2volts(Q, settings.dwell_time) * 1e6
             S = I + 1j * Q
-            R = np.abs(S) * 1e6  # Amplitude
+            R = np.abs(S)   # Amplitude
             width = 10
             smooth_R = np.convolve(
                 R, np.ones(width) / width, mode="same"
@@ -171,7 +173,7 @@ if verified:
             )
             ax1.vlines(
                 [0],
-                ymin=np.min(R),
+                ymin=0,
                 ymax=np.max(R),
                 color="k",
                 linestyle="--",
