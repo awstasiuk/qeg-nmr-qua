@@ -20,13 +20,13 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.46,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
     rotation_angle=243.10,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7350 * u.Hz,
+    offset_freq=7500 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -34,11 +34,10 @@ settings = qnmr.ExperimentSettings(
     save_dir=Path(__file__).parent / "test_results",
 )
 
-
 cfg = qnmr.cfg_from_settings(settings)
 
-# amp_list = np.arange(.93,1.05,.025)
-amp_list = np.arange(.975,1.025,.005)
+#amp_list = np.arange(.93,1.05,.025)
+amp_list = np.arange(.975,1.03,.005)
 # amp_list = np.arange(0.55, 1.1, .05)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 

@@ -150,13 +150,13 @@ class Experiment:
             raise ValueError(f"Element {element} not defined in config.")
 
         pulse = self.config.elements.elements[element].operations.get(shape, None)
-        if pulse is None:
+        if shape is None:
             shape = self.pulse_shape
-            pulse = self.config.elements.elements[element].operations.get(shape, None)
-            # print(f"No shape specified in add_pulse, Using default settings.pulse_shape: {self.pulse_shape}")
-        elif pulse not in self.config.elements.elements.keys():
-            print(f"test")
-
+            pulse = self.config.elements.elements[element].operations.get(self.pulse_shape, None)
+        elif pulse is None:
+            raise ValueError(f"Pulse shape '{shape}' not recognized in element '{element}'. "
+                             f"Please provide a valid pulse shape key.")
+    
 
         command = {
             "type": "pulse",
@@ -235,7 +235,12 @@ class Experiment:
         self._commands.append(command)
 
     def add_floquet_sequence(
-        self, phases: list[float], delays: list[int], repetitions: int | list[int], shape: str = None
+        self, 
+        phases: list[float], 
+        delays: list[int], 
+        repetitions: int | list[int], 
+        element: str = None,
+        shape: str = None
     ):
         """
         Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
@@ -250,13 +255,24 @@ class Experiment:
             raise ValueError(
                 "There must be one more delay than phase in a Floquet sequence."
             )
+        
+        if element is None:
+            element = self.probe_key
+        elif element not in self.config.elements.elements.keys():
+            raise ValueError(f"Element {element} not defined in config.")
+        
+        pulse = self.config.elements.elements[element].operations.get(shape, None)
         if shape is None:
             shape = self.pulse_shape
             #print(f"No shape specified in add_floquet_sequence, Using default settings.pulse_shape: {self.pulse_shape}")
+        elif pulse is None:
+            raise ValueError(f"Pulse shape '{shape}' not recognized in element '{element}'. "
+                             f"Please provide a valid pulse shape key.")
 
         command = {
             "type": "sequence",
             "shape": shape,
+            "element": element,
             "phases": (np.array(phases) / 360) % 1,
             "delays": np.array(delays, dtype=int) // 4,
         }
@@ -403,17 +419,17 @@ class Experiment:
             phases = command.get("phases", None)
             delays = command.get("delays", None)
             repetitions = command.get("repetitions", var)
-            shape = command.get("shape", self.square)
+            shape = command.get("shape", None)
 
             with for_(m, 0, m < repetitions, m + 1):
                 wait(delays[0])
                 for phase, delay in zip(phases, delays[1:]):
-                    frame_rotation_2pi(phase, self.probe_key)
+                    frame_rotation_2pi(phase, command["element"])
                     play(
                         shape,
-                        self.probe_key,
+                        command["element"],
                     )
-                    frame_rotation_2pi(-phase, self.probe_key)
+                    frame_rotation_2pi(-phase, command["element"])
                     if self.use_frame_change:
                         frame_rotation_2pi(
                             self.frame_change_angle, self.frame_change_element

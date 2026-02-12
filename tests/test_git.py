@@ -11,7 +11,7 @@ git push origin mason/git-sandbox
 git stash push -m "Description of changes"
 git stash list
 git stash apply "stash@{0}"
-
+git commit -a -m "introduces ValueError if
 If its been a while since the last calibration:
 Step 0: Calibrate the "wobb" (wobble?) (a.k.a. resonator spectroscopy)
 	a. Turn off the big amplifier.

@@ -12,14 +12,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=2.2 * u.us,
-    pulse_amplitude=0.47,  # amplitude is 0.5*Vpp
-    pulse_shape="lowpass_square",
-    pulse_rise_fall=0.0,  # 50% rise/fall time
-    rotation_angle=238.60,  # degrees
+    pulse_length=1.1 * u.us,
+    pulse_amplitude=0.463,  # amplitude is 0.5*Vpp
+    pulse_shape="square",
+    pulse_rise_fall=0.0,  # 0% rise/fall time
+    rotation_angle=248.27,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7350 * u.Hz,
+    offset_freq=7500 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
