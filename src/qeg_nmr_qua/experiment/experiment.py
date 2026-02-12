@@ -76,7 +76,7 @@ class Experiment:
         # ---- Experiment parameters ---- #
         self.n_avg = settings.n_avg
         self.pulse_shape = settings.pulse_shape
-        self.pi_half_pulse = settings.square_key
+        self.square = settings.square_key
 
         self.probe_key = settings.res_key
         self.helper_key = settings.helper_key
@@ -130,7 +130,7 @@ class Experiment:
     def add_pulse(
         self,
         element: str,
-        name: str = None,
+        shape: str = None,
         phase: float = 0.0,
         amplitude: float = 1.0,
         length: int | Iterable | None = None,
@@ -140,7 +140,7 @@ class Experiment:
         and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).
 
         Args:
-            name (str): Name of the pulse operation, defaults to settings.pulse_shape if not defined.
+            shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
             element (str): Element to which the pulse is applied. Must be defined in the config.
             phase (float | Iterable): Phase of the pulse in degrees. Saves as a fraction of 2pi.
             amplitude (float | Iterable): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
@@ -149,15 +149,18 @@ class Experiment:
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
 
-        pulse = self.config.elements.elements[element].operations.get(name, None)
+        pulse = self.config.elements.elements[element].operations.get(shape, None)
         if pulse is None:
-            name = self.pulse_shape
-            pulse = self.config.elements.elements[element].operations.get(name, None)
-            print(f"No shape specified in add_pulse, Using default settings.pulse_shape: {self.pulse_shape}")
+            shape = self.pulse_shape
+            pulse = self.config.elements.elements[element].operations.get(shape, None)
+            # print(f"No shape specified in add_pulse, Using default settings.pulse_shape: {self.pulse_shape}")
+        elif pulse not in self.config.elements.elements.keys():
+            print(f"test")
+
 
         command = {
             "type": "pulse",
-            "name": name,
+            "shape": shape,
             "element": element,
         }
 
@@ -232,7 +235,7 @@ class Experiment:
         self._commands.append(command)
 
     def add_floquet_sequence(
-        self, phases: list[float], delays: list[int], repetitions: int | list[int], name: str = None
+        self, phases: list[float], delays: list[int], repetitions: int | list[int], shape: str = None
     ):
         """
         Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
@@ -240,20 +243,20 @@ class Experiment:
         Args:
             phases (list[float]): List of phases for the pulses in degrees.
             delays (list[int]): List of delays in nanoseconds.
-            name (str): Name of the pulse operation, defaults to settings.pulse_shape if not defined.
+            shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
         """
 
         if len(phases) + 1 != len(delays):
             raise ValueError(
                 "There must be one more delay than phase in a Floquet sequence."
             )
-        if name is None:
-            name = self.pulse_shape
+        if shape is None:
+            shape = self.pulse_shape
             #print(f"No shape specified in add_floquet_sequence, Using default settings.pulse_shape: {self.pulse_shape}")
 
         command = {
             "type": "sequence",
-            "name": name,
+            "shape": shape,
             "phases": (np.array(phases) / 360) % 1,
             "delays": np.array(delays, dtype=int) // 4,
         }
@@ -277,8 +280,7 @@ class Experiment:
             raise ValueError(f"Element {element} not defined in config.")
 
         command = {
-            "type": "pulse",
-            "name": "virtual_z",
+            "type": "z_rotation",
             "element": element,
             "phase": (angle / 360) % 1,  # convert to fraction of 2pi
         }
@@ -375,7 +377,7 @@ class Experiment:
 
             frame_rotation_2pi(phase, command["element"])
             play(
-                command["name"] * amp(amplitude),
+                command["shape"] * amp(amplitude),
                 command["element"],
                 duration=length,
             )
@@ -401,14 +403,14 @@ class Experiment:
             phases = command.get("phases", None)
             delays = command.get("delays", None)
             repetitions = command.get("repetitions", var)
-            name = command.get("name", self.pi_half_pulse)
+            shape = command.get("shape", self.square)
 
             with for_(m, 0, m < repetitions, m + 1):
                 wait(delays[0])
                 for phase, delay in zip(phases, delays[1:]):
                     frame_rotation_2pi(phase, self.probe_key)
                     play(
-                        name,
+                        shape,
                         self.probe_key,
                     )
                     frame_rotation_2pi(-phase, self.probe_key)
