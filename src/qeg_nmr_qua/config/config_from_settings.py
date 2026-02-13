@@ -38,7 +38,7 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     )
     lf_fem.add_analog_output(port=2)
     lf_fem.add_analog_input(port=1, gain_db=0)
-    lf_fem.add_analog_input(port=2, gain_db=26)
+    lf_fem.add_analog_input(port=2, gain_db=16)
     lf_fem.add_digital_output(port=1, name="readout_switch")
     lf_fem.add_digital_output(port=2, name="amplifier_blank", inverted=True)
     lf_fem.add_digital_output(port=3, name="debug_marker")
@@ -328,10 +328,10 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
     )
     cfg.add_integration_weight(
-        name="sine_weights",
+        name="opt_sine_weights",
         length=settings.dwell_time,
-        real_weight=-np.sin(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
+        real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
     )
     cfg.add_integration_weight(
         name="opt_minus_sine_weights",

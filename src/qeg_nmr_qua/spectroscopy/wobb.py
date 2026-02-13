@@ -19,7 +19,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from qm.qua import *
-from qm import QuantumMachinesManager
+from qm import QuantumMachinesManager, generate_qua_script
 from qualang_tools.loops import from_array
 from qualang_tools.results import fetching_tool
 from qualang_tools.plot import interrupt_on_close
@@ -44,7 +44,7 @@ settings = ExperimentSettings(
     rotation_angle=243.10,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7350 * u.Hz,
+    offset_freq=7500 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -70,7 +70,7 @@ res_spec_df = 10 * u.kHz
 res_spec_sweep_dfs = np.arange(-res_spec_span, res_spec_span + res_spec_df, res_spec_df)
 res_spec_frequency = res_spec_sweep_dfs + res_frequency
 
-window_max = 160  # expected max signal with default settings in microvolts
+window_max = 80  # expected max signal with default settings in microvolts
 
 # ---- Data to save ---- #
 save_data_dict = {
