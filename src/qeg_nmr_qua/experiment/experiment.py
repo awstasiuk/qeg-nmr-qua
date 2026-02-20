@@ -114,7 +114,7 @@ class Experiment:
         self.start_with_wait = True  # whether to start the experiment with a wait
         self.use_frame_change = False
         self.frame_change_angle = 0.0  # angle for frame change compensation
-        self.frame_change_element = ""  # element for frame change compensation
+        self.frame_change_elements = ("",)  # element(s) for frame change compensation
 
         # ---- Data to save ---- #
         self.save_data_dict = {
@@ -249,6 +249,9 @@ class Experiment:
             phases (list[float]): List of phases for the pulses in degrees.
             delays (list[int]): List of delays in nanoseconds.
             shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
+
+        Raises:
+            ValueError: If the number of phases and delays are inconsistent, and if the element or pulse shape are not recognized.
         """
 
         if len(phases) + 1 != len(delays):
@@ -303,7 +306,7 @@ class Experiment:
 
         self._commands.append(command)
 
-    def add_frame_change(self, angle: float, element: str):
+    def add_frame_change(self, angle: float, elements: str | Iterable[str]):
         """
         Adds frame change compensation to the experiment, which is implemented as a frame rotation after
         each applied pi-half pulse. This feature is useful for correcting out-of-phase overrotation errors
@@ -312,13 +315,19 @@ class Experiment:
 
         Args:
             angle (float): Angle of the frame change in degrees.
-            element (str): Element to which the frame change is applied. Must be defined in the config.
+            elements (str): Element(s) to which the frame change is applied. Must be defined in the config.
         """
-        if element not in self.config.elements.elements.keys():
-            raise ValueError(f"Element {element} not defined in config.")
+        
+        if isinstance(elements, str):
+            elements = (elements,)
+
+        for element in elements:
+            if element not in self.config.elements.elements.keys():
+                raise ValueError(f"Element {element} not defined in config.")
+            
         self.use_frame_change = True
         self.frame_change_angle = (angle / 360) % 1  # convert to fraction of 2pi
-        self.frame_change_element = element
+        self.frame_change_elements = elements
 
     def remove_initial_delay(self, remove: bool = True):
         """
@@ -400,7 +409,7 @@ class Experiment:
             frame_rotation_2pi(-phase, command["element"])
 
             if self.use_frame_change:
-                frame_rotation_2pi(self.frame_change_angle, self.frame_change_element)
+                frame_rotation_2pi(self.frame_change_angle, *self.frame_change_elements)
 
         elif command["type"] == "delay":
             duration = command.get("duration", var)
@@ -432,7 +441,7 @@ class Experiment:
                     frame_rotation_2pi(-phase, command["element"])
                     if self.use_frame_change:
                         frame_rotation_2pi(
-                            self.frame_change_angle, self.frame_change_element
+                            self.frame_change_angle, *self.frame_change_elements
                         )
                     wait(delay)
 

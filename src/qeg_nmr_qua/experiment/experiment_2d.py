@@ -166,7 +166,7 @@ class Experiment2D(Experiment):
                         save(Q2, Q_st)
                         wait(self.loop_wait_cycles, self.helper_key)
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    reset_frame(self.probe_key)
+                    reset_frame(self.probe_key, self.helper_key)
                     wait(self.wait_between_scans, self.probe_key)
 
                 save(n, n_st)

@@ -58,12 +58,18 @@ def check_offset(settings):
 
     # Calculate the autocorrelation of the signal
     autocorr = acf(Q, nlags=len(Q) - 1, fft=True)
-    confidence_95 = 1.96 / np.sqrt(len(Q))
 
-    # Compute the number of entries in autocorr greater than confidence_95
-    num_entries_above_threshold = np.sum(abs(autocorr) > confidence_95)
+    # Fourier transform of autocorrelation
+    fft_vals = np.fft.fft(autocorr)
+    freqs = np.fft.fftfreq(len(autocorr), d=settings.dwell_time / u.ms) # dt in ns --> dt in ms. freq in kHz
+    fft_vals_shifted = np.fft.fftshift(fft_vals)
+    freqs_shifted = np.fft.fftshift(freqs)
 
-    if num_entries_above_threshold <= 3:
+    mag = np.abs(fft_vals_shifted)
+    band_mask = (freqs_shifted >= 7) & (freqs_shifted <= 12) # look for peaks in 7-12 kHz range
+    PSD_threshold = 3  # empirically determined threshold for acceptable offset frequencies
+
+    if np.all(mag[band_mask] <= PSD_threshold):
         return 0  # offset frequency is acceptable
     else:
         if np.mean(Q[:5]) > 0:
@@ -73,7 +79,7 @@ def check_offset(settings):
 
 
 def bisection_offset_calibration(
-    settings, delta=500 * u.Hz, max_iters=10, tol=50 * u.Hz
+    settings, delta=500 * u.Hz, max_iters=10, tol=25 * u.Hz
 ):
     """
     Perform offset frequency calibration using a bisection method to find the optimal offset frequency.

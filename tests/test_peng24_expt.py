@@ -13,20 +13,19 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.485,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=245.50,  # degrees
+    rotation_angle=251.26,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7350 * u.Hz,
+    offset_freq=8125 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
     save_dir=Path(__file__).parent / "test_results",
 )
-
 
 cfg = qnmr.cfg_from_settings(settings)
 
@@ -49,32 +48,25 @@ yxx24_delays = np.array([thlf,t1,t1,t1,  t1,t1,t1,  t1,t1,t1,  t1,t1,t1,
                           t1,t1,t1,  t1,t1,t1,  t1,t1,t1,  t1,t1,thlf])
 
 
-# evolve for up to 48 periods, 0 to 48
-period_list = np.arange(0,50,2)
+# evolve for up to 24 periods, 0 to 24
+period_list = np.arange(0,15,1)
 
 # define experiment object
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-expt.add_frame_change(angle=5.58, element=settings.res_key)
+# fc_elements = (settings.res_key, settings.helper_key)
+# expt.add_frame_change(angle=4.1, elements=fc_elements)
 
-# expt.add_floquet_sequence(phases=angle12_phases, delays=angle12_delays, repetitions=period_list)
-expt.add_floquet_sequence(phases=yxx24_phases, delays=yxx24_delays, repetitions=period_list)
+expt.add_floquet_sequence(phases=angle12_phases, delays=angle12_delays, repetitions=period_list)
+# expt.add_floquet_sequence(phases=yxx24_phases, delays=yxx24_delays, repetitions=period_list)
 
 expt.add_delay(1*u.ms)
 
 expt.add_pulse(element=settings.res_key)
 
 expt.update_sweep_axis(period_list)
-expt.update_sweep_label("Peng-24 Periods")
+expt.update_sweep_label("Angle-12 Periods")
 expt.execute_experiment()
-
-
-# import json
-# file_path = r"C:\Users\NMR Lab\Documents\dev\qeg-nmr-qua\tests\test_results\experiment_0045\data.json"
-# with open(file_path, "r") as f:
-#     data = json.load(f)
-# re =  np.array(data["I_data"]) * 1e6
-# periods = np.array(data["sweep_axis"])
 
 fit = True
 if fit:
@@ -99,7 +91,8 @@ if fit:
 
     # Plot the fitted decay function
     plt.scatter(periods, signal, label='Data Points')
-    plt.plot(x_fit, y_fit, color='red', label='Fitted Decay Function')
+    plt.plot(x_fit, y_fit, color='red', label=f'Fitted Decay Function\n'
+                                        f'A={amplitude_fit:.2f}, τ={tau_fit:.2f}, b={b_fit:.2f}')
     plt.legend()
 
     plt.show()
