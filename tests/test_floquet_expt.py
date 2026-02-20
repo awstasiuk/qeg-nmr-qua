@@ -58,6 +58,8 @@ expt.add_pulse(element=settings.res_key)
 expt.update_sweep_axis(period_list)
 expt.update_sweep_label("Pine-8 Periods")
 expt.execute_experiment()
+# expt.remove_initial_delay()
+# expt.simulate_experiment()
 
 fit = True
 if fit:
