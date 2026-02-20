@@ -20,7 +20,7 @@ def phase_calibration(settings):
     """
     config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
-    expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+    expt.add_pulse(element=settings.res_key)
     expt.execute_experiment(
         live=True, wait_on_close=False, title_prefix="[Phase Calibration] "
     )
@@ -31,6 +31,7 @@ def phase_calibration(settings):
     delphi = np.arctan2(Q[0], I[0]) * (180 / np.pi)
     settings.rotation_angle += round(delphi, 2)
     print("Incrementing phase reference by {:.2f} degrees".format(delphi))
+    print("Updated rotation angle to {:.2f} degrees".format(settings.rotation_angle))
     # return delphi
 
 
@@ -48,7 +49,7 @@ def check_offset(settings):
     """
     config = qnmr.cfg_from_settings(settings)
     expt = qnmr.Experiment1D(settings, config)
-    expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+    expt.add_pulse(element=settings.res_key)
     expt.execute_experiment(
         live=True, wait_on_close=False, title_prefix="[Offset Check] "
     )
@@ -57,12 +58,18 @@ def check_offset(settings):
 
     # Calculate the autocorrelation of the signal
     autocorr = acf(Q, nlags=len(Q) - 1, fft=True)
-    confidence_95 = 1.96 / np.sqrt(len(Q))
 
-    # Compute the number of entries in autocorr greater than confidence_95
-    num_entries_above_threshold = np.sum(abs(autocorr) > confidence_95)
+    # Fourier transform of autocorrelation
+    fft_vals = np.fft.fft(autocorr)
+    freqs = np.fft.fftfreq(len(autocorr), d=settings.dwell_time / u.ms) # dt in ns --> dt in ms. freq in kHz
+    fft_vals_shifted = np.fft.fftshift(fft_vals)
+    freqs_shifted = np.fft.fftshift(freqs)
 
-    if num_entries_above_threshold <= 2:
+    mag = np.abs(fft_vals_shifted)
+    band_mask = (freqs_shifted >= 7) & (freqs_shifted <= 12) # look for peaks in 7-12 kHz range
+    PSD_threshold = 3  # empirically determined threshold for acceptable offset frequencies
+
+    if np.all(mag[band_mask] <= PSD_threshold):
         return 0  # offset frequency is acceptable
     else:
         if np.mean(Q[:5]) > 0:
@@ -72,7 +79,7 @@ def check_offset(settings):
 
 
 def bisection_offset_calibration(
-    settings, delta=500 * u.Hz, max_iters=10, tol=50 * u.Hz
+    settings, delta=500 * u.Hz, max_iters=10, tol=25 * u.Hz
 ):
     """
     Perform offset frequency calibration using a bisection method to find the optimal offset frequency.
@@ -137,14 +144,10 @@ def pulse_amp_calibration(settings, n_wraps=2):
     amp_scaling = np.arange(0.94, 1.06, 0.01)
     expt = qnmr.Experiment2D(settings=settings, config=config)
 
-    expt.add_pulse(
-        name=settings.pi_half_key, element=settings.res_key, amplitude=amp_scaling
-    )
+    expt.add_pulse(element=settings.res_key, amplitude=amp_scaling)
 
     for i in range(n_wraps * 4):
-        expt.add_pulse(
-            name=settings.pi_half_key, element=settings.res_key, amplitude=amp_scaling
-        )
+        expt.add_pulse(element=settings.res_key, amplitude=amp_scaling)
         expt.add_delay(2 * u.us)
 
     expt.update_sweep_axis(amp_scaling * settings.pulse_amplitude)

@@ -15,7 +15,7 @@
           "analog_inputs": {
             "2": {
               "offset": 0.0,
-              "gain_db": 0.0,
+              "gain_db": 16,
               "sampling_rate": 1000000000
             }
           },
@@ -192,7 +192,7 @@
       "digital_marker": "OFF"
     },
     "readout_pulse": {
-      "operation": "measure",
+      "operation": "measurement",
       "length": 4000,
       "waveforms": {
         "single": "readout_wf"
@@ -211,7 +211,7 @@
       "digital_marker": "ON"
     },
     "no_pulse_readout": {
-      "operation": "measure",
+      "operation": "measurement",
       "length": 4000,
       "waveforms": {
         "single": "zero_wf"
@@ -293,7 +293,7 @@
     },
     "gaussian_pi_half_wf": {
       "type": "arbitrary",
-      "sample": [
+      "samples": [
         0.00472132352875298,
         0.004799217058225298,
         0.004878250289414408,
@@ -1399,12 +1399,20 @@
   },
   "digital_waveforms": {
     "ON": {
-      "state": 1,
-      "length": 0
+      "samples": [
+        [
+          1,
+          0
+        ]
+      ]
     },
     "OFF": {
-      "state": 0,
-      "length": 0
+      "samples": [
+        [
+          0,
+          0
+        ]
+      ]
     }
   },
   "integration_weights": {

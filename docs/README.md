@@ -60,6 +60,7 @@ less stable than simply using the "open in browser" extension.
   - `experiment.rst` - Experiment module documentation
   - `analysis.rst` - Analysis module documentation
   - `spectroscopy.rst` - Spectroscopy module documentation
+- `examples.rst` - Example experiments & calibration documentation
 - `conf.py` - Sphinx configuration file
 
 ## Making Changes

@@ -34,6 +34,8 @@ class ExperimentSettings:
     - ``n_avg``: Number of signal averages (default: 4)
     - ``pulse_length``: Duration of control pulse in nanoseconds (default: 1.1 µs)
     - ``pulse_amplitude``: Normalized pulse amplitude 0-0.5 (default: 0.25, representing 0.5 Vpp)
+    - ``pulse_shape``: Name of pulse shape operation (default: "sqr_pi_half")
+    - ``pulse_rise_fall``: Fraction of pulse length for rise/fall time from 0 to 1 (default: 0.0)
     - ``rotation_angle``: Pulse rotation angle in degrees (default: 90°)
 
     **Continuous Wave (CW) Parameters**: For continuous wave experiments
@@ -70,7 +72,9 @@ class ExperimentSettings:
     - ``amp_key``: Amplifier element name (default: "amplifier")
     - ``helper_key``: Helper element name (default: "helper")
     - ``sw_key``: Switch control element name (default: "switch")
-    - ``pi_half_key``: π/2 pulse operation name (default: "pi_half")
+    - ``sqr_pi_half_key``: π/2 pulse operation name (default: "sqr_pi_half")
+    - ``gaus_pi_half_key``: Gaussian π/2 pulse operation name (default: "gaus_pi_half")
+    - ``gaus_sqr_pi_half_key``: Gaussian square pulse operation name (default: "gaus_sqr_pi_half")
 
     **Validation:**
 
@@ -79,6 +83,7 @@ class ExperimentSettings:
     - ``n_avg`` must be an integer >= 1
     - ``pulse_length`` must be >= 64 ns
     - ``pulse_amplitude`` must be in range [-0.5, 0.5]
+    - ``pulse_rise_fall`` must be in range [0, 1] 
     - ``readout_delay`` must be >= 5 µs
     - Frequency must be in valid OPX range: 0 <= (center_freq - offset_freq) < 750 MHz
     """
@@ -87,6 +92,8 @@ class ExperimentSettings:
     n_avg: int = 4
     pulse_length: int = 1.100 * u.us  # nanoseconds
     pulse_amplitude: float = 0.25  # 0.5*Vpp
+    pulse_shape: str = "square"
+    pulse_rise_fall: float = 0.0 # fraction of pulse length from 0 to 1
     rotation_angle: float = 90.0  # degrees
 
     # cw params
@@ -120,7 +127,12 @@ class ExperimentSettings:
     amp_key: str = "amplifier"
     helper_key: str = "helper"
     sw_key: str = "switch"
-    pi_half_key: str = "pi_half"
+    square_key: str = "square"
+    square_pi_key: str = "square_pi"
+    gaussian_key: str = "gaussian"
+    gaussian_square_key: str = "gaussian_square"
+    lowpass_square_key: str = "lowpass_square"
+    tukey_key: str = "tukey"
 
     # Internal: callbacks (no thread locking - updates are not synchronized)
     _callbacks: List[UpdateCallback] = field(
