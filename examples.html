@@ -1,0 +1,176 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &amp; Calibration &mdash; qeg-nmr-qua 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="canonical" href="https://awstasiuk.github.io/qeg-nmr-qua/examples.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/index.html" />
+    <link rel="prev" title="Quick Start Guide" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            qeg-nmr-qua
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples &amp; Calibration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#resonator-spectroscopy">Resonator Spectroscopy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#offset-phase-calibrate-zero-go">Offset &amp; Phase Calibrate (Zero-go)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pulse-amplitude-calibration">Pulse Amplitude Calibration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overrotaion-calibration">Overrotaion Calibration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">qeg-nmr-qua</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples &amp; Calibration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples-calibration">
+<h1>Examples &amp; Calibration<a class="headerlink" href="#examples-calibration" title="Link to this heading"></a></h1>
+<p>These examples will introduce you to experiments and calibration with the qeg-nmr-qua package.</p>
+<section id="resonator-spectroscopy">
+<h2>Resonator Spectroscopy<a class="headerlink" href="#resonator-spectroscopy" title="Link to this heading"></a></h2>
+<p>Step 0: Calibrate the “wobb” (wobble)</p>
+<p>If its been a while since the last calibration, we must calibrate the wobb to maximize the signal from the resonator (see the <a class="reference internal" href="api/spectroscopy.html"><span class="doc">Spectroscopy Module</span></a> for more details).
+Here, we measure the response of a resonator over a range of frequencies using a continuous wave excitation (wobbler). The response is measured in terms of the I and Q quadratures of the transmitted signal.
+You must be careful with this process, as the big amplifier can be damaged if not properly disconnected.</p>
+<ol class="loweralpha simple">
+<li><p>Turn off the big amplifier.</p></li>
+<li><p>Unplug the QM Xoutput from the amplifier’s Xinput. Unplug the amplifier from the circulator circuit</p></li>
+<li><p>Plug the QM Xoutput into the circulator circuit.</p></li>
+<li><p>Danger Zone: resspec.py &amp; wobb.py. Only use if big amplifier is off &amp; disconnected!</p></li>
+<li><p>Tune the two knobs under the NMR: one is frequency tuning, the other is shape/amplitude tuning (this one is finnicky) (aim for &lt; 0.5e-5 loss)</p></li>
+<li><p>End the Danger Zone script.</p></li>
+<li><p>Return the wires to the original positions, then turn the big amp back on</p></li>
+</ol>
+</section>
+<section id="offset-phase-calibrate-zero-go">
+<h2>Offset &amp; Phase Calibrate (Zero-go)<a class="headerlink" href="#offset-phase-calibrate-zero-go" title="Link to this heading"></a></h2>
+<p>Step 1: Calibrate the offset-freq &amp; phase.</p>
+<p>As time goes on, the magnet demagnetizes slowly, leading to a small detuning (~1000s of Hz/week) of the frequency from our expected center (282.1901 MHz), and our phase drifts.
+We can account for this detuning and phase drift by performing a simple free induction decay (FID) experiment.
+This reproduces the “zero-go” function often used in Brucker systems.</p>
+<ol class="loweralpha simple">
+<li><p>Zero-go: zg.py. Will spit out the I and Q vs t curves.</p></li>
+<li><p>Script uses simple trigonometry to tune the phase.</p></li>
+<li><p>The Q and auto-correlation will tell you how you must tune the offset-freq.
+i. If the Q concavity is positive, offset-freq is too high.
+ii. If Q concavity is negative, offset-freq is too low.</p></li>
+<li><p>Repeat steps a-c and gradually adjust until Q approaches noise. Alternatively, autocal.py is meant to do this automatically</p></li>
+</ol>
+</section>
+<section id="pulse-amplitude-calibration">
+<h2>Pulse Amplitude Calibration<a class="headerlink" href="#pulse-amplitude-calibration" title="Link to this heading"></a></h2>
+<p>Step 2: Calibrate the pulse amplitude.</p>
+<p>Each pulse (e.g. pi/2 square pulse, gaussian, etc.) needs to have its amplitude/timing tuned in order to maximize I over several wraps.
+This example shows how to run a 2D pulse calibration experiment; it applies a series of pulses with varying amplitudes to the nuclear spin system and measures the resulting FID signals.</p>
+<ol class="loweralpha simple">
+<li><p>pulcal_1x.py, performs an amplitude sweep. It takes the pulse_amplitude from the config and scales it by the amp_list.
+i. e.g. pulse_amplitude=0.441 Vpp and amp_list = np.arange(.93,1.05,.01) sweeps from 93% (0.410Vpp) to 105% (0.464Vpp) in increments of 1%.
+ii. It then runs the pulse once, and then runs it 4*n_wraps times again (for a pi/2 pulse, 4 pulses is approximately identity and “wraps” back around). Then it measures the amplitude of I.</p></li>
+<li><p>Fits the results to a parabola to find which pulse amplitude leads to the best I amplitude. We can adjust n_wraps to test further.</p></li>
+</ol>
+</section>
+<section id="overrotaion-calibration">
+<h2>Overrotaion Calibration<a class="headerlink" href="#overrotaion-calibration" title="Link to this heading"></a></h2>
+<p>Step 3: Calibrate the Over Rotation Error</p>
+<p>Our pulses are not perfectly accurate: e.g. a square pulse has a different leading and trailing edge.</p>
+<div class="math notranslate nohighlight">
+\[\int{d?(φ_{lead} - φ_{trail})} ≈ 10°\]</div>
+<p>This leads to a Y component from our pulse, an “over rotation” which must be corrected with a frame change.</p>
+<p>Stasiuk, Andrew, et al. “Frame change technique for phase transient cancellation.” Journal of Magnetic Resonance 362 (2024): 107688.</p>
+<ol class="loweralpha simple">
+<li><p>Overrotation calibration: overrotcal_xy.py. This script will determine the necessary frame change, which can then be accounted for with <code class="code docutils literal notranslate"><span class="pre">expt.add_frame_change(angle,</span> <span class="pre">elements)</span></code></p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, awstasiuk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

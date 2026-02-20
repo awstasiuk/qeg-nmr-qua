@@ -47,6 +47,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples &amp; Calibration</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="config.html">Configuration Module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Experiment Module</a><ul>
@@ -195,13 +196,13 @@ with support for looped experiments and real-time data acquisition.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.add_pulse">
-<span class="sig-name descname"><span class="pre">add_pulse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_pulse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_pulse" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_pulse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amplitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_pulse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_pulse" title="Link to this definition"></a></dt>
 <dd><p>Adds a pulse command to the experiment. Stores the data to control the pulse in the experiment’s command list,
-and ensures the command is well defined</p>
+and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the pulse operation, must be defined in the element’s config.</p></li>
+<li><p><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Shape of the pulse operation, defaults to settings.pulse_shape if not defined.</p></li>
 <li><p><strong>element</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Element to which the pulse is applied. Must be defined in the config.</p></li>
 <li><p><strong>phase</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Iterable</em>) – Phase of the pulse in degrees. Saves as a fraction of 2pi.</p></li>
 <li><p><strong>amplitude</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Iterable</em>) – Amplitude of the pulse. This factor multiplies the waveform’s defined amplitude.</p></li>
@@ -235,14 +236,18 @@ and ensures the command is well defined</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.add_floquet_sequence">
-<span class="sig-name descname"><span class="pre">add_floquet_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delays</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repetitions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_floquet_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_floquet_sequence" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_floquet_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delays</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repetitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_floquet_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_floquet_sequence" title="Link to this definition"></a></dt>
 <dd><p>Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>phases</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>]</em>) – List of phases for the pulses in degrees.</p></li>
 <li><p><strong>delays</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>]</em>) – List of delays in nanoseconds.</p></li>
+<li><p><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Shape of the pulse operation, defaults to settings.pulse_shape if not defined.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the number of phases and delays are inconsistent, and if the element or pulse shape are not recognized.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -263,7 +268,7 @@ and ensures the command is well defined</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="qeg_nmr_qua.experiment.experiment.Experiment.add_frame_change">
-<span class="sig-name descname"><span class="pre">add_frame_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_frame_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_frame_change" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">add_frame_change</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elements</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qeg_nmr_qua/experiment/experiment.html#Experiment.add_frame_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qeg_nmr_qua.experiment.experiment.Experiment.add_frame_change" title="Link to this definition"></a></dt>
 <dd><p>Adds frame change compensation to the experiment, which is implemented as a frame rotation after
 each applied pi-half pulse. This feature is useful for correcting out-of-phase overrotation errors
 in pi-half only pulse sequences. In principle, any pulse sequence can be written with only pi-half
@@ -272,7 +277,7 @@ pulses and z-rotations, allowing for frame change compensation to be applied in 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>angle</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Angle of the frame change in degrees.</p></li>
-<li><p><strong>element</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Element to which the frame change is applied. Must be defined in the config.</p></li>
+<li><p><strong>elements</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Element(s) to which the frame change is applied. Must be defined in the config.</p></li>
 </ul>
 </dd>
 </dl>

@@ -44,6 +44,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples &amp; Calibration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
 </ul>
 
@@ -110,6 +111,8 @@
 <span class="sd">    - ``n_avg``: Number of signal averages (default: 4)</span>
 <span class="sd">    - ``pulse_length``: Duration of control pulse in nanoseconds (default: 1.1 µs)</span>
 <span class="sd">    - ``pulse_amplitude``: Normalized pulse amplitude 0-0.5 (default: 0.25, representing 0.5 Vpp)</span>
+<span class="sd">    - ``pulse_shape``: Name of pulse shape operation (default: &quot;sqr_pi_half&quot;)</span>
+<span class="sd">    - ``pulse_rise_fall``: Fraction of pulse length for rise/fall time from 0 to 1 (default: 0.0)</span>
 <span class="sd">    - ``rotation_angle``: Pulse rotation angle in degrees (default: 90°)</span>
 
 <span class="sd">    **Continuous Wave (CW) Parameters**: For continuous wave experiments</span>
@@ -146,7 +149,9 @@
 <span class="sd">    - ``amp_key``: Amplifier element name (default: &quot;amplifier&quot;)</span>
 <span class="sd">    - ``helper_key``: Helper element name (default: &quot;helper&quot;)</span>
 <span class="sd">    - ``sw_key``: Switch control element name (default: &quot;switch&quot;)</span>
-<span class="sd">    - ``pi_half_key``: π/2 pulse operation name (default: &quot;pi_half&quot;)</span>
+<span class="sd">    - ``sqr_pi_half_key``: π/2 pulse operation name (default: &quot;sqr_pi_half&quot;)</span>
+<span class="sd">    - ``gaus_pi_half_key``: Gaussian π/2 pulse operation name (default: &quot;gaus_pi_half&quot;)</span>
+<span class="sd">    - ``gaus_sqr_pi_half_key``: Gaussian square pulse operation name (default: &quot;gaus_sqr_pi_half&quot;)</span>
 
 <span class="sd">    **Validation:**</span>
 
@@ -155,6 +160,7 @@
 <span class="sd">    - ``n_avg`` must be an integer &gt;= 1</span>
 <span class="sd">    - ``pulse_length`` must be &gt;= 64 ns</span>
 <span class="sd">    - ``pulse_amplitude`` must be in range [-0.5, 0.5]</span>
+<span class="sd">    - ``pulse_rise_fall`` must be in range [0, 1] </span>
 <span class="sd">    - ``readout_delay`` must be &gt;= 5 µs</span>
 <span class="sd">    - Frequency must be in valid OPX range: 0 &lt;= (center_freq - offset_freq) &lt; 750 MHz</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -163,6 +169,8 @@
     <span class="n">n_avg</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
     <span class="n">pulse_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1.100</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>  <span class="c1"># nanoseconds</span>
     <span class="n">pulse_amplitude</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># 0.5*Vpp</span>
+    <span class="n">pulse_shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;square&quot;</span>
+    <span class="n">pulse_rise_fall</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="c1"># fraction of pulse length from 0 to 1</span>
     <span class="n">rotation_angle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">90.0</span>  <span class="c1"># degrees</span>
 
     <span class="c1"># cw params</span>
@@ -196,7 +204,12 @@
     <span class="n">amp_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;amplifier&quot;</span>
     <span class="n">helper_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;helper&quot;</span>
     <span class="n">sw_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;switch&quot;</span>
-    <span class="n">pi_half_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pi_half&quot;</span>
+    <span class="n">square_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;square&quot;</span>
+    <span class="n">square_pi_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;square_pi&quot;</span>
+    <span class="n">gaussian_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gaussian&quot;</span>
+    <span class="n">gaussian_square_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gaussian_square&quot;</span>
+    <span class="n">lowpass_square_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lowpass_square&quot;</span>
+    <span class="n">tukey_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tukey&quot;</span>
 
     <span class="c1"># Internal: callbacks (no thread locking - updates are not synchronized)</span>
     <span class="n">_callbacks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">UpdateCallback</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>

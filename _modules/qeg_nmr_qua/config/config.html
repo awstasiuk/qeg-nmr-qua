@@ -44,6 +44,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples &amp; Calibration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
 </ul>
 
@@ -243,6 +244,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">add_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pulse</span><span class="p">:</span> <span class="n">ControlPulse</span> <span class="o">|</span> <span class="n">MeasPulse</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a pulse configuration.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pulse</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OPXConfig.add_control_pulse">
+<a class="viewcode-back" href="../../../api/config.html#qeg_nmr_qua.config.config.OPXConfig.add_control_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_control_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pulse_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">element_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">waveform</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a control pulse configuration.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulses</span><span class="o">.</span><span class="n">add_control_pulse</span><span class="p">(</span>
+            <span class="n">pulse_name</span><span class="p">,</span> <span class="n">element_name</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">waveform</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="OPXConfig.add_waveform">
