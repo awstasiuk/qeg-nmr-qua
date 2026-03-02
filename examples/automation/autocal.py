@@ -22,15 +22,15 @@ settings = qnmr.ExperimentSettings(
     pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=248.41,  # degrees
+    rotation_angle=249.58,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7975 * u.Hz,
+    offset_freq=8900 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path(__file__).parent / "test_results",
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
 
 saver = qnmr.DataSaver(settings.save_dir)

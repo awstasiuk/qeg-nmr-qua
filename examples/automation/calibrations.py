@@ -73,8 +73,10 @@ def check_offset(settings):
         return 0  # offset frequency is acceptable
     else:
         if np.mean(Q[:5]) > 0:
+            print("testing increased offset frequency")
             return 1  # increase offset frequency
         else:
+            print("testing decreased offset frequency")
             return -1  # decrease offset frequency
 
 
@@ -113,7 +115,6 @@ def bisection_offset_calibration(
         settings.offset_freq = mid_offset
         phase_calibration(settings)
         result = check_offset(settings)
-
         if result == 0:
             print("Offset frequency calibrated to {:.2f} Hz".format(mid_offset))
             return True

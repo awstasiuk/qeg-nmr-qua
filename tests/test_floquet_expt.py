@@ -37,26 +37,29 @@ thlf = (t0 - p1) / 2
 t1 = t0 - p1
 t2 = 2 * t0 - p1
 
-# Pine-8 sequence pattern for engineering DQ
-pine8_phases = np.array([0,0,0,0,180,180,180,180])
-pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])
-
-# evolve for up to 24 periods, 0 to 24
-period_list = np.arange(0,25,1)
-
 # define experiment object
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-expt.add_frame_change(angle=5.58, element=settings.res_key)
+fc_elements = (settings.res_key, settings.helper_key)
+expt.add_frame_change(angle=-4.9, elements=fc_elements)
 
+
+# Pine-8 sequence pattern for engineering H=0
+pine8_phases = np.array([0,0,0,0,180,180,180,180])
+pine8_bw_phases = np.array([90,90,90,90,270,270,270,270])
+pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])
+# evolve for up to 24 periods, 0 to 24
+period_list = np.arange(0,25,1)
 expt.add_floquet_sequence(phases=pine8_phases, delays=pine8_delays, repetitions=period_list)
+expt.add_floquet_sequence(phases=pine8_bw_phases, delays=pine8_delays, repetitions=period_list)
+expt.update_sweep_label("Pine-8 Periods")
+
 
 expt.add_delay(1*u.ms)
-
 expt.add_pulse(element=settings.res_key)
 
 expt.update_sweep_axis(period_list)
-expt.update_sweep_label("Pine-8 Periods")
+
 expt.execute_experiment()
 # expt.remove_initial_delay()
 # expt.simulate_experiment()
