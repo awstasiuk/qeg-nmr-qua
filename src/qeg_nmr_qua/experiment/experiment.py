@@ -1,6 +1,7 @@
 # src/qeg_nmr_qua/experiment/experiment.py
 from collections.abc import Iterable
 import warnings
+import math
 
 from pyparsing import Any
 from qeg_nmr_qua.config.config import OPXConfig
@@ -444,7 +445,11 @@ class Experiment:
                 div = list1[idx] / list2[idx] if list2[idx] != 0 else -1
                 idx += 1
             if div > 0:
-                return div
+                if math.isclose(div, round(div)):
+                    div = round(
+                        div
+                    )  # try to save time by using integers in the QUA program when possible
+            return div
         else:
             return -1
 
@@ -465,8 +470,13 @@ class Experiment:
         # of QUA variables indexed by layer-1.
         var = None
         layer = command.get("layer", None)
+        scale = command.get("scale", 1)
+
         if layer is not None and vars is not None:
-            var = vars[layer - 1]
+            if scale == 1:
+                var = vars[layer - 1]
+            else:
+                var = vars[layer - 1] * scale
 
         if command["type"] == "pulse":
             phase = command.get("phase", var)

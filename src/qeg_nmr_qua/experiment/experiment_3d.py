@@ -238,9 +238,11 @@ class Experiment3D(Experiment):
         title_prefix: str = "",
     ):
         """
-        Handles live data processing for a 2D experiment during execution. This method fetches
+        Handles live data processing for a 3D experiment during execution. This method fetches
         data from the Quantum Machine job, processes it into voltage units via digital demodulation,
-        and generates live plots when `live` is set to `True`. The plot includes 2D color plots of the I
+        and generates live plots when `live` is set to `True`.
+
+        The plot includes 2D color plots of the I
         and Q signals as functions of the swept variable and acquisition time, as well as a line plot of
         the primary signal, determined to be the first element of each FID's I data. This captures the essential
         observable for 2D NMR experiments, such as calibrations of T1, T2, pulse amplitude sweeps, and
