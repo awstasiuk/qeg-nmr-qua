@@ -238,18 +238,18 @@ class Experiment3D(Experiment):
         title_prefix: str = "",
     ):
         """
-        Handles live data processing for a 3D experiment during execution. This method fetches
-        data from the Quantum Machine job, processes it into voltage units via digital demodulation,
-        and generates live plots when `live` is set to `True`.
+        Handles live data processing for a 3D experiment during execution.
 
-        The plot includes 2D color plots of the I
-        and Q signals as functions of the swept variable and acquisition time, as well as a line plot of
-        the primary signal, determined to be the first element of each FID's I data. This captures the essential
-        observable for 2D NMR experiments, such as calibrations of T1, T2, pulse amplitude sweeps, and
-        Hamiltonian engineering measurements of two-point correlations.
+        Fetched data has shape ``(n_outer, n_inner, n_time)`` after on-FPGA averaging.
+        Two heatmaps are displayed, both with the outer-sweep variable on the y-axis
+        and the inner-sweep variable on the x-axis:
 
-        After the experiment completes, the final data is saved into the :attr:`save_data_dict` for
-        later analysis and storage.
+        * **Left panel** — ``I[:, :, 0]``: the first sampled time-point of the I
+          quadrature for every (outer, inner) parameter pair, in µV.  This is the
+          primary NMR observable for sequences that refocus at time zero.
+        * **Right panel** — ``std`` of ``Q[:, :, -20:]``: the standard deviation computed
+          over the final 20 readout points of the Q quadrature, in µV.  This tracks the
+          noise floor of the tail of the FID.
 
         Args:
             qm (QuantumMachine): The Quantum Machine instance used to run the experiment.
@@ -258,76 +258,87 @@ class Experiment3D(Experiment):
             wait_on_close (bool): Whether to wait for user to close plot after completion.
             title_prefix (str): Prefix to add to plot title.
         """
-        # Fetching tool -- even if we aren't doing live plotting, we use it to fetch data
-        # continually during the experiment's execution
+        import numpy as np
+
         results = fetching_tool(
             job,
             data_list=["I", "Q", "iteration"],
             mode="live",
         )
+
+        # Resolve the physical axes to display (fall back to raw loop vectors)
+        axis_outer = (
+            self.sweep_axis_outer
+            if self.sweep_axis_outer is not None
+            else self.var_vec_lst[0]
+        )
+        axis_inner = (
+            self.sweep_axis_inner
+            if self.sweep_axis_inner is not None
+            else self.var_vec_lst[1]
+        )
+
         if live:
-            fig_live, (ax1, ax2, ax3) = plt.subplots(
-                1, 3, sharex=False, figsize=(16, 6.4)
-            )
-            # Only interrupt on close if we're waiting for user input
+            fig_live, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
             if wait_on_close:
                 interrupt_on_close(fig_live, job)
+
+        I = None
+        Q = None
+
         try:
             while results.is_processing():
                 I, Q, iteration = results.fetch_all()
 
                 progress_counter(iteration, self.n_avg, start_time=results.start_time)
 
-                # Convert results into Volts
+                # Convert demodulated counts → Volts; shape (n_outer, n_inner, n_time)
                 I = u.demod2volts(I, self.readout_len)
                 Q = u.demod2volts(Q, self.readout_len)
 
-                if live:
-                    # 2D color plot: pulse amplitude vs I
-                    axis = (
-                        self.sweep_axis if self.sweep_axis is not None else self.var_vec
-                    )
+                if live and I.ndim == 3 and I.shape[2] >= 1:
+                    # --- Panel 1: first I time-point heatmap ---
+                    I_first = I[:, :, 0] * 1e6  # (n_outer, n_inner), µV
+
+                    # --- Panel 2: (mean + std) / 2 of last 20 Q time-points ---
+                    n_tail = min(20, I.shape[2])
+                    Q_tail = Q[:, :, -n_tail:] * 1e6  # µV
+                    Q_metric = np.std(Q_tail, axis=2)
+
                     if title_prefix:
                         fig_live.suptitle(title_prefix, fontsize=12, fontweight="bold")
+
                     ax1.cla()
                     im1 = ax1.pcolormesh(
-                        axis,
-                        self.tau_sweep / u.us,
-                        I.T * 1e6,
+                        axis_inner,
+                        axis_outer,
+                        I_first,
                         shading="auto",
                         cmap="viridis",
                     )
-                    ax1.set_ylabel("Delay (µs)")
-                    ax1.set_xlabel(self.sweep_label)
-                    ax1.set_title("I")
+                    ax1.set_xlabel(self.sweep_label_inner)
+                    ax1.set_ylabel(self.sweep_label_outer)
+                    ax1.set_title("I  (first point, µV)")
                     if not hasattr(ax1, "_colorbar"):
-                        ax1._colorbar = plt.colorbar(im1, ax=ax1, label="I (V)")
+                        ax1._colorbar = plt.colorbar(im1, ax=ax1, label="I (µV)")
                     else:
                         ax1._colorbar.update_normal(im1)
 
-                    # 2D color plot: pulse amplitude vs tau for Q
                     ax2.cla()
                     im2 = ax2.pcolormesh(
-                        axis,
-                        self.tau_sweep / u.us,
-                        Q.T * 1e6,
+                        axis_inner,
+                        axis_outer,
+                        Q_metric,
                         shading="auto",
-                        cmap="viridis",
+                        cmap="plasma",
                     )
-                    ax2.set_ylabel("Delay (µs)")
-                    ax2.set_xlabel(self.sweep_label)
-                    ax2.set_title("Q")
+                    ax2.set_xlabel(self.sweep_label_inner)
+                    ax2.set_ylabel(self.sweep_label_outer)
+                    ax2.set_title("Q tail noise (20pt std dev) [µV]")
                     if not hasattr(ax2, "_colorbar"):
-                        ax2._colorbar = plt.colorbar(im2, ax=ax2, label="Q (µV)")
+                        ax2._colorbar = plt.colorbar(im2, ax=ax2, label="(µV)")
                     else:
                         ax2._colorbar.update_normal(im2)
-
-                    ax3.cla()
-                    ax3.plot(axis, I.T[0] * 1e6, label="I")
-                    ax3.set_xlabel(self.sweep_label)
-                    ax3.set_ylabel("I (µV)")
-                    ax3.set_title("Primary signal")
-                    ax3.legend()
 
                     fig_live.tight_layout()
                     fig_live.canvas.draw_idle()
@@ -337,11 +348,9 @@ class Experiment3D(Experiment):
             print("Experiment interrupted by user.")
 
         if live and wait_on_close:
-            # Keep the interactive plot open after acquisition until the user closes it
             message = "Acquisition finished. Close the plot window to continue."
             print(message)
             try:
-                # Add a centered text box on the figure (figure coordinates)
                 fig_live.text(
                     0.04,
                     0.02,
@@ -357,16 +366,18 @@ class Experiment3D(Experiment):
             while plt.fignum_exists(fig_live.number):
                 plt.pause(0.5)
 
-        # Close the figure if we're not waiting for user to close it
         if live and not wait_on_close:
             plt.close(fig_live)
             fig_live = None
 
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
-        self.save_data_dict.update({"swept_variable": self.var_vec})
-        self.save_data_dict.update({"sweep_axis": axis})
-        self.save_data_dict.update({"sweep_label": self.sweep_label})
+        self.save_data_dict.update({"var_vec_outer": self.var_vec_lst[0]})
+        self.save_data_dict.update({"var_vec_inner": self.var_vec_lst[1]})
+        self.save_data_dict.update({"sweep_axis_outer": axis_outer})
+        self.save_data_dict.update({"sweep_axis_inner": axis_inner})
+        self.save_data_dict.update({"sweep_label_outer": self.sweep_label_outer})
+        self.save_data_dict.update({"sweep_label_inner": self.sweep_label_inner})
         self.save_data_dict.update({"fig_live": fig_live})
 
         self.save_data()
