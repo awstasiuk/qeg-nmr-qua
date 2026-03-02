@@ -134,7 +134,7 @@ class Experiment3D(Experiment):
 
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
-            m = declare(int)  # QUA variable for floquet loops
+            loop_idx = declare(int)  # QUA variable for floquet loops
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
             I1 = declare(fixed)
             Q1 = declare(fixed)
@@ -145,15 +145,15 @@ class Experiment3D(Experiment):
             t1 = declare(int)
             t2 = declare(int)
 
-            if self.use_fixed_inner:
-                var_inner = declare(fixed)
-            else:
-                var_inner = declare(int)
-
-            if self.use_fixed_outer:
+            if self.use_fixed_lst[0]:
                 var_outer = declare(fixed)
             else:
                 var_outer = declare(int)
+
+            if self.use_fixed_lst[1]:
+                var_inner = declare(fixed)
+            else:
+                var_inner = declare(int)
 
             if self.start_with_wait:
                 wait(self.wait_between_scans, self.probe_key)
@@ -161,11 +161,11 @@ class Experiment3D(Experiment):
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
 
                 with for_(
-                    *from_array(var_outer, self.var_vec_outer)
+                    *from_array(var_outer, self.var_vec_lst[0])
                 ):  # outer loop over variable vector
 
                     with for_(
-                        *from_array(var_inner, self.var_vec_inner)
+                        *from_array(var_inner, self.var_vec_lst[1])
                     ):  # inner loop over variable vector
 
                         drive_mode(
@@ -173,7 +173,9 @@ class Experiment3D(Experiment):
                         )
 
                         for command in self._commands:
-                            self.translate_command(command, var_inner, var_outer, m)
+                            self.translate_command(
+                                command, (var_outer, var_inner), loop_idx
+                            )
 
                         # wait for ringdown to decay, blank amplifier, set to receive mode
                         safe_mode(
@@ -219,11 +221,11 @@ class Experiment3D(Experiment):
             with stream_processing():
                 n_st.save("iteration")
                 I_st.buffer(self.measure_sequence_len).buffer(
-                    len(self.var_vec_inner)
-                ).buffer(len(self.var_vec_outer)).average().save("I")
+                    len(self.var_vec_lst[1])
+                ).buffer(len(self.var_vec_lst[0])).average().save("I")
                 Q_st.buffer(self.measure_sequence_len).buffer(
-                    len(self.var_vec_inner)
-                ).buffer(len(self.var_vec_outer)).average().save("Q")
+                    len(self.var_vec_lst[1])
+                ).buffer(len(self.var_vec_lst[0])).average().save("Q")
 
         return experiment
 

@@ -169,7 +169,9 @@ class Experiment:
             command["amplitude"] = amplitude
 
             self._update_loop((np.array(phase) / 360) % 1, loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         elif isinstance(amplitude, Iterable):
             command["length"] = length = (
                 length // 4
@@ -178,12 +180,16 @@ class Experiment:
             )
             command["phase"] = (phase / 360) % 1
             self._update_loop(np.array(amplitude), loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=True)
+            layer, div = self._update_loop_type(loop_layer, use_fixed=True)
+            command["layer"] = layer
+            command["scale"] = div
         elif isinstance(length, Iterable):
             command["phase"] = (phase / 360) % 1
             command["amplitude"] = amplitude
             self._update_loop(np.array(length) // 4, loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         else:
             command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
@@ -192,7 +198,7 @@ class Experiment:
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
             )
-
+            command["scale"] = 1
         self._commands.append(command)
 
     def add_delay(self, duration: int | Iterable, loop_layer: int = -1):
@@ -204,11 +210,12 @@ class Experiment:
         """
         command = {
             "type": "delay",
-            # "duration": duration // 4,  # convert to clock cycles
         }
         if isinstance(duration, Iterable):
             self._update_loop(np.array(duration, dtype=int) // 4, loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         else:
             command["duration"] = duration // 4  # convert to clock cycles
 
@@ -257,7 +264,9 @@ class Experiment:
         }
         if isinstance(repetitions, Iterable):
             self._update_loop(np.array(repetitions, dtype=int), loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         else:
             command["repetitions"] = repetitions
 
@@ -337,7 +346,9 @@ class Experiment:
                 self.use_fixed_lst.append(use_fixed)
         elif loop_layer >= len(self.use_fixed_lst):
             # extend with undefined layers until the requested loop layer exists
-            self.use_fixed_lst.extend([None] * (loop_layer - len(self.use_fixed_lst) + 1))
+            self.use_fixed_lst.extend(
+                [None] * (loop_layer - len(self.use_fixed_lst) + 1)
+            )
             self.use_fixed_lst[loop_layer] = use_fixed
 
         elif self.use_fixed_lst[loop_layer] is None:
@@ -381,9 +392,11 @@ class Experiment:
             for idx, elem in enumerate(self.var_vec_lst):
                 if elem is None:
                     self.var_vec_lst[idx] = var_vec
+                    loop_layer = idx + 1
                     break
             else:
                 self.var_vec_lst.append(var_vec)
+                loop_layer = len(self.var_vec_lst)
 
         elif loop_layer > len(self.var_vec_lst):
             # extend with undefined layers until the requested loop layer exists
@@ -402,7 +415,7 @@ class Experiment:
             if div >= 1 and np.allclose(
                 var_vec, div * self.var_vec_lst[loop_layer - 1]
             ):
-                return div
+                return loop_layer, div
             elif div == -1:
                 raise ValueError(
                     "New swept variable is a not constant multiple of the exisitng list in this dimension."
@@ -411,8 +424,8 @@ class Experiment:
                 warnings.warn(
                     "New swept variable requires division, which may introduce run-time delays."
                 )
-                return div
-        return 1
+                return loop_layer, div
+        return loop_layer, 1
 
     def _list_find_scale_factor(self, list1, list2):
         """Find the least common multiple of two lists of integers."""
@@ -430,22 +443,22 @@ class Experiment:
         else:
             return -1
 
-    def translate_command(
-        self, command: dict, var: Any = None, m: Any = None, l: Any = None
-    ):
+    def translate_command(self, command: dict, vars: Any = None, loop_idx: Any = None):
         """
         Translates a command dictionary into QUA code.
 
         Args:
             command (dict): Command dictionary to translate.
-            var (Any, optional): QUA Variable to use for swept parameters.
-            m (QUAInt, optional): QUA Variable to use for Floquet loops.
-            l (QUAInt, optional): QUA Variable to use for 3D loops.
+            vars (Any, optional): QUA Variables to use for swept parameters.
+            loop_idx (Any, optional): QUA Variable to use for loop index.
 
         Raises:
             ValueError: If the command type is unknown.
         """
         if command["type"] == "pulse":
+            layer = command.get("layer", None)
+            if layer is not None:
+                var = vars[layer - 1]
             phase = command.get("phase", var)
             amplitude = command.get("amplitude", var)
             length = command.get("length", var)
@@ -479,7 +492,7 @@ class Experiment:
             delays = command.get("delays", None)
             repetitions = command.get("repetitions", var)
 
-            with for_(m, 0, m < repetitions, m + 1):
+            with for_(loop_idx, 0, loop_idx < repetitions, loop_idx + 1):
                 wait(delays[0])
                 for phase, delay in zip(phases, delays[1:]):
                     frame_rotation_2pi(phase, self.probe_key)
