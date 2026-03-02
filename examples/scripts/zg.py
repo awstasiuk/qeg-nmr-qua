@@ -20,11 +20,13 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.4095,  # amplitude is 0.5*Vpp
-    rotation_angle=250.94,  # degrees
+    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_shape="square",
+    pulse_rise_fall=0.0,  # 0% rise/fall time
+    rotation_angle=251.26,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=4500 * u.Hz,
+    offset_freq=8125 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -40,38 +42,66 @@ expt = qnmr.Experiment1D(
     settings=settings,
 )
 
-expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+expt.add_pulse(element=settings.res_key)
 
 expt.execute_experiment()
 
+# expt.remove_initial_delay()
+# expt.simulate_experiment()
+
 fit = True
 if fit:
-    
-    re = np.array(expt.save_data_dict["I_data"])*1e6
-    im = np.array(expt.save_data_dict["Q_data"])*1e6
-    ph_ref = np.arctan2(im[0], re[0]) * (180 / np.pi)  # phase reference from first point
-    times = np.arange(settings.readout_start, settings.readout_end, settings.dwell_time)
-    if abs(ph_ref) > 0.5:
-        print(f"Increment phase reference by {ph_ref:.2f} degrees")
+    re = np.array(expt.save_data_dict["I_data"]) * 1e6
+    im = np.array(expt.save_data_dict["Q_data"]) * 1e6
+    ph_ref = np.arctan2(im[0], re[0]) * (180 / np.pi)
+    times = np.arange(settings.readout_start,
+                      settings.readout_end,
+                      settings.dwell_time) / u.us # convert to us for plotting
 
-    plt.figure(figsize=(10, 5))
+    if abs(ph_ref) > 0.1:
+        print(f"Increment phase reference by {ph_ref:.2f} degrees to {(settings.rotation_angle+ph_ref):.2f}" )
+
     sig = im
-    # Calculate the autocorrelation of the signal
+
+    # --- Autocorrelation ---
     autocorr = acf(sig, nlags=len(sig)-1, fft=True)
 
-    # Plot the autocorrelation
+    # --- Fourier transform of autocorrelation ---
+    fft_vals = np.fft.fft(autocorr)
+    dt = settings.dwell_time
+    freqs = np.fft.fftfreq(len(autocorr), d=dt / u.ms) # convert to kHz (1/ms)
+
+    # Shift zero frequency to center
+    fft_vals_shifted = np.fft.fftshift(fft_vals)
+    freqs_shifted = np.fft.fftshift(freqs)
+
+    # --- Plotting ---
+    fig, axs = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Confidence bounds
     confidence_95 = 1.96 / np.sqrt(len(sig))
     confidence_99 = 2.58 / np.sqrt(len(sig))
 
-    plt.axhline(y=confidence_95, color='red', linestyle='--', label='95% Confidence Level')
-    plt.axhline(y=-confidence_95, color='red', linestyle='--')
-    plt.axhline(y=confidence_99, color='black', linestyle='--', label='99% Confidence Level')
-    plt.axhline(y=-confidence_99, color='black', linestyle='--')
+    # Autocorrelation plot
+    axs[0].axhline(y=confidence_95, color='red', linestyle='--', label='95% Confidence Level')
+    axs[0].axhline(y=-confidence_95, color='red', linestyle='--')
+    axs[0].axhline(y=confidence_99, color='black', linestyle='--', label='99% Confidence Level')
+    axs[0].axhline(y=-confidence_99, color='black', linestyle='--')
 
-    plt.stem(times, autocorr, basefmt=" ", markerfmt="o", linefmt="-")
-    plt.title(f"Autocorrelation of the Imaginary Component")
-    plt.xlabel("Lag (µs)")
-    plt.ylabel("Autocorrelation")
-    plt.legend()
-    plt.grid()
+    axs[0].stem(times[:len(autocorr)], autocorr, basefmt=" ", markerfmt="o", linefmt="-")
+    axs[0].set_title("Autocorrelation of the Imaginary Component")
+    axs[0].set_xlabel("Lag (µs)")
+    axs[0].set_ylabel("Autocorrelation")
+    axs[0].legend()
+    axs[0].grid()
+
+    # Fourier transform plot (Power Spectral Density)
+    axs[1].plot(freqs_shifted, np.abs(fft_vals_shifted))
+    axs[1].set_title("Fourier Transform of Autocorrelation (PSD)")
+    axs[1].set_xlim(0, np.max(freqs_shifted))
+    axs[1].set_xlabel("Frequency (kHz)")
+    axs[1].set_ylabel("Magnitude")
+    axs[1].grid()
+
+    plt.tight_layout()
     plt.show()

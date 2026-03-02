@@ -12,6 +12,7 @@ for solid state nuclear magnetic resonance experiments, particularly for fluorin
 
    installation
    quickstart
+   examples
    api/index
 
 Features

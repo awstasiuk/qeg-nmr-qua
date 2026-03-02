@@ -145,6 +145,15 @@ class OPXConfig:
         """Add a pulse configuration."""
         self.pulses.add_pulse(name, pulse)
 
+    def add_control_pulse(self, pulse_name: str, element_name: str, amplitude: float, length: int, waveform: list[float]):
+        """
+        Add a control pulse configuration.
+        
+        """
+        self.pulses.add_control_pulse(
+            pulse_name, element_name, amplitude, length, waveform
+        )
+
     def add_waveform(self, name: str, waveform: float | list[float]):
         """Add an analog waveform configuration."""
         self.waveforms.add_waveform(name, sample=waveform)
