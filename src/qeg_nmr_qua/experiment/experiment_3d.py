@@ -58,6 +58,8 @@ class Experiment3D(Experiment):
         self.sweep_label_inner = "Inner Swept Variable"  # Label for sweep axis
         self.sweep_axis_outer = None  # Outer Axis for live plotting and data saving
         self.sweep_label_outer = "Outer Swept Variable"  # Label for sweep axis
+        self.use_fixed_lst = [None, None]  # whether to use fixed point for looping
+        self.var_vec_lst = [None, None]  # variable vector for looped experiments
 
     def update_sweep_axis_inner(self, new_axis):
         """
@@ -66,9 +68,9 @@ class Experiment3D(Experiment):
         to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude
         rescaling factor physical Vpp units).
         """
-        if len(new_axis) != len(self.var_vec):
+        if len(new_axis) != len(self.var_vec_lst[1]):
             raise ValueError(
-                "New sweep axis must have the same length as the variable vector."
+                "New sweep axis must have the same length as the inner variable vector."
             )
         self.sweep_axis_inner = new_axis
 
@@ -86,9 +88,9 @@ class Experiment3D(Experiment):
         to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude
         rescaling factor physical Vpp units).
         """
-        if len(new_axis) != len(self.tau_sweep):
+        if len(new_axis) != len(self.var_vec_lst[0]):
             raise ValueError(
-                "New sweep axis must have the same length as the tau sweep vector."
+                "New sweep axis must have the same length as the outer variable vector."
             )
         self.sweep_axis_outer = new_axis
 
@@ -102,17 +104,17 @@ class Experiment3D(Experiment):
     def validate_experiment(self):
         """
         Checks to make sure that the experiment contains variable operations,
-        since it is a 2D experiment. Variable operations require looping which is
-        supported in 2D experiments.
+        since it is a 3D experiment. Variable operations require looping which is
+        supported in 3D experiments.
 
         Raises:
             ValueError: No variable vector was found in the experiment commands.
         """
-        if self.var_vec_inner is None and self.var_vec_outer is None:
+        if self.var_vec_lst[1] is None and self.var_vec_lst[0] is None:
             raise ValueError(
                 "Experiment3D requires two swept parameters. Use Experiment1D, or similar, instead."
             )
-        elif self.var_vec_inner is None or self.var_vec_outer is None:
+        elif self.var_vec_lst[1] is None or self.var_vec_lst[0] is None:
             raise ValueError(
                 "Experiment3D requires two swept parameters. To sweep a single parameter, use Experiment2D, or similar, instead."
             )
@@ -161,18 +163,22 @@ class Experiment3D(Experiment):
                 with for_(
                     *from_array(var_outer, self.var_vec_outer)
                 ):  # outer loop over variable vector
-                    
+
                     with for_(
                         *from_array(var_inner, self.var_vec_inner)
                     ):  # inner loop over variable vector
 
-                        drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+                        drive_mode(
+                            switch=self.rx_switch_key, amplifier=self.amplifier_key
+                        )
 
                         for command in self._commands:
                             self.translate_command(command, var_inner, var_outer, m)
 
                         # wait for ringdown to decay, blank amplifier, set to receive mode
-                        safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+                        safe_mode(
+                            switch=self.rx_switch_key, amplifier=self.amplifier_key
+                        )
                         wait(self.pre_scan_delay)
                         readout_mode(
                             switch=self.rx_switch_key, amplifier=self.amplifier_key
@@ -202,7 +208,9 @@ class Experiment3D(Experiment):
                             save(I2, I_st)
                             save(Q2, Q_st)
                             wait(self.loop_wait_cycles, self.helper_key)
-                        safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+                        safe_mode(
+                            switch=self.rx_switch_key, amplifier=self.amplifier_key
+                        )
                         reset_frame(self.probe_key)
                         wait(self.wait_between_scans, self.probe_key)
 
@@ -210,12 +218,23 @@ class Experiment3D(Experiment):
 
             with stream_processing():
                 n_st.save("iteration")
-                I_st.buffer(self.measure_sequence_len).buffer(len(self.var_vec_inner)).buffer(len(self.var_vec_outer)).average().save("I")
-                Q_st.buffer(self.measure_sequence_len).buffer(len(self.var_vec_inner)).buffer(len(self.var_vec_outer)).average().save("Q")
+                I_st.buffer(self.measure_sequence_len).buffer(
+                    len(self.var_vec_inner)
+                ).buffer(len(self.var_vec_outer)).average().save("I")
+                Q_st.buffer(self.measure_sequence_len).buffer(
+                    len(self.var_vec_inner)
+                ).buffer(len(self.var_vec_outer)).average().save("Q")
 
         return experiment
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
+    def data_processing(
+        self,
+        qm: QuantumMachine,
+        job: RunningQmJob,
+        live: bool,
+        wait_on_close: bool = True,
+        title_prefix: str = "",
+    ):
         """
         Handles live data processing for a 2D experiment during execution. This method fetches
         data from the Quantum Machine job, processes it into voltage units via digital demodulation,
@@ -265,7 +284,7 @@ class Experiment3D(Experiment):
                         self.sweep_axis if self.sweep_axis is not None else self.var_vec
                     )
                     if title_prefix:
-                        fig_live.suptitle(title_prefix, fontsize=12, fontweight='bold')
+                        fig_live.suptitle(title_prefix, fontsize=12, fontweight="bold")
                     ax1.cla()
                     im1 = ax1.pcolormesh(
                         axis,
