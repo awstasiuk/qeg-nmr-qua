@@ -118,7 +118,7 @@ class Experiment2D(Experiment):
             Q_st = declare_stream()
             t1 = declare(int)
             t2 = declare(int)
-            if self.use_fixed:
+            if self.use_fixed_lst[0]:
                 var = declare(fixed)
             else:
                 var = declare(int)

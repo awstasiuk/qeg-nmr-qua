@@ -14,7 +14,12 @@ from qeg_nmr_qua.experiment.macros import (
 
 import numpy as np
 from pathlib import Path
-from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
+from qm import (
+    QuantumMachinesManager,
+    SimulationConfig,
+    QuantumMachine,
+    generate_qua_script,
+)
 from qm.jobs.running_qm_job import RunningQmJob
 from qualang_tools.units import unit
 from qm.qua import play, wait, frame_rotation_2pi, align, amp, for_
@@ -168,8 +173,8 @@ class Experiment:
             )
             command["amplitude"] = amplitude
 
-            self._update_loop((np.array(phase) / 360) % 1, loop_layer)
-            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
+            self._update_loop_type(loop_layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         elif isinstance(amplitude, Iterable):
@@ -179,15 +184,15 @@ class Experiment:
                 else self.config.pulses.pulses[pulse].length // 4
             )
             command["phase"] = (phase / 360) % 1
-            self._update_loop(np.array(amplitude), loop_layer)
-            layer, div = self._update_loop_type(loop_layer, use_fixed=True)
+            layer, div = self._update_loop(np.array(amplitude), loop_layer)
+            self._update_loop_type(loop_layer, use_fixed=True)
             command["layer"] = layer
             command["scale"] = div
         elif isinstance(length, Iterable):
             command["phase"] = (phase / 360) % 1
             command["amplitude"] = amplitude
-            self._update_loop(np.array(length) // 4, loop_layer)
-            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop(np.array(length) // 4, loop_layer)
+            self._update_loop_type(loop_layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         else:
@@ -212,8 +217,10 @@ class Experiment:
             "type": "delay",
         }
         if isinstance(duration, Iterable):
-            self._update_loop(np.array(duration, dtype=int) // 4, loop_layer)
-            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop(
+                np.array(duration, dtype=int) // 4, loop_layer
+            )
+            self._update_loop_type(loop_layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         else:
@@ -230,7 +237,7 @@ class Experiment:
         """
         if elements is not None:
             for el in elements:
-                if el not in self.config.elements:
+                if el not in self.config.elements.elements:
                     raise ValueError(f"Element {el} not defined in config.")
         command = {
             "type": "align",
@@ -263,8 +270,8 @@ class Experiment:
             "delays": np.array(delays, dtype=int) // 4,
         }
         if isinstance(repetitions, Iterable):
-            self._update_loop(np.array(repetitions, dtype=int), loop_layer)
-            layer, div = self._update_loop_type(loop_layer, use_fixed=False)
+            layer, div = self._update_loop(np.array(repetitions, dtype=int), loop_layer)
+            self._update_loop_type(loop_layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         else:
@@ -344,17 +351,15 @@ class Experiment:
                     break
             else:
                 self.use_fixed_lst.append(use_fixed)
-        elif loop_layer >= len(self.use_fixed_lst):
+        elif loop_layer > len(self.use_fixed_lst):
             # extend with undefined layers until the requested loop layer exists
-            self.use_fixed_lst.extend(
-                [None] * (loop_layer - len(self.use_fixed_lst) + 1)
-            )
-            self.use_fixed_lst[loop_layer] = use_fixed
+            self.use_fixed_lst.extend([None] * (loop_layer - len(self.use_fixed_lst)))
+            self.use_fixed_lst[loop_layer - 1] = use_fixed
 
-        elif self.use_fixed_lst[loop_layer] is None:
+        elif self.use_fixed_lst[loop_layer - 1] is None:
             # the layer exists but has not been defined yet, so define it
-            self.use_fixed_lst[loop_layer] = use_fixed
-        elif self.use_fixed_lst[loop_layer] != use_fixed:
+            self.use_fixed_lst[loop_layer - 1] = use_fixed
+        elif self.use_fixed_lst[loop_layer - 1] != use_fixed:
             # ensure we aren't mixing types on the same loop layer, as this will cause errors in the QUA program
             raise ValueError(
                 "Inconsistent loop variable types: cannot mix fixed point and integer variables in the same loop layer."
@@ -455,10 +460,15 @@ class Experiment:
         Raises:
             ValueError: If the command type is unknown.
         """
+        # Resolve the loop variable for this command once, before branching.
+        # Each swept command stores a 1-based 'layer' key; vars is a tuple/list
+        # of QUA variables indexed by layer-1.
+        var = None
+        layer = command.get("layer", None)
+        if layer is not None and vars is not None:
+            var = vars[layer - 1]
+
         if command["type"] == "pulse":
-            layer = command.get("layer", None)
-            if layer is not None:
-                var = vars[layer - 1]
             phase = command.get("phase", var)
             amplitude = command.get("amplitude", var)
             length = command.get("length", var)
@@ -528,6 +538,34 @@ class Experiment:
         if the experiment is not properly defined.
         """
         pass  # to be implemented by subclasses
+
+    def compile_to_qua(self, offline: bool = True, save_path: Path = None):
+        """
+        Compiles the experiment to a QUA program, running all python code in order to generate
+        the final QUA program as a string, which is then saved to disk at the specified path. This is useful for
+        inspecting the generated QUA program to verify that the commands are being translated as expected, and can be used
+        for debugging command translation and config interpreation issues without needing to run the experiment on hardware or in the simulator.
+
+        Args:
+            offline (bool): Whether to compile offline, or to use the connected Quantum Machine. Defaults to True for offline compilation.
+            save_path (Path): The path to save the compiled QUA program. If None, saves to the same directory
+                as this file with the name "compiled_experiment.qua".
+        """
+        config = self.config.to_opx_config()
+        prog = self.create_experiment()
+        if offline:
+            QuantumMachinesManager.set_capabilities_offline()
+        else:
+            qm = self.qmm.open_qm(config)
+
+        path = (
+            save_path
+            if save_path is not None
+            else Path(__file__).resolve().parent / "compiled_experiment.qua"
+        )
+        sourceFile = open(path, "w")
+        print(generate_qua_script(prog, config), file=sourceFile)
+        sourceFile.close()
 
     def simulate_experiment(self, sim_length=40_000):
         """

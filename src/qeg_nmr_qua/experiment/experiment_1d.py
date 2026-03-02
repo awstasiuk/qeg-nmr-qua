@@ -48,7 +48,7 @@ class Experiment1D(Experiment):
         Raises:
             ValueError: A looping operation was found in the experiment commands.
         """
-        if self.var_vec is not None:
+        if len(self.var_vec_lst) > 0:
             raise ValueError(
                 "Experiment1D does not support variable vectors. Use Experiment2D, or similar, instead."
             )
@@ -130,7 +130,14 @@ class Experiment1D(Experiment):
 
         return experiment
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
+    def data_processing(
+        self,
+        qm: QuantumMachine,
+        job: RunningQmJob,
+        live: bool,
+        wait_on_close: bool = True,
+        title_prefix: str = "",
+    ):
         """
         Handles live data processing for a 1D experiment during execution.
 
@@ -173,7 +180,11 @@ class Experiment1D(Experiment):
 
                 if live and fig_live is not None:
                     ax.cla()
-                    title = f"{title_prefix}Scan {iteration+1}/{self.n_avg}" if title_prefix else f"Scan {iteration+1}/{self.n_avg}"
+                    title = (
+                        f"{title_prefix}Scan {iteration+1}/{self.n_avg}"
+                        if title_prefix
+                        else f"Scan {iteration+1}/{self.n_avg}"
+                    )
                     fig_live.suptitle(title)
                     ax.plot(
                         self.tau_sweep / u.us,
