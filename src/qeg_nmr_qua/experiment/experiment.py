@@ -219,6 +219,7 @@ class Experiment:
             )
             command["scale"] = 1
         self._commands.append(command)
+        print(f"Layer assignment for pulse command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}")
 
     def add_delay(self, duration: int | Iterable, loop_layer: int = -1):
         """
@@ -452,17 +453,26 @@ class Experiment:
         """
         if np.all(var_vec == 0):
             raise ValueError("Variable vector cannot be all zeros.")
-
+        
         if loop_layer < 0:
-            # automatically determine the first available loop layer
+            # Check if this exact var_vec already exists in any layer
+            for idx, existing_vec in enumerate(self.var_vec_lst):
+                if existing_vec is not None and np.allclose(var_vec, existing_vec):
+                    # Reuse the existing layer
+                    loop_layer = idx + 1
+                    return loop_layer, 1
+            
+            # If not found, assign to first undefined layer
             for idx, elem in enumerate(self.var_vec_lst):
                 if elem is None:
                     self.var_vec_lst[idx] = var_vec
                     loop_layer = idx + 1
-                    break
-            else:
-                self.var_vec_lst.append(var_vec)
-                loop_layer = len(self.var_vec_lst)
+                    return loop_layer, 1
+            
+            # If all layers defined, add new layer
+            self.var_vec_lst.append(var_vec)
+            loop_layer = len(self.var_vec_lst)
+            return loop_layer, 1
 
         elif loop_layer > len(self.var_vec_lst):
             # extend with undefined layers until the requested loop layer exists
