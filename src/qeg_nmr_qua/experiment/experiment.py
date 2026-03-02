@@ -40,7 +40,7 @@ class Experiment:
 
     - ``create_experiment()``: Build the QUA program from stored commands
     - ``validate_experiment()``: Validate settings and command consistency
-    - ``live_data_processing()``: Handle real-time data during hardware execution
+    - ``data_processing()``: Handle real-time data during hardware execution
 
     Typical workflow:
 
@@ -70,6 +70,9 @@ class Experiment:
         Args:
             settings: Experiment-specific parameters (frequencies, pulse lengths, etc.).
             config: OPX configuration. If None, automatically generated from settings.
+            connect (bool): Whether to establish a live connection to the OPX-1000 via
+                ``QuantumMachinesManager``. Set to ``False`` for offline compilation or
+                unit testing. Defaults to ``True``.
 
         Raises:
             ValueError: If readout delay is too short to accommodate switching times.
@@ -147,11 +150,13 @@ class Experiment:
         and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).
 
         Args:
-            shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
             element (str): Element to which the pulse is applied. Must be defined in the config.
-            phase (float | Iterable): Phase of the pulse in degrees. Saves as a fraction of 2pi.
-            amplitude (float | Iterable): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
-            length (int | Iterable): Length of the pulse in nanoseconds. This overrides the waveform's defined length.
+            shape (str): Shape of the pulse operation, defaults to ``settings.pulse_shape`` if not provided.
+            phase (float | Iterable): Phase of the pulse in degrees. Stored as a fraction of 2π.
+            amplitude (float | Iterable): Amplitude scale factor for the pulse waveform.
+            length (int | Iterable): Length of the pulse in nanoseconds, overriding the waveform default.
+            loop_layer (int): Loop layer (1-based) to associate with the swept parameter.  Use ``-1``
+                (default) to auto-assign to the first available layer.
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
@@ -221,6 +226,8 @@ class Experiment:
 
         Args:
             duration (int | Iterable): Duration of the delay in nanoseconds.
+            loop_layer (int): Loop layer (1-based) to associate with the swept duration.  Use ``-1``
+                (default) to auto-assign to the first available layer.
         """
         command = {
             "type": "delay",
@@ -264,15 +271,30 @@ class Experiment:
         shape: str = None,
     ):
         """
-        Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
+        Adds a Floquet sequence to the experiment. This is a repeating block of
+        evenly-spaced, phase-cycled pulses of the form::
+
+            delay[0] — (R(phase[0]) — delay[1]) — (R(phase[1]) — delay[2]) — … repeated N times
+
+        The number of repetitions can be a fixed integer or a 1-D array, in which case
+        it becomes the swept loop variable for the given ``loop_layer``.
 
         Args:
-            phases (list[float]): List of phases for the pulses in degrees.
-            delays (list[int]): List of delays in nanoseconds.
-            shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
+            phases (list[float]): Phase of each pulse in the block, in degrees.
+            delays (list[int]): Inter-pulse delays in nanoseconds.  Must contain
+                exactly ``len(phases) + 1`` entries (one leading delay plus one after
+                each pulse).
+            repetitions (int | Iterable): Number of times the pulse block is repeated.
+                Pass an array to sweep over this parameter.
+            loop_layer (int): Loop layer (1-based) to associate with a swept
+                ``repetitions`` array.  Use ``-1`` (default) to auto-assign.
+            element (str): Element to apply the sequence to.  Defaults to
+                ``settings.res_key`` (the probe channel) when ``None``.
+            shape (str): Pulse shape key, defaults to ``settings.pulse_shape``.
 
         Raises:
-            ValueError: If the number of phases and delays are inconsistent, and if the element or pulse shape are not recognized.
+            ValueError: If ``len(delays) != len(phases) + 1``.
+            ValueError: If ``element`` or ``shape`` are not recognised in the config.
         """
 
         if len(phases) + 1 != len(delays):
@@ -416,9 +438,10 @@ class Experiment:
             var_vec (numpy.ndarray): Array of values for the variable in the experiment.
             loop_layer (int): The loop layer index (1-indexed) to update.
         Returns:
-            int | float: The scaling factor between the new vector and the old vector.
-                Returns 1 if this is the first update for this loop layer.
-                Returns a positive divisor/multiplier if the vectors are consistent.
+            tuple[int, int | float]: A ``(loop_layer, scale)`` pair where ``loop_layer``
+                is the 1-based layer index that was updated and ``scale`` is the
+                proportionality constant between the new vector and the one already
+                stored (1 if this is the first assignment for this layer).
         Raises:
             ValueError: If the variable vector is all zeros.
             ValueError: If the new vector is not a constant multiple of the existing vector
@@ -471,7 +494,11 @@ class Experiment:
         return loop_layer, 1
 
     def _list_find_scale_factor(self, list1, list2):
-        """Find the least common multiple of two lists of integers."""
+        """Find the scalar proportionality constant *k* such that ``list1 ≈ k * list2``.
+
+        Returns the constant if the two arrays are parallel (i.e. one is a scalar
+        multiple of the other), or ``-1`` if they are not.
+        """
 
         if np.dot(list1, list2) * np.dot(list2, list1) == np.dot(list1, list1) * np.dot(
             list2, list2
@@ -623,7 +650,7 @@ class Experiment:
         on hardware.
 
         Parameters:
-            sim_length (int, optional): The duration of the simulation in ns. Defaults to ``10_000``.
+            sim_length (int, optional): The duration of the simulation in ns. Defaults to ``40_000``.
         """
         self.validate_experiment()
         expt = self.create_experiment()
