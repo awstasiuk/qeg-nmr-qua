@@ -21,29 +21,29 @@ from qm.qua import (
     save,
     program,
     declare,
+    reset_frame,
     stream_processing,
     declare_stream,
     for_,
     fixed,
     demod,
-    reset_frame,
 )
 
 u = unit(coerce_to_integer=True)
 
 
-class Experiment2D(Experiment):
+class Experiment3D(Experiment):
     """
-    Class to create and run 2D NMR experiments using the QUA programming language. Inherits
-    from the base :class:`Experiment` class and implements methods specific to 2D experiments, which
+    Class to create and run 3D NMR experiments using the QUA programming language. Inherits
+    from the base :class:`Experiment` class and implements methods specific to 3D experiments, which
     can have a broad range of applications such as measuring relaxation times (T1, T2), performing
     pulse amplitude sweeps, and performing two-point correlation measurements under Hamiltonian engineering
     pulse sequences.
 
-    2D experiments involve sweeping one parameter (e.g., pulse amplitude, delay time, evolution time) while
-    measuring the system's response. This is typically done by defining a variable vector that contains the values to be
-    swept. The experiment loops over this vector, applying the corresponding parameter value in each iteration. In
-    this class's implementation, the swept parameter is varied first, then the averaging loop is performed. During longer
+    3D experiments involve sweeping two parameters (e.g., pulse amplitude, delay time, evolution time) while
+    measuring the system's response. This is typically done by defining two variable vectors that contain the values to be
+    swept. The experiment loops over these vectors, applying the corresponding parameter values in each iteration. In
+    this class's implementation, the swept parameters are varied first, then the averaging loop is performed. During longer
     experiments, this ordering should help mitigate the effects of slow drifts in system parameters.
     """
 
@@ -54,13 +54,15 @@ class Experiment2D(Experiment):
         connect: bool = True,
     ):
         super().__init__(settings=settings, config=config, connect=connect)
-        self.sweep_axis = None  # Axis for live plotting and data saving
-        self.sweep_label = "Swept Variable"  # Label for sweep axis
+        self.sweep_axis_inner = None  # Inner Axis for live plotting and data saving
+        self.sweep_label_inner = "Inner Swept Variable"  # Label for sweep axis
+        self.sweep_axis_outer = None  # Outer Axis for live plotting and data saving
+        self.sweep_label_outer = "Outer Swept Variable"  # Label for sweep axis
 
-    def update_sweep_axis(self, new_axis):
+    def update_sweep_axis_inner(self, new_axis):
         """
         Updates the sweep axis for live plotting and data saving. If this method is not called, the
-        variable vector :attr:`var_vec` will be used as the sweep axis by default. It can be convienient
+        variable vector :attr:`var_vec` will be used as the sweep axis by default. It can be convenient
         to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude
         rescaling factor physical Vpp units).
         """
@@ -68,14 +70,34 @@ class Experiment2D(Experiment):
             raise ValueError(
                 "New sweep axis must have the same length as the variable vector."
             )
-        self.sweep_axis = new_axis
+        self.sweep_axis_inner = new_axis
 
-    def update_sweep_label(self, new_label):
+    def update_sweep_label_inner(self, new_label: str):
         """
         Updates the label for the sweep axis in live plotting. If this method is not called, the
         default label "Swept Variable" will be used.
         """
-        self.sweep_label = new_label
+        self.sweep_label_inner = new_label
+
+    def update_sweep_axis_outer(self, new_axis):
+        """
+        Updates the sweep axis for live plotting and data saving. If this method is not called, the
+        variable vector :attr:`var_vec` will be used as the sweep axis by default. It can be convenient
+        to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude
+        rescaling factor physical Vpp units).
+        """
+        if len(new_axis) != len(self.tau_sweep):
+            raise ValueError(
+                "New sweep axis must have the same length as the tau sweep vector."
+            )
+        self.sweep_axis_outer = new_axis
+
+    def update_sweep_label_outer(self, new_label):
+        """
+        Updates the label for the sweep axis in live plotting. If this method is not called, the
+        default label "Swept Variable" will be used.
+        """
+        self.sweep_label_outer = new_label
 
     def validate_experiment(self):
         """
@@ -86,9 +108,13 @@ class Experiment2D(Experiment):
         Raises:
             ValueError: No variable vector was found in the experiment commands.
         """
-        if self.var_vec is None:
+        if self.var_vec_inner is None and self.var_vec_outer is None:
             raise ValueError(
-                "Experiment2D requires variable vectors. Use Experiment1D, or similar, instead."
+                "Experiment3D requires two swept parameters. Use Experiment1D, or similar, instead."
+            )
+        elif self.var_vec_inner is None or self.var_vec_outer is None:
+            raise ValueError(
+                "Experiment3D requires two swept parameters. To sweep a single parameter, use Experiment2D, or similar, instead."
             )
 
     def create_experiment(self):
@@ -116,10 +142,16 @@ class Experiment2D(Experiment):
             Q_st = declare_stream()
             t1 = declare(int)
             t2 = declare(int)
-            if self.use_fixed:
-                var = declare(fixed)
+
+            if self.use_fixed_inner:
+                var_inner = declare(fixed)
             else:
-                var = declare(int)
+                var_inner = declare(int)
+
+            if self.use_fixed_outer:
+                var_outer = declare(fixed)
+            else:
+                var_outer = declare(int)
 
             if self.start_with_wait:
                 wait(self.wait_between_scans, self.probe_key)
@@ -127,58 +159,59 @@ class Experiment2D(Experiment):
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
 
                 with for_(
-                    *from_array(var, self.var_vec)
-                ):  # inner loop over variable vector
-                    drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+                    *from_array(var_outer, self.var_vec_outer)
+                ):  # outer loop over variable vector
+                    
+                    with for_(
+                        *from_array(var_inner, self.var_vec_inner)
+                    ):  # inner loop over variable vector
 
-                    for command in self._commands:
-                        self.translate_command(command, var, m)
+                        drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
-                    # wait for ringdown to decay, blank amplifier, set to receive mode
-                    safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    wait(self.pre_scan_delay)
-                    readout_mode(
-                        switch=self.rx_switch_key, amplifier=self.amplifier_key
-                    )
+                        for command in self._commands:
+                            self.translate_command(command, var_inner, var_outer, m)
 
-                    # measure the FID signal via resonator and helper elements
-                    with for_(t1, 0, t1 < self.measure_sequence_len, t1 + 2):
-                        measure(
-                            "no_pulse_readout",
-                            self.probe_key,
-                            demod.full("rotated_cos", I1, "out1"),
-                            demod.full("rotated_sin", Q1, "out1"),
+                        # wait for ringdown to decay, blank amplifier, set to receive mode
+                        safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+                        wait(self.pre_scan_delay)
+                        readout_mode(
+                            switch=self.rx_switch_key, amplifier=self.amplifier_key
                         )
-                        save(I1, I_st)
-                        save(Q1, Q_st)
-                        wait(self.loop_wait_cycles, self.probe_key)
-                    wait(
-                        self.loop_wait_cycles, self.helper_key
-                    )  # Delay the second measurement loop
-                    with for_(t2, 1, t2 < self.measure_sequence_len, t2 + 2):
-                        measure(
-                            "no_pulse_readout",
-                            self.helper_key,
-                            demod.full("rotated_cos", I2, "out1"),
-                            demod.full("rotated_sin", Q2, "out1"),
-                        )
-                        save(I2, I_st)
-                        save(Q2, Q_st)
-                        wait(self.loop_wait_cycles, self.helper_key)
-                    safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
-                    reset_frame(self.probe_key)
-                    wait(self.wait_between_scans, self.probe_key)
+
+                        # measure the FID signal via resonator and helper elements
+                        with for_(t1, 0, t1 < self.measure_sequence_len, t1 + 2):
+                            measure(
+                                "no_pulse_readout",
+                                self.probe_key,
+                                demod.full("rotated_cos", I1, "out1"),
+                                demod.full("rotated_sin", Q1, "out1"),
+                            )
+                            save(I1, I_st)
+                            save(Q1, Q_st)
+                            wait(self.loop_wait_cycles, self.probe_key)
+                        wait(
+                            self.loop_wait_cycles, self.helper_key
+                        )  # Delay the second measurement loop
+                        with for_(t2, 1, t2 < self.measure_sequence_len, t2 + 2):
+                            measure(
+                                "no_pulse_readout",
+                                self.helper_key,
+                                demod.full("rotated_cos", I2, "out1"),
+                                demod.full("rotated_sin", Q2, "out1"),
+                            )
+                            save(I2, I_st)
+                            save(Q2, Q_st)
+                            wait(self.loop_wait_cycles, self.helper_key)
+                        safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
+                        reset_frame(self.probe_key)
+                        wait(self.wait_between_scans, self.probe_key)
 
                 save(n, n_st)
 
             with stream_processing():
                 n_st.save("iteration")
-                I_st.buffer(self.measure_sequence_len).buffer(
-                    len(self.var_vec)
-                ).average().save("I")
-                Q_st.buffer(self.measure_sequence_len).buffer(
-                    len(self.var_vec)
-                ).average().save("Q")
+                I_st.buffer(self.measure_sequence_len).buffer(len(self.var_vec_inner)).buffer(len(self.var_vec_outer)).average().save("I")
+                Q_st.buffer(self.measure_sequence_len).buffer(len(self.var_vec_inner)).buffer(len(self.var_vec_outer)).average().save("Q")
 
         return experiment
 

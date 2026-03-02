@@ -30,6 +30,10 @@ MANIFEST
 data/
 test_results/
 
+# gui files until ready
+#    The binaries appear to hang around after the build, even on a different branch
+gui/
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
