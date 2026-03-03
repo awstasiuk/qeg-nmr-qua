@@ -71,6 +71,9 @@ class Experiment1D(Experiment):
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
+            dummy = declare(
+                int, 0
+            )  # dummy variable for loops without a declared variable vector
             I1 = declare(fixed)
             Q1 = declare(fixed)
             I2 = declare(fixed)
@@ -84,8 +87,9 @@ class Experiment1D(Experiment):
                 wait(self.wait_between_scans)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-                with if_(n > 0):
+                with if_(dummy > 0):
                     wait(self.wait_between_scans, self.probe_key)
+                dummy += 1  # increment dummy variable to track whether we're in the first iteration
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 for command in self._commands:

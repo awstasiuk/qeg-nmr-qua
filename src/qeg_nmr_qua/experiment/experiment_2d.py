@@ -117,6 +117,9 @@ class Experiment2D(Experiment):
             n = declare(int)  # QUA variable for the averaging loop
             loop_idx = declare(int)  # QUA variable for floquet loops
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
+            dummy = declare(
+                int, 0
+            )  # dummy variable for loops without a declared variable vector
             I1 = declare(fixed)
             Q1 = declare(fixed)
             I2 = declare(fixed)
@@ -134,8 +137,9 @@ class Experiment2D(Experiment):
                 wait(self.wait_between_scans, self.probe_key)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-                with if_(n > 0):
+                with if_(dummy > 0):
                     wait(self.wait_between_scans, self.probe_key)
+                dummy += 1  # increment dummy variable to track whether we're in the first iteration
                 with for_(
                     *from_array(var, self.var_vec_lst[0])
                 ):  # inner loop over variable vector

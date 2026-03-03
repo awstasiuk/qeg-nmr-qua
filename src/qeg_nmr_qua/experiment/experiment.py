@@ -459,12 +459,21 @@ class Experiment:
             raise ValueError("Variable vector cannot be all zeros.")
 
         if loop_layer < 0:
-            # Check if this exact var_vec already exists in any layer
+            # Check if a multiple of this var_vec already exists in any layer
             for idx, existing_vec in enumerate(self.var_vec_lst):
-                if existing_vec is not None and np.allclose(var_vec, existing_vec):
-                    # Reuse the existing layer
-                    loop_layer = idx + 1
-                    return loop_layer, 1
+                if existing_vec is not None:
+                    div = self._list_find_scale_factor(var_vec, existing_vec)
+                    if div >= 1:
+                        # Reuse the existing layer directly
+                        loop_layer = idx + 1
+                        return loop_layer, div
+                    elif div > 0:
+                        # Reuse the existing layer and warn about the division
+                        warnings.warn(
+                            "New swept variable requires division of an existing variable vector, which may introduce run-time delays."
+                        )
+                        loop_layer = idx + 1
+                        return loop_layer, div
 
             # If not found, assign to first undefined layer
             for idx, elem in enumerate(self.var_vec_lst):
