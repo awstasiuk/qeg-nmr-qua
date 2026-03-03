@@ -341,27 +341,33 @@ class Experiment:
         )
 
     def add_z_rotation(
-        self, angle: float | Iterable, element: str, loop_layer: int = -1
+        self,
+        angle: float | Iterable,
+        elements: str | Iterable[str],
+        loop_layer: int = -1,
     ):
         """
         Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.
 
         Args:
             angle (float | Iterable): Angle(s) of the Z rotation in degrees.
-            element (str): Element to which the Z rotation is applied. Must be defined in the config.
+            elements (str | Iterable[str]): Element(s) to which the Z rotation is applied. Must be defined in the config.
             loop_layer (int): Loop layer (1-based) to associate with a swept
                 ``angle`` array.  Use ``-1`` (default) to auto-assign.
         """
-        if element not in self.config.elements.elements.keys():
-            raise ValueError(f"Element {element} not defined in config.")
+        if isinstance(elements, str):
+            elements = (elements,)
+        for element in elements:
+            if element not in self.config.elements.elements.keys():
+                raise ValueError(f"Element {element} not defined in config.")
 
         command = {
             "type": "z_rotation",
-            "element": element,
+            "elements": elements,
         }
         if isinstance(angle, Iterable):
             layer, div = self._update_loop((np.array(angle) / 360) % 1, loop_layer)
-            self._update_loop_type(layer, use_fixed=False)
+            self._update_loop_type(layer, use_fixed=True)
             command["layer"] = layer
             command["scale"] = div
         else:
@@ -378,7 +384,7 @@ class Experiment:
 
         Args:
             angle (float): Angle of the frame change in degrees.
-            elements (str): Element(s) to which the frame change is applied. Must be defined in the config.
+            elements (str | Iterable[str]): Element(s) to which the frame change is applied. Must be defined in the config.
         """
 
         if isinstance(elements, str):
@@ -419,29 +425,12 @@ class Experiment:
             loop_layer (int): The layer of the loop to update the type for.
             use_fixed (bool): Whether to use fixed point variables for this loop layer.
         """
-        if loop_layer < 0:
-            # automatically find the first undefined loop layer and set the type, else add a new layer if all existing layers are defined
-            for idx, elem in enumerate(self.use_fixed_lst):
-                if elem is None:
-                    self.use_fixed_lst[idx] = use_fixed
-                    break
-            else:
-                self.use_fixed_lst.append(use_fixed)
-        elif loop_layer > len(self.use_fixed_lst):
-            # extend with undefined layers until the requested loop layer exists
-            self.use_fixed_lst.extend([None] * (loop_layer - len(self.use_fixed_lst)))
-            self.use_fixed_lst[loop_layer - 1] = use_fixed
-
-        elif self.use_fixed_lst[loop_layer - 1] is None:
-            # the layer exists but has not been defined yet, so define it
+        if self.use_fixed_lst[loop_layer - 1] is None:
             self.use_fixed_lst[loop_layer - 1] = use_fixed
         elif self.use_fixed_lst[loop_layer - 1] != use_fixed:
-            # ensure we aren't mixing types on the same loop layer, as this will cause errors in the QUA program
             raise ValueError(
-                "Inconsistent loop variable types: cannot mix fixed point and integer variables in the same loop layer."
+                f"Loop layer {loop_layer} has already been assigned a variable vector with use_fixed={self.use_fixed_lst[loop_layer - 1]}, cannot assign a new variable vector with use_fixed={use_fixed}."
             )
-
-        # if the layer exists and has been defined, and is consistent with the new type, do nothing
 
     def _update_loop(self, var_vec, loop_layer):
         """
@@ -590,7 +579,7 @@ class Experiment:
 
         elif command["type"] == "z_rotation":
             phase = command.get("phase", var)
-            frame_rotation_2pi(phase, command["element"])
+            frame_rotation_2pi(phase, *command["elements"])
 
         elif command["type"] == "align":
 

@@ -24,7 +24,7 @@ settings = qnmr.ExperimentSettings(
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem,
 )
 
 
@@ -59,7 +59,9 @@ expt.add_floquet_sequence(
 )
 
 # rotate rho(t) by variable angle about Z
-expt.add_z_rotation(angle=kick_angles, element=settings.res_key, loop_layer=2)
+expt.add_z_rotation(
+    angle=kick_angles, elements=(settings.res_key, settings.helper_key), loop_layer=2
+)
 
 # reverse evolution via -DQ
 expt.add_floquet_sequence(
