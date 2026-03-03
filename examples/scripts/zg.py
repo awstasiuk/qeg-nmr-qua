@@ -19,7 +19,7 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
+    pulse_length=1.14 * u.us,
     pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time

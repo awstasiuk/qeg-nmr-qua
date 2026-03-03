@@ -334,6 +334,8 @@ class Experiment:
             command["repetitions"] = repetitions
 
         self._commands.append(command)
+        print(f"Layer assignment for sequence command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}")
+
 
     def add_z_rotation(self, angle: float, element: str):
         """

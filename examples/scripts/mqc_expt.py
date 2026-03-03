@@ -12,19 +12,19 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
-    pulse_amplitude=0.463,  # amplitude is 0.5*Vpp
+    pulse_length=1.14 * u.us,
+    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=248.27,  # degrees
+    rotation_angle=247.54,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7500 * u.Hz,
+    offset_freq=9125 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path(__file__).parent / "test_results",
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
 
 
@@ -59,7 +59,7 @@ expt.add_floquet_sequence(
 )
 
 # rotate rho(t) by variable angle about Z
-expt.add_z_rotation(angles=kick_angles, element=settings.res_key, loop_layer=2)
+expt.add_z_rotation(angle=kick_angles, element=settings.res_key, loop_layer=2)
 
 # reverse evolution via -DQ
 expt.add_floquet_sequence(
