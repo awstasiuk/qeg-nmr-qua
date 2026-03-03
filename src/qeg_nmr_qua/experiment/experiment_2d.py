@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import warnings
+
 from qeg_nmr_qua.experiment.macros import (
     readout_mode,
     safe_mode,
@@ -7,8 +10,6 @@ from qeg_nmr_qua.experiment.experiment import Experiment
 from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 
-
-import matplotlib.pyplot as plt
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
@@ -25,6 +26,7 @@ from qm.qua import (
     stream_processing,
     declare_stream,
     for_,
+    if_,
     fixed,
     demod,
     reset_frame,
@@ -93,6 +95,10 @@ class Experiment2D(Experiment):
             raise ValueError(
                 "Experiment2D requires variable vectors. Use Experiment1D, or similar, instead."
             )
+        if len(self.var_vec_lst) > 1:
+            warnings.warn(
+                "Experiment2D only supports one variable vector, but more were found."
+            )
 
     def create_experiment(self):
         """
@@ -128,7 +134,8 @@ class Experiment2D(Experiment):
                 wait(self.wait_between_scans, self.probe_key)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-
+                with if_(n > 0):
+                    wait(self.wait_between_scans, self.probe_key)
                 with for_(
                     *from_array(var, self.var_vec_lst[0])
                 ):  # inner loop over variable vector
@@ -170,7 +177,6 @@ class Experiment2D(Experiment):
                         wait(self.loop_wait_cycles, self.helper_key)
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
                     reset_frame(self.probe_key, self.helper_key)
-                    wait(self.wait_between_scans, self.probe_key)
 
                 save(n, n_st)
 

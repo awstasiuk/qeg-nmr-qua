@@ -188,7 +188,7 @@ class Experiment:
             command["amplitude"] = amplitude
 
             layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            self._update_loop_type(layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         elif isinstance(amplitude, Iterable):
@@ -199,14 +199,14 @@ class Experiment:
             )
             command["phase"] = (phase / 360) % 1
             layer, div = self._update_loop(np.array(amplitude), loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=True)
+            self._update_loop_type(layer, use_fixed=True)
             command["layer"] = layer
             command["scale"] = div
         elif isinstance(length, Iterable):
             command["phase"] = (phase / 360) % 1
             command["amplitude"] = amplitude
             layer, div = self._update_loop(np.array(length) // 4, loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            self._update_loop_type(layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         else:
@@ -219,7 +219,9 @@ class Experiment:
             )
             command["scale"] = 1
         self._commands.append(command)
-        print(f"Layer assignment for pulse command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}")
+        print(
+            f"Layer assignment for pulse command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}"
+        )
 
     def add_delay(self, duration: int | Iterable, loop_layer: int = -1):
         """
@@ -237,7 +239,7 @@ class Experiment:
             layer, div = self._update_loop(
                 np.array(duration, dtype=int) // 4, loop_layer
             )
-            self._update_loop_type(loop_layer, use_fixed=False)
+            self._update_loop_type(layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         else:
@@ -327,23 +329,28 @@ class Experiment:
         }
         if isinstance(repetitions, Iterable):
             layer, div = self._update_loop(np.array(repetitions, dtype=int), loop_layer)
-            self._update_loop_type(loop_layer, use_fixed=False)
+            self._update_loop_type(layer, use_fixed=False)
             command["layer"] = layer
             command["scale"] = div
         else:
             command["repetitions"] = repetitions
 
         self._commands.append(command)
-        print(f"Layer assignment for sequence command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}")
+        print(
+            f"Layer assignment for sequence command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}"
+        )
 
-
-    def add_z_rotation(self, angle: float, element: str):
+    def add_z_rotation(
+        self, angle: float | Iterable, element: str, loop_layer: int = -1
+    ):
         """
         Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.
 
         Args:
-            angle (float): Angle of the Z rotation in degrees.
+            angle (float | Iterable): Angle(s) of the Z rotation in degrees.
             element (str): Element to which the Z rotation is applied. Must be defined in the config.
+            loop_layer (int): Loop layer (1-based) to associate with a swept
+                ``angle`` array.  Use ``-1`` (default) to auto-assign.
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
@@ -351,8 +358,14 @@ class Experiment:
         command = {
             "type": "z_rotation",
             "element": element,
-            "phase": (angle / 360) % 1,  # convert to fraction of 2pi
         }
+        if isinstance(angle, Iterable):
+            layer, div = self._update_loop((np.array(angle) / 360) % 1, loop_layer)
+            self._update_loop_type(layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
+        else:
+            command["angle"] = (angle / 360) % 1  # convert to fraction of 2pi
 
         self._commands.append(command)
 
@@ -455,7 +468,7 @@ class Experiment:
         """
         if np.all(var_vec == 0):
             raise ValueError("Variable vector cannot be all zeros.")
-        
+
         if loop_layer < 0:
             # Check if this exact var_vec already exists in any layer
             for idx, existing_vec in enumerate(self.var_vec_lst):
@@ -463,17 +476,17 @@ class Experiment:
                     # Reuse the existing layer
                     loop_layer = idx + 1
                     return loop_layer, 1
-            
+
             # If not found, assign to first undefined layer
             for idx, elem in enumerate(self.var_vec_lst):
                 if elem is None:
                     self.var_vec_lst[idx] = var_vec
                     loop_layer = idx + 1
                     return loop_layer, 1
-            
+
             # If all layers defined, add new layer
             self.var_vec_lst.append(var_vec)
-            loop_layer = len(self.var_vec_lst)
+            loop_layer = len(self.var_vec_lst) + 1
             return loop_layer, 1
 
         elif loop_layer > len(self.var_vec_lst):

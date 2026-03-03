@@ -20,6 +20,7 @@ from qm.qua import (
     stream_processing,
     declare_stream,
     for_,
+    if_,
     fixed,
     demod,
 )
@@ -83,6 +84,8 @@ class Experiment1D(Experiment):
                 wait(self.wait_between_scans)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
+                with if_(n > 0):
+                    wait(self.wait_between_scans, self.probe_key)
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 for command in self._commands:
@@ -121,7 +124,6 @@ class Experiment1D(Experiment):
                 # set to safe mode and allow system to relax
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
                 save(n, n_st)
-                wait(self.wait_between_scans, self.probe_key)
 
             with stream_processing():
                 n_st.save("iteration")

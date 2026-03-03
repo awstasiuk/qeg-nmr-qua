@@ -1,3 +1,6 @@
+import warnings
+import matplotlib.pyplot as plt
+
 from qeg_nmr_qua.experiment.macros import (
     readout_mode,
     safe_mode,
@@ -7,8 +10,6 @@ from qeg_nmr_qua.experiment.experiment import Experiment
 from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 
-
-import matplotlib.pyplot as plt
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
@@ -25,6 +26,7 @@ from qm.qua import (
     stream_processing,
     declare_stream,
     for_,
+    if_,
     fixed,
     demod,
 )
@@ -119,6 +121,11 @@ class Experiment3D(Experiment):
                 "Experiment3D requires two swept parameters. To sweep a single parameter, use Experiment2D, or similar, instead."
             )
 
+        if len(self.var_vec_lst) > 2:
+            warnings.warn(
+                "Experiment3D only supports two variable vectors, but more were found."
+            )
+
     def create_experiment(self):
         """
         Creates the Quantum Machine program for the experiment, and returns the
@@ -158,15 +165,16 @@ class Experiment3D(Experiment):
             if self.start_with_wait:
                 wait(self.wait_between_scans, self.probe_key)
 
-            with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-
+            with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop, "layer 0"
+                with if_(n > 0):
+                    wait(self.wait_between_scans, self.probe_key)
                 with for_(
                     *from_array(var_outer, self.var_vec_lst[0])
-                ):  # outer loop over variable vector
+                ):  # outer loop over variable vector, layer 1
 
                     with for_(
                         *from_array(var_inner, self.var_vec_lst[1])
-                    ):  # inner loop over variable vector
+                    ):  # inner loop over variable vector, layer 2
 
                         drive_mode(
                             switch=self.rx_switch_key, amplifier=self.amplifier_key
@@ -213,8 +221,7 @@ class Experiment3D(Experiment):
                         safe_mode(
                             switch=self.rx_switch_key, amplifier=self.amplifier_key
                         )
-                        reset_frame(self.probe_key)
-                        wait(self.wait_between_scans, self.probe_key)
+                        reset_frame(self.probe_key, self.helper_key)
 
                 save(n, n_st)
 
@@ -300,7 +307,7 @@ class Experiment3D(Experiment):
                     # --- Panel 1: first I time-point heatmap ---
                     I_first = I[:, :, 0] * 1e6  # (n_outer, n_inner), µV
 
-                    # --- Panel 2: (mean + std) / 2 of last 20 Q time-points ---
+                    # --- Panel 2: std  of last 20 Q time-points ---
                     n_tail = min(20, I.shape[2])
                     Q_tail = Q[:, :, -n_tail:] * 1e6  # µV
                     Q_metric = np.std(Q_tail, axis=2)
