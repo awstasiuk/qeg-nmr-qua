@@ -19,8 +19,8 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.14 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_length=1.1 * u.us,
+    pulse_amplitude=0.44,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
     rotation_angle=247.54,  # degrees
@@ -36,8 +36,8 @@ settings = qnmr.ExperimentSettings(
 
 cfg = qnmr.cfg_from_settings(settings)
 
-amp_list = np.arange(.93,1.05,.0125)
-# amp_list = np.arange(.975,1.03,.005)
+# amp_list = np.arange(.93,1.05,.0125)
+amp_list = np.arange(.975,1.03,.005)
 # amp_list = np.arange(0.55, 1.1, .05)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
@@ -46,14 +46,17 @@ n_wraps = 2
 expt.add_pulse(element=settings.res_key, amplitude=amp_list)
 
 for i in range(n_wraps * 4):
-    expt.add_pulse(element=settings.res_key, amplitude=amp_list)
     expt.add_delay(2*u.us)
+    expt.add_pulse(element=settings.res_key, amplitude=amp_list)
 
 expt.update_sweep_axis(amp_list*settings.pulse_amplitude)
 expt.update_sweep_label("Pulse Amplitude (Vpp)")
 expt.execute_experiment()
+# expt.remove_initial_delay()
+# expt.simulate_experiment()
 
-fit = True
+fit = False
+
 if fit:
     
     fig = plt.figure()
