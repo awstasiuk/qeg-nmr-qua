@@ -219,9 +219,6 @@ class Experiment:
             )
             command["scale"] = 1
         self._commands.append(command)
-        print(
-            f"Layer assignment for pulse command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}"
-        )
 
     def add_delay(self, duration: int | Iterable, loop_layer: int = -1):
         """
@@ -313,7 +310,6 @@ class Experiment:
         pulse = self.config.elements.elements[element].operations.get(shape, None)
         if shape is None:
             shape = self.pulse_shape
-            # print(f"No shape specified in add_floquet_sequence, Using default settings.pulse_shape: {self.pulse_shape}")
         elif pulse is None:
             raise ValueError(
                 f"Pulse shape '{shape}' not recognized in element '{element}'. "
@@ -336,9 +332,6 @@ class Experiment:
             command["repetitions"] = repetitions
 
         self._commands.append(command)
-        print(
-            f"Layer assignment for sequence command with element {element}: layer {command.get('layer', 'N/A')}, scale {command.get('scale', 'N/A')}"
-        )
 
     def add_z_rotation(
         self,
