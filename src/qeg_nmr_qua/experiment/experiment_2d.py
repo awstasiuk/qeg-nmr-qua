@@ -133,16 +133,15 @@ class Experiment2D(Experiment):
             else:
                 var = declare(int)
 
-            if self.start_with_wait:
-                wait(self.wait_between_scans, self.probe_key)
+            
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-                with if_(dummy > 0):
-                    wait(self.wait_between_scans, self.probe_key)
-                dummy += 1  # increment dummy variable to track whether we're in the first iteration
+                
                 with for_(
                     *from_array(var, self.var_vec_lst[0])
                 ):  # inner loop over variable vector
+                    if self.start_with_wait:
+                        wait(self.wait_between_scans, self.probe_key)
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:
