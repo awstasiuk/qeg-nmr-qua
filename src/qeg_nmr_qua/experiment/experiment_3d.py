@@ -17,6 +17,7 @@ from qualang_tools.loops import from_array
 from qm import QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
+    assign,
     wait,
     measure,
     save,
@@ -27,6 +28,7 @@ from qm.qua import (
     declare_stream,
     for_,
     if_,
+    else_,
     fixed,
     demod,
 )
@@ -178,7 +180,8 @@ class Experiment3D(Experiment):
                     ):  # inner loop over variable vector, layer 2
                         with if_(dummy > 0):
                             wait(self.wait_between_scans, self.probe_key)
-                        dummy += 1  # increment dummy variable to track whether we're in the first iteration
+                        with else_():
+                            assign(dummy, dummy + 1)
                         drive_mode(
                             switch=self.rx_switch_key, amplifier=self.amplifier_key
                         )

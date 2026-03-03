@@ -12,6 +12,7 @@ from qualang_tools.units import unit
 from qm import QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
+    assign,
     wait,
     measure,
     save,
@@ -21,6 +22,7 @@ from qm.qua import (
     declare_stream,
     for_,
     if_,
+    else_,
     fixed,
     demod,
 )
@@ -89,7 +91,11 @@ class Experiment1D(Experiment):
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
                 with if_(dummy > 0):
                     wait(self.wait_between_scans, self.probe_key)
-                dummy += 1  # increment dummy variable to track whether we're in the first iteration
+                with else_():
+                    assign(dummy, dummy + 1)
+                assign(
+                    dummy, dummy + 1
+                )  # increment dummy variable to track whether we're in the first iteration
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 for command in self._commands:
