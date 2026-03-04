@@ -1,9 +1,10 @@
 import qeg_nmr_qua as qnmr
 
-from qualang_tools.units import unit
+import json
 from pathlib import Path
-import numpy as np
+from qualang_tools.units import unit
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.optimize import curve_fit
 from scipy.special import jn
 
@@ -12,11 +13,11 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.14 * u.us,
+    pulse_length=1.1 * u.us,
     pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=247.54,  # degrees
+    rotation_angle=241.35,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
     offset_freq=9150 * u.Hz,
@@ -24,9 +25,8 @@ settings = qnmr.ExperimentSettings(
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem,
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
-
 
 cfg = qnmr.cfg_from_settings(settings)
 
@@ -81,3 +81,43 @@ expt.update_sweep_label_outer("Floquet Periods")
 expt.execute_experiment()
 # expt.remove_initial_delay()
 # expt.simulate_experiment()
+
+mqc_plot = True
+remove_echo_decay = True # For observing operator spreading |Cₘ(t)|² / Σₘ|Cₘ(t)|²
+if mqc_plot:
+    re = np.array(expt.save_data_dict["I_data"]) * 1e6
+    periods = np.array(expt.save_data_dict["sweep_axis_outer"])
+    rotation_deg = np.array(expt.save_data_dict["sweep_axis_inner"])
+    re = re[:, :, 0]  # Plot first point of FID for each period & rotation
+    n_periods, n_phi = re.shape
+
+    if remove_echo_decay: signal = re / re[:, 0][:, np.newaxis] # normalize to φ=0 to remove echo decay envelope and observe operator spreading
+    else: signal = re / re[0,0]  # preserve echo decay envelope, observe MQC intensities more quantitatively
+
+    # FFT over φ to extract MQC intensities
+    rotation_rad = np.deg2rad(rotation_deg)
+    dphi = np.mean(np.diff(rotation_rad))
+    mqc = np.fft.fft(signal, axis=1) / n_phi
+    mqc = np.fft.fftshift(mqc, axes=1)
+    mqc_intensity = np.abs(mqc)
+    coherence_orders = np.fft.fftshift(np.fft.fftfreq(n_phi, d=dphi/(2*np.pi))) # Frequency axis (coherence order)
+
+    # 3D Plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # render MQC intensity of each order back to front
+    sort_idx = np.argsort(coherence_orders)[::-1]
+    for j in sort_idx:
+        threshold = 0.025 # gray out low intensity coherences
+        if np.average(mqc_intensity[:, j]) < threshold: color = 'darkgray'
+        else: color = None
+
+        ax.plot(periods, np.full_like(periods, coherence_orders[j]), 
+                mqc_intensity[:, j], color=color)
+
+    ax.set_xlabel("Floquet Periods"); ax.set_xlim(0, periods.max())
+    ax.set_ylabel("Coherence Order"); ax.set_yticks(np.arange(coherence_orders.min(), coherence_orders.max(), step=2))
+    ax.set_zlabel("Normalized MQC Intensity"); ax.set_zlim(0, mqc_intensity.max())
+    plt.tight_layout()
+    plt.show()
