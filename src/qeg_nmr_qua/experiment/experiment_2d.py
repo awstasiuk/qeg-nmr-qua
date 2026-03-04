@@ -17,6 +17,7 @@ from qualang_tools.loops import from_array
 from qm import QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
+    assign,
     wait,
     reset_frame,
     measure,
@@ -27,6 +28,7 @@ from qm.qua import (
     declare_stream,
     for_,
     if_,
+    else_,
     fixed,
     demod,
     reset_frame,
@@ -133,15 +135,16 @@ class Experiment2D(Experiment):
             else:
                 var = declare(int)
 
-            
-
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
-                
+
                 with for_(
                     *from_array(var, self.var_vec_lst[0])
                 ):  # inner loop over variable vector
-                    if self.start_with_wait:
+                    with if_(dummy > 0):
                         wait(self.wait_between_scans, self.probe_key)
+                    with else_():
+                        assign(dummy, dummy + 1)
+                    assign(dummy, dummy + 1)
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:
