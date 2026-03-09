@@ -47,9 +47,23 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#basic-configuration">Basic Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#running-a-1d-experiment">Running a 1D Experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#working-with-data">Working with Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setup-and-configuration">Setup and Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-a-pulse-sequence">Building a Pulse Sequence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#d-experiment-free-induction-decay">1D Experiment — Free Induction Decay</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#d-experiment-sweeping-one-parameter">2D Experiment — Sweeping One Parameter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-pulse-amplitude-calibration">Example: pulse-amplitude calibration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-floquet-hamiltonian-engineering-sweep">Example: Floquet (Hamiltonian-engineering) sweep</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#consistency-rule">Consistency rule</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#d-experiment-sweeping-two-parameters">3D Experiment — Sweeping Two Parameters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#loop-layer-convention">Loop layer convention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-joint-amplitude-delay-sweep">Example: joint amplitude + delay sweep</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#omitting-loop-layer-in-a-3d-experiment">Omitting <code class="docutils literal notranslate"><span class="pre">loop_layer</span></code> in a 3D experiment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#checking-the-generated-qua-program">Checking the generated QUA program</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#saving-data">Saving Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
 </ul>
 </li>
@@ -83,50 +97,359 @@
              
   <section id="quick-start-guide">
 <h1>Quick Start Guide<a class="headerlink" href="#quick-start-guide" title="Link to this heading"></a></h1>
-<p>This guide will help you get started with qeg-nmr-qua.</p>
-<section id="basic-configuration">
-<h2>Basic Configuration<a class="headerlink" href="#basic-configuration" title="Link to this heading"></a></h2>
-<p>Import the necessary modules:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPXConfig</span><span class="p">,</span> <span class="n">ExperimentSettings</span><span class="p">,</span> <span class="n">cfg_from_settings</span>
-</pre></div>
-</div>
-<p>Create an experiment configuration:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define your experiment settings</span>
-<span class="n">settings</span> <span class="o">=</span> <span class="n">ExperimentSettings</span><span class="p">(</span>
-    <span class="c1"># Add your settings here</span>
+<p>This guide walks through the full workflow for designing and running NMR experiments
+with <strong>qeg-nmr-qua</strong>, from basic configuration through to 3D parameter sweeps.</p>
+<nav class="contents local" id="on-this-page">
+<p class="topic-title">On this page</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#setup-and-configuration" id="id1">Setup and Configuration</a></p></li>
+<li><p><a class="reference internal" href="#building-a-pulse-sequence" id="id2">Building a Pulse Sequence</a></p></li>
+<li><p><a class="reference internal" href="#d-experiment-free-induction-decay" id="id3">1D Experiment — Free Induction Decay</a></p></li>
+<li><p><a class="reference internal" href="#d-experiment-sweeping-one-parameter" id="id4">2D Experiment — Sweeping One Parameter</a></p>
+<ul>
+<li><p><a class="reference internal" href="#example-pulse-amplitude-calibration" id="id5">Example: pulse-amplitude calibration</a></p></li>
+<li><p><a class="reference internal" href="#example-floquet-hamiltonian-engineering-sweep" id="id6">Example: Floquet (Hamiltonian-engineering) sweep</a></p></li>
+<li><p><a class="reference internal" href="#consistency-rule" id="id7">Consistency rule</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#d-experiment-sweeping-two-parameters" id="id8">3D Experiment — Sweeping Two Parameters</a></p>
+<ul>
+<li><p><a class="reference internal" href="#loop-layer-convention" id="id9">Loop layer convention</a></p></li>
+<li><p><a class="reference internal" href="#example-joint-amplitude-delay-sweep" id="id10">Example: joint amplitude + delay sweep</a></p></li>
+<li><p><a class="reference internal" href="#omitting-loop-layer-in-a-3d-experiment" id="id11">Omitting <code class="docutils literal notranslate"><span class="pre">loop_layer</span></code> in a 3D experiment</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#checking-the-generated-qua-program" id="id12">Checking the generated QUA program</a></p></li>
+<li><p><a class="reference internal" href="#saving-data" id="id13">Saving Data</a></p></li>
+<li><p><a class="reference internal" href="#next-steps" id="id14">Next Steps</a></p></li>
+</ul>
+</nav>
+<section id="setup-and-configuration">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Setup and Configuration</a><a class="headerlink" href="#setup-and-configuration" title="Link to this heading"></a></h2>
+<p>All experiments start with an <a class="reference internal" href="api/config.html#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a>
+object. This is the single source of truth for pulse, frequency, and readout parameters.
+The OPX hardware configuration is then generated automatically from those settings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">unit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">qeg_nmr_qua</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qnmr</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="n">unit</span><span class="p">(</span><span class="n">coerce_to_integer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">settings</span> <span class="o">=</span> <span class="n">qnmr</span><span class="o">.</span><span class="n">ExperimentSettings</span><span class="p">(</span>
+    <span class="n">n_avg</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">pulse_length</span><span class="o">=</span><span class="mf">1.1</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+    <span class="n">pulse_amplitude</span><span class="o">=</span><span class="mf">0.422</span><span class="p">,</span>       <span class="c1"># 0.5 * Vpp</span>
+    <span class="n">rotation_angle</span><span class="o">=</span><span class="mf">248.0</span><span class="p">,</span>        <span class="c1"># degrees</span>
+    <span class="n">thermal_reset</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">s</span><span class="p">,</span>
+    <span class="n">center_freq</span><span class="o">=</span><span class="mf">282.1901</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">MHz</span><span class="p">,</span>
+    <span class="n">offset_freq</span><span class="o">=</span><span class="mi">4500</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">Hz</span><span class="p">,</span>
+    <span class="n">readout_delay</span><span class="o">=</span><span class="mi">20</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+    <span class="n">dwell_time</span><span class="o">=</span><span class="mi">4</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+    <span class="n">readout_start</span><span class="o">=</span><span class="mi">0</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+    <span class="n">readout_end</span><span class="o">=</span><span class="mi">256</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">),</span>
 <span class="p">)</span>
 
-<span class="c1"># Generate OPX configuration from settings</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">cfg_from_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">qnmr</span><span class="o">.</span><span class="n">cfg_from_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Settings are validated on update; call <code class="docutils literal notranslate"><span class="pre">settings.validate()</span></code> directly if you change
+values manually. All time values are in <strong>nanoseconds</strong> internally; use the <code class="docutils literal notranslate"><span class="pre">unit</span></code>
+helper to express them in physical units.</p>
+</section>
+<section id="building-a-pulse-sequence">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Building a Pulse Sequence</a><a class="headerlink" href="#building-a-pulse-sequence" title="Link to this heading"></a></h2>
+<p>Experiments are constructed by appending <strong>commands</strong> to an experiment object.  Four
+command types are available:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Effect</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">add_pulse(...)</span></code></p></td>
+<td><p>RF pulse with optional phase, amplitude, or length</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">add_delay(...)</span></code></p></td>
+<td><p>Free-evolution delay</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">add_align(...)</span></code></p></td>
+<td><p>Align one or more elements in time</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">add_floquet_sequence(...)</span></code></p></td>
+<td><p>Repeating multi-pulse / delay block</p></td>
+</tr>
+</tbody>
+</table>
+<p>Commands are translated into QUA code in FIFO order when
+<a class="reference internal" href="api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.create_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.create_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_experiment()</span></code></a> is called.</p>
+</section>
+<section id="d-experiment-free-induction-decay">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">1D Experiment — Free Induction Decay</a><a class="headerlink" href="#d-experiment-free-induction-decay" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/experiment.html#qeg_nmr_qua.experiment.experiment_1d.Experiment1D" title="qeg_nmr_qua.experiment.experiment_1d.Experiment1D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment1D</span></code></a> measures the FID following
+a single π/2 pulse.  No swept parameter is needed; every command must use
+scalar (non-iterable) arguments.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">expt</span> <span class="o">=</span> <span class="n">qnmr</span><span class="o">.</span><span class="n">Experiment1D</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># A single π/2 pulse on the resonator element</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">pi_half_key</span><span class="p">,</span> <span class="n">element</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">res_key</span><span class="p">)</span>
+
+<span class="n">expt</span><span class="o">.</span><span class="n">execute_experiment</span><span class="p">()</span>
+
+<span class="c1"># Inspect data</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">expt</span><span class="o">.</span><span class="n">save_data_dict</span><span class="p">[</span><span class="s2">&quot;I_data&quot;</span><span class="p">])</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">expt</span><span class="o">.</span><span class="n">save_data_dict</span><span class="p">[</span><span class="s2">&quot;Q_data&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you pass an iterable (e.g. a NumPy array) to any argument of a command in a
+<code class="docutils literal notranslate"><span class="pre">Experiment1D</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_experiment()</span></code> will raise a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> before the
+QUA program is compiled.</p>
+</div>
+</section>
+<section id="d-experiment-sweeping-one-parameter">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">2D Experiment — Sweeping One Parameter</a><a class="headerlink" href="#d-experiment-sweeping-one-parameter" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/experiment.html#qeg_nmr_qua.experiment.experiment_2d.Experiment2D" title="qeg_nmr_qua.experiment.experiment_2d.Experiment2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment2D</span></code></a> loops over a single
+<strong>swept variable vector</strong>.  Pass a NumPy array to one argument of <em>any</em> command and
+the class records it as the sweep axis.</p>
+<p>The <strong>loop nesting order</strong> is: <strong>averages (outer) → swept variable → readout scan (inner-most)</strong>.
+This means the sweep is traversed in full before the next average begins, which helps
+mitigate slow parameter drifts.</p>
+<section id="example-pulse-amplitude-calibration">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Example: pulse-amplitude calibration</a><a class="headerlink" href="#example-pulse-amplitude-calibration" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">qeg_nmr_qua</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qnmr</span>
+
+<span class="n">amp_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.93</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>   <span class="c1"># amplitude rescaling factors</span>
+
+<span class="n">expt</span> <span class="o">=</span> <span class="n">qnmr</span><span class="o">.</span><span class="n">Experiment2D</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># Sweep the amplitude — every add_pulse call with the same array</span>
+<span class="c1"># is automatically recognised as the same loop variable.</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">pi_half_key</span><span class="p">,</span>
+    <span class="n">element</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">res_key</span><span class="p">,</span>
+    <span class="n">amplitude</span><span class="o">=</span><span class="n">amp_list</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Optionally convert the raw rescaling factor to physical units for plots</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_axis</span><span class="p">(</span><span class="n">amp_list</span> <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">pulse_amplitude</span><span class="p">)</span>  <span class="c1"># volts</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_label</span><span class="p">(</span><span class="s2">&quot;Pulse Amplitude (Vpp)&quot;</span><span class="p">)</span>
+
+<span class="n">expt</span><span class="o">.</span><span class="n">execute_experiment</span><span class="p">()</span>
+
+<span class="n">I_data</span> <span class="o">=</span> <span class="n">expt</span><span class="o">.</span><span class="n">save_data_dict</span><span class="p">[</span><span class="s2">&quot;I_data&quot;</span><span class="p">]</span>   <span class="c1"># shape (n_sweep, n_time)</span>
 </pre></div>
 </div>
 </section>
-<section id="running-a-1d-experiment">
-<h2>Running a 1D Experiment<a class="headerlink" href="#running-a-1d-experiment" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua</span><span class="w"> </span><span class="kn">import</span> <span class="n">Experiment1D</span>
+<section id="example-floquet-hamiltonian-engineering-sweep">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Example: Floquet (Hamiltonian-engineering) sweep</a><a class="headerlink" href="#example-floquet-hamiltonian-engineering-sweep" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">unit</span>
+<span class="n">u</span> <span class="o">=</span> <span class="n">unit</span><span class="p">(</span><span class="n">coerce_to_integer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="c1"># Create and run a 1D experiment</span>
-<span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment1D</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-<span class="c1"># Run your experiment</span>
+<span class="n">t0</span>   <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>
+<span class="n">p1</span>   <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">pulse_length</span>
+<span class="n">thlf</span> <span class="o">=</span> <span class="p">(</span><span class="n">t0</span> <span class="o">-</span> <span class="n">p1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+<span class="n">t1</span>   <span class="o">=</span> <span class="n">t0</span> <span class="o">-</span> <span class="n">p1</span>
+<span class="n">t2</span>   <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">p1</span>
+
+<span class="n">pine8_phases</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">180</span><span class="p">])</span>
+<span class="n">pine8_delays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">thlf</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">thlf</span><span class="p">])</span>
+
+<span class="n">period_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>         <span class="c1"># 0 to 24 Floquet periods</span>
+
+<span class="n">expt</span> <span class="o">=</span> <span class="n">qnmr</span><span class="o">.</span><span class="n">Experiment2D</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_frame_change</span><span class="p">(</span><span class="n">angle</span><span class="o">=</span><span class="mf">5.50</span><span class="p">,</span> <span class="n">element</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">res_key</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_floquet_sequence</span><span class="p">(</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">pine8_phases</span><span class="p">,</span>
+    <span class="n">delays</span><span class="o">=</span><span class="n">pine8_delays</span><span class="p">,</span>
+    <span class="n">repetitions</span><span class="o">=</span><span class="n">period_list</span><span class="p">,</span>           <span class="c1"># iterable → sweep variable</span>
+<span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_delay</span><span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">ms</span><span class="p">)</span>              <span class="c1"># T1 filter</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">pi_half_key</span><span class="p">,</span> <span class="n">element</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">res_key</span><span class="p">)</span>
+
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_axis</span><span class="p">(</span><span class="n">period_list</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_label</span><span class="p">(</span><span class="s2">&quot;Pine-8 Periods&quot;</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">execute_experiment</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
-<section id="working-with-data">
-<h2>Working with Data<a class="headerlink" href="#working-with-data" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qeg_nmr_qua.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSaver</span>
-
-<span class="c1"># Save experimental data</span>
-<span class="n">saver</span> <span class="o">=</span> <span class="n">DataSaver</span><span class="p">()</span>
-<span class="c1"># Use the saver to store your results</span>
+<section id="consistency-rule">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Consistency rule</a><a class="headerlink" href="#consistency-rule" title="Link to this heading"></a></h3>
+<p>All iterable arguments across <em>all</em> commands in a <code class="docutils literal notranslate"><span class="pre">Experiment2D</span></code> must either be
+the <strong>same</strong> array or a <strong>constant multiple</strong> of that array.  Mixing incompatible
+vectors raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+</section>
+</section>
+<section id="d-experiment-sweeping-two-parameters">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">3D Experiment — Sweeping Two Parameters</a><a class="headerlink" href="#d-experiment-sweeping-two-parameters" title="Link to this heading"></a></h2>
+<p><a class="reference internal" href="api/experiment.html#qeg_nmr_qua.experiment.experiment_3d.Experiment3D" title="qeg_nmr_qua.experiment.experiment_3d.Experiment3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment3D</span></code></a> extends the 2D framework
+to <strong>two independent swept variables</strong>.  Understanding the loop layer convention is
+essential to getting the correct data shape and avoiding subtle bugs.</p>
+<p>The <strong>loop nesting order</strong> is:
+<strong>averages (outer) → swept variable 1 (slow) → swept variable 2 (fast) → readout scan (inner-most)</strong>.
+This means that current <cite>live_plot</cite> implementations will take a long time to update if the product
+of the two sweep dimensions is large, since the full inner loop must be traversed before the next point in the</p>
+<blockquote>
+<div><p>outer loop is reached.</p>
+</div></blockquote>
+<section id="loop-layer-convention">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Loop layer convention</a><a class="headerlink" href="#loop-layer-convention" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">loop_layer</span></code> keyword argument is <strong>1-based</strong> and controls which QUA loop variable
+a command’s iterable is bound to.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 45.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">loop_layer</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">var_vec_lst</span></code> slot</p></th>
+<th class="head"><p>QUA variable</p></th>
+<th class="head"><p>Role in the loop nest</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">var_vec_lst[0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">var_outer</span></code></p></td>
+<td><p><strong>Outer</strong> (slow) sweep — changes less frequently</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">2</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">var_vec_lst[1]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">var_inner</span></code></p></td>
+<td><p><strong>Inner</strong> (fast) sweep — changes most frequently</p></td>
+</tr>
+</tbody>
+</table>
+<p>The full loop nest executes as:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>for average in range(n_avg):              # outermost
+    for value_outer in var_vec_lst[0]:    # layer 1 — slow sweep
+        for value_inner in var_vec_lst[1]: # layer 2 — fast sweep
+            &lt;pulse sequence&gt;
+            &lt;readout&gt;
 </pre></div>
 </div>
+<p>The resulting data arrays have shape
+<code class="docutils literal notranslate"><span class="pre">(n_outer,</span> <span class="pre">n_inner,</span> <span class="pre">n_time)</span></code> after averaging.</p>
+</section>
+<section id="example-joint-amplitude-delay-sweep">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Example: joint amplitude + delay sweep</a><a class="headerlink" href="#example-joint-amplitude-delay-sweep" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">qeg_nmr_qua</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">qnmr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qualang_tools.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">unit</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="n">unit</span><span class="p">(</span><span class="n">coerce_to_integer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Layer 1 (outer / slow): vary the delay between pulses</span>
+<span class="c1"># Layer 2 (inner / fast): vary the pulse amplitude</span>
+
+<span class="n">delay_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">])</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span>   <span class="c1"># 6 outer points</span>
+<span class="n">amp_list</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">1.06</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>             <span class="c1"># 11 inner points</span>
+
+<span class="n">expt</span> <span class="o">=</span> <span class="n">qnmr</span><span class="o">.</span><span class="n">Experiment3D</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># --- Pulse 1: amplitude is swept (inner loop, layer 2) ---</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">pi_half_key</span><span class="p">,</span>
+    <span class="n">element</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">res_key</span><span class="p">,</span>
+    <span class="n">amplitude</span><span class="o">=</span><span class="n">amp_list</span><span class="p">,</span>
+    <span class="n">loop_layer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>               <span class="c1"># &lt;-- inner / fast sweep</span>
+<span class="p">)</span>
+
+<span class="c1"># --- Delay: duration is swept (outer loop, layer 1) ---</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_delay</span><span class="p">(</span><span class="n">delay_list</span><span class="p">,</span> <span class="n">loop_layer</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># &lt;-- outer / slow sweep</span>
+
+<span class="c1"># --- Pulse 2: same amplitude sweep must be consistent with layer 2 ---</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">add_pulse</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">pi_half_key</span><span class="p">,</span>
+    <span class="n">element</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">res_key</span><span class="p">,</span>
+    <span class="n">amplitude</span><span class="o">=</span><span class="n">amp_list</span><span class="p">,</span>
+    <span class="n">loop_layer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_axis_outer</span><span class="p">(</span><span class="n">delay_list</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_label_outer</span><span class="p">(</span><span class="s2">&quot;Delay (µs)&quot;</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_axis_inner</span><span class="p">(</span><span class="n">amp_list</span> <span class="o">*</span> <span class="n">settings</span><span class="o">.</span><span class="n">pulse_amplitude</span><span class="p">)</span>
+<span class="n">expt</span><span class="o">.</span><span class="n">update_sweep_label_inner</span><span class="p">(</span><span class="s2">&quot;Pulse Amplitude (Vpp)&quot;</span><span class="p">)</span>
+
+<span class="n">expt</span><span class="o">.</span><span class="n">execute_experiment</span><span class="p">()</span>
+
+<span class="c1"># Data shape: (n_outer=6, n_inner=11, n_time)</span>
+<span class="n">I_data</span> <span class="o">=</span> <span class="n">expt</span><span class="o">.</span><span class="n">save_data_dict</span><span class="p">[</span><span class="s2">&quot;I_data&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Assigning the wrong loop layer is a silent data-ordering error.</strong>
+If you intend a variable to be the slow sweep but assign
+<code class="docutils literal notranslate"><span class="pre">loop_layer=2</span></code> instead of <code class="docutils literal notranslate"><span class="pre">loop_layer=1</span></code>, the QUA program will
+compile and run without error but the data axes will be transposed.
+Always match <code class="docutils literal notranslate"><span class="pre">loop_layer=1</span></code> to <code class="docutils literal notranslate"><span class="pre">var_vec_lst[0]</span></code> (outer loop) and
+<code class="docutils literal notranslate"><span class="pre">loop_layer=2</span></code> to <code class="docutils literal notranslate"><span class="pre">var_vec_lst[1]</span></code> (inner loop).</p>
+</div>
+</section>
+<section id="omitting-loop-layer-in-a-3d-experiment">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Omitting <code class="docutils literal notranslate"><span class="pre">loop_layer</span></code> in a 3D experiment</a><a class="headerlink" href="#omitting-loop-layer-in-a-3d-experiment" title="Link to this heading"></a></h3>
+<p>When <code class="docutils literal notranslate"><span class="pre">loop_layer</span></code> is not specified (default <code class="docutils literal notranslate"><span class="pre">-1</span></code>), the experiment
+automatically assigns the variable to the <strong>first unfilled slot</strong>:</p>
+<ul class="simple">
+<li><p>The first iterable encountered fills layer 1 (outer).</p></li>
+<li><p>The second <em>distinct</em> iterable encountered fills layer 2 (inner).</p></li>
+<li><p>A second call using an array that is a scalar multiple of an existing
+layer’s vector is merged into that same layer.</p></li>
+</ul>
+<p>This auto-assignment is convenient for simple cases but <strong>explicit
+``loop_layer`` values are strongly recommended</strong> for 3D experiments to
+prevent accidental ordering mistakes.</p>
+</section>
+</section>
+<section id="checking-the-generated-qua-program">
+<h2><a class="toc-backref" href="#id12" role="doc-backlink">Checking the generated QUA program</a><a class="headerlink" href="#checking-the-generated-qua-program" title="Link to this heading"></a></h2>
+<p>Before running on hardware, you can inspect the compiled QUA program offline:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">expt</span><span class="o">.</span><span class="n">compile_to_qua</span><span class="p">(</span>
+    <span class="n">offline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;compiled_experiment.qua&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This writes a plain-text file containing the full QUA script and does not
+require a hardware connection.  Use it to verify pulse ordering, timing, and
+that sweep variables appear in the expected loop positions.</p>
+</section>
+<section id="saving-data">
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">Saving Data</a><a class="headerlink" href="#saving-data" title="Link to this heading"></a></h2>
+<p>Data is persisted automatically at the end of
+<a class="reference internal" href="api/experiment.html#qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment" title="qeg_nmr_qua.experiment.experiment.Experiment.execute_experiment"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_experiment()</span></code></a> via
+<a class="reference internal" href="api/analysis.html#qeg_nmr_qua.analysis.data_saver.DataSaver" title="qeg_nmr_qua.analysis.data_saver.DataSaver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataSaver</span></code></a>.  You can also trigger a manual
+save at any point:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">expt</span><span class="o">.</span><span class="n">save_data</span><span class="p">(</span><span class="n">experiment_prefix</span><span class="o">=</span><span class="s2">&quot;pulse_cal&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This creates a folder <code class="docutils literal notranslate"><span class="pre">pulse_cal_0001/</span></code> (auto-incremented) containing:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">config.json</span></code>   — OPX hardware configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">settings.json</span></code> — Experiment settings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">commands.json</span></code> — Serialised command list</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data.json</span></code>      — Averaged I/Q data and metadata</p></li>
+</ul>
 </section>
 <section id="next-steps">
-<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id14" role="doc-backlink">Next Steps</a><a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>Check out the <a class="reference internal" href="api/index.html"><span class="doc">API Reference</span></a> for detailed API documentation</p></li>
-<li><p>See the <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory for more complete examples</p></li>
-<li><p>Read about specific modules in the API reference</p></li>
+<li><p><a class="reference internal" href="api/experiment.html"><span class="doc">Experiment Module</span></a> — Complete API reference and design notes for subclass extensions</p></li>
+<li><p><a class="reference internal" href="api/config.html"><span class="doc">Configuration Module</span></a> — Configuration and settings API</p></li>
 </ul>
 </section>
 </section>

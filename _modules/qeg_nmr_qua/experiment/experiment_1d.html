@@ -87,6 +87,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qm</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumMachine</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qm.jobs.running_qm_job</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunningQmJob</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">qm.qua</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">assign</span><span class="p">,</span>
     <span class="n">wait</span><span class="p">,</span>
     <span class="n">measure</span><span class="p">,</span>
     <span class="n">save</span><span class="p">,</span>
@@ -95,6 +96,8 @@
     <span class="n">stream_processing</span><span class="p">,</span>
     <span class="n">declare_stream</span><span class="p">,</span>
     <span class="n">for_</span><span class="p">,</span>
+    <span class="n">if_</span><span class="p">,</span>
+    <span class="n">else_</span><span class="p">,</span>
     <span class="n">fixed</span><span class="p">,</span>
     <span class="n">demod</span><span class="p">,</span>
 <span class="p">)</span>
@@ -127,7 +130,7 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: A looping operation was found in the experiment commands.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">var_vec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">var_vec_lst</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Experiment1D does not support variable vectors. Use Experiment2D, or similar, instead.&quot;</span>
             <span class="p">)</span></div>
@@ -152,6 +155,9 @@
             <span class="c1"># define the variables and datastreams</span>
             <span class="n">n</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># QUA variable for the averaging loop</span>
             <span class="n">n_st</span> <span class="o">=</span> <span class="n">declare_stream</span><span class="p">()</span>  <span class="c1"># Stream for the averaging iteration &#39;n&#39;</span>
+            <span class="n">dummy</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">,</span> <span class="mi">0</span>
+            <span class="p">)</span>  <span class="c1"># dummy variable for loops without a declared variable vector</span>
             <span class="n">I1</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
             <span class="n">Q1</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
             <span class="n">I2</span> <span class="o">=</span> <span class="n">declare</span><span class="p">(</span><span class="n">fixed</span><span class="p">)</span>
@@ -165,6 +171,13 @@
                 <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wait_between_scans</span><span class="p">)</span>
 
             <span class="k">with</span> <span class="n">for_</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>  <span class="c1"># averaging loop</span>
+                <span class="k">with</span> <span class="n">if_</span><span class="p">(</span><span class="n">dummy</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wait_between_scans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">else_</span><span class="p">():</span>
+                    <span class="n">assign</span><span class="p">(</span><span class="n">dummy</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">assign</span><span class="p">(</span>
+                    <span class="n">dummy</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="p">)</span>  <span class="c1"># increment dummy variable to track whether we&#39;re in the first iteration</span>
                 <span class="n">drive_mode</span><span class="p">(</span><span class="n">switch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rx_switch_key</span><span class="p">,</span> <span class="n">amplifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">amplifier_key</span><span class="p">)</span>
 
                 <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commands</span><span class="p">:</span>
@@ -203,7 +216,6 @@
                 <span class="c1"># set to safe mode and allow system to relax</span>
                 <span class="n">safe_mode</span><span class="p">(</span><span class="n">switch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rx_switch_key</span><span class="p">,</span> <span class="n">amplifier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">amplifier_key</span><span class="p">)</span>
                 <span class="n">save</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n_st</span><span class="p">)</span>
-                <span class="n">wait</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wait_between_scans</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe_key</span><span class="p">)</span>
 
             <span class="k">with</span> <span class="n">stream_processing</span><span class="p">():</span>
                 <span class="n">n_st</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;iteration&quot;</span><span class="p">)</span>
@@ -215,7 +227,14 @@
 
 <div class="viewcode-block" id="Experiment1D.data_processing">
 <a class="viewcode-back" href="../../../api/experiment.html#qeg_nmr_qua.experiment.experiment_1d.Experiment1D.data_processing">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">data_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qm</span><span class="p">:</span> <span class="n">QuantumMachine</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">RunningQmJob</span><span class="p">,</span> <span class="n">live</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">wait_on_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">title_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data_processing</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">qm</span><span class="p">:</span> <span class="n">QuantumMachine</span><span class="p">,</span>
+        <span class="n">job</span><span class="p">:</span> <span class="n">RunningQmJob</span><span class="p">,</span>
+        <span class="n">live</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">wait_on_close</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">title_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handles live data processing for a 1D experiment during execution.</span>
 
@@ -258,7 +277,11 @@
 
                 <span class="k">if</span> <span class="n">live</span> <span class="ow">and</span> <span class="n">fig_live</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">ax</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
-                    <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title_prefix</span><span class="si">}</span><span class="s2">Scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">title_prefix</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">title</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title_prefix</span><span class="si">}</span><span class="s2">Scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="k">if</span> <span class="n">title_prefix</span>
+                        <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Scan </span><span class="si">{</span><span class="n">iteration</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_avg</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
                     <span class="n">fig_live</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
                     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">tau_sweep</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">us</span><span class="p">,</span>

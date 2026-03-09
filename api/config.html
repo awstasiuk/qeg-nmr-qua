@@ -376,7 +376,7 @@ updates are possible in their environment.</p>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
@@ -405,7 +405,7 @@ are excluded.</p>
 <dd class="field-odd"><p>A shallow copy of all settings with internal fields excluded.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
 </dd>
 </dl>
 <div class="admonition seealso">
@@ -430,7 +430,7 @@ which will be ignored.</p>
 <dd class="field-even"><p>A new validated instance.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings">ExperimentSettings</a></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a></span></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
@@ -467,14 +467,16 @@ if needed.</p>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">fn</span></code> is not callable.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.unregister_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">unregister_update_callback()</span></code></a> to remove a callback.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">on_settings_change</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Settings changed: </span><span class="si">{</span><span class="n">changes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -496,14 +498,16 @@ If the callback was not registered, this method does nothing (no error).</p>
 <dd class="field-odd"><p><strong>fn</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]], <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span>) – The callback function to unregister. Must be the same object
 that was passed to <a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_update_callback()</span></code></a>.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
 </dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback" title="qeg_nmr_qua.config.settings.ExperimentSettings.register_update_callback"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_update_callback()</span></code></a> to register a callback.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">on_change</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="k">pass</span>
@@ -526,7 +530,7 @@ Modifications to the copy do not affect the original.</p>
 <dd class="field-odd"><p>A new instance with identical settings.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings">ExperimentSettings</a></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#qeg_nmr_qua.config.settings.ExperimentSettings" title="qeg_nmr_qua.config.settings.ExperimentSettings"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentSettings</span></code></a></span></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -551,7 +555,7 @@ frequency calibration adjustments stored in <code class="docutils literal notran
 <dd class="field-odd"><p>The effective RF frequency in MHz.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
