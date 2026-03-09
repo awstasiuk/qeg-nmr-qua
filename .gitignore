@@ -30,6 +30,7 @@ MANIFEST
 # Local data directories
 data/
 test_results/
+waveform_report_*
 
 # gui files until ready
 #    The binaries appear to hang around after the build, even on a different branch
