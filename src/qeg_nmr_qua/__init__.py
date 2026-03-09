@@ -24,6 +24,7 @@ from qeg_nmr_qua.config.waveform import AnalogWaveformConfig, DigitalWaveformCon
 from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
 from qeg_nmr_qua.experiment.experiment_1d import Experiment1D
 from qeg_nmr_qua.experiment.experiment_2d import Experiment2D
+from qeg_nmr_qua.experiment.experiment_3d import Experiment3D
 from qeg_nmr_qua.analysis.data_saver import DataSaver, QuantumEncoder
 
 __version__ = "0.1.0"
@@ -48,6 +49,7 @@ __all__ = [
     "cfg_from_settings",
     "Experiment1D",
     "Experiment2D",
+    "Experiment3D",
     "__version__",
 ]
 

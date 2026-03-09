@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import warnings
+
 from qeg_nmr_qua.experiment.macros import (
     readout_mode,
     safe_mode,
@@ -7,8 +10,6 @@ from qeg_nmr_qua.experiment.experiment import Experiment
 from qeg_nmr_qua.config.config import OPXConfig
 from qeg_nmr_qua.config.settings import ExperimentSettings
 
-
-import matplotlib.pyplot as plt
 from qualang_tools.results import fetching_tool, progress_counter
 from qualang_tools.plot import interrupt_on_close
 from qualang_tools.units import unit
@@ -16,6 +17,7 @@ from qualang_tools.loops import from_array
 from qm import QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
+    assign,
     wait,
     reset_frame,
     measure,
@@ -25,8 +27,11 @@ from qm.qua import (
     stream_processing,
     declare_stream,
     for_,
+    if_,
+    else_,
     fixed,
     demod,
+    reset_frame,
 )
 
 u = unit(coerce_to_integer=True)
@@ -56,15 +61,17 @@ class Experiment2D(Experiment):
         super().__init__(settings=settings, config=config, connect=connect)
         self.sweep_axis = None  # Axis for live plotting and data saving
         self.sweep_label = "Swept Variable"  # Label for sweep axis
+        self.use_fixed_lst = [None]  # whether to use fixed point for looping variables
+        self.var_vec_lst = [None]  # variable vector for looped experiments
 
     def update_sweep_axis(self, new_axis):
         """
-        Updates the sweep axis for live plotting and data saving. If this method is not called, the
-        variable vector :attr:`var_vec` will be used as the sweep axis by default. It can be convienient
+        Updates the sweep axis for live plotting and data saving. If this method is not called, the first element of the
+        variable vector collection :attr:`var_vec_list` will be used as the sweep axis by default. It can be convienient
         to change the sweep axis to a more physically meaningful quantity (e.g., converting pulse amplitude
         rescaling factor physical Vpp units).
         """
-        if len(new_axis) != len(self.var_vec):
+        if len(new_axis) != len(self.var_vec_lst[0]):
             raise ValueError(
                 "New sweep axis must have the same length as the variable vector."
             )
@@ -86,9 +93,13 @@ class Experiment2D(Experiment):
         Raises:
             ValueError: No variable vector was found in the experiment commands.
         """
-        if self.var_vec is None:
+        if self.var_vec_lst[0] is None:
             raise ValueError(
                 "Experiment2D requires variable vectors. Use Experiment1D, or similar, instead."
+            )
+        if len(self.var_vec_lst) > 1:
+            warnings.warn(
+                "Experiment2D only supports one variable vector, but more were found."
             )
 
     def create_experiment(self):
@@ -106,8 +117,11 @@ class Experiment2D(Experiment):
 
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
-            m = declare(int)  # QUA variable for floquet loops
+            loop_idx = declare(int)  # QUA variable for floquet loops
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
+            dummy = declare(
+                int, 0
+            )  # dummy variable for loops without a declared variable vector
             I1 = declare(fixed)
             Q1 = declare(fixed)
             I2 = declare(fixed)
@@ -116,23 +130,25 @@ class Experiment2D(Experiment):
             Q_st = declare_stream()
             t1 = declare(int)
             t2 = declare(int)
-            if self.use_fixed:
+            if self.use_fixed_lst[0]:
                 var = declare(fixed)
             else:
                 var = declare(int)
 
-            if self.start_with_wait:
-                wait(self.wait_between_scans, self.probe_key)
-
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
 
                 with for_(
-                    *from_array(var, self.var_vec)
+                    *from_array(var, self.var_vec_lst[0])
                 ):  # inner loop over variable vector
+                    with if_(dummy > 0):
+                        wait(self.wait_between_scans, self.probe_key)
+                    with else_():
+                        assign(dummy, dummy + 1)
+                    assign(dummy, dummy + 1)
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:
-                        self.translate_command(command, var, m)
+                        self.translate_command(command, (var,), loop_idx)
 
                     # wait for ringdown to decay, blank amplifier, set to receive mode
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
@@ -167,22 +183,28 @@ class Experiment2D(Experiment):
                         wait(self.loop_wait_cycles, self.helper_key)
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
                     reset_frame(self.probe_key, self.helper_key)
-                    wait(self.wait_between_scans, self.probe_key)
 
                 save(n, n_st)
 
             with stream_processing():
                 n_st.save("iteration")
                 I_st.buffer(self.measure_sequence_len).buffer(
-                    len(self.var_vec)
+                    len(self.var_vec_lst[0])
                 ).average().save("I")
                 Q_st.buffer(self.measure_sequence_len).buffer(
-                    len(self.var_vec)
+                    len(self.var_vec_lst[0])
                 ).average().save("Q")
 
         return experiment
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
+    def data_processing(
+        self,
+        qm: QuantumMachine,
+        job: RunningQmJob,
+        live: bool,
+        wait_on_close: bool = True,
+        title_prefix: str = "",
+    ):
         """
         Handles live data processing for a 2D experiment during execution. This method fetches
         data from the Quantum Machine job, processes it into voltage units via digital demodulation,
@@ -229,10 +251,12 @@ class Experiment2D(Experiment):
                 if live:
                     # 2D color plot: pulse amplitude vs I
                     axis = (
-                        self.sweep_axis if self.sweep_axis is not None else self.var_vec
+                        self.sweep_axis
+                        if self.sweep_axis is not None
+                        else self.var_vec_lst[0]
                     )
                     if title_prefix:
-                        fig_live.suptitle(title_prefix, fontsize=12, fontweight='bold')
+                        fig_live.suptitle(title_prefix, fontsize=12, fontweight="bold")
                     ax1.cla()
                     im1 = ax1.pcolormesh(
                         axis,
@@ -308,7 +332,7 @@ class Experiment2D(Experiment):
 
         self.save_data_dict.update({"I_data": I})
         self.save_data_dict.update({"Q_data": Q})
-        self.save_data_dict.update({"swept_variable": self.var_vec})
+        self.save_data_dict.update({"swept_variable": self.var_vec_lst[0]})
         self.save_data_dict.update({"sweep_axis": axis})
         self.save_data_dict.update({"sweep_label": self.sweep_label})
         self.save_data_dict.update({"fig_live": fig_live})

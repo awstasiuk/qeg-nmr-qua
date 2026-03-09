@@ -1,5 +1,7 @@
 # src/qeg_nmr_qua/experiment/experiment.py
 from collections.abc import Iterable
+import warnings
+import math
 
 from pyparsing import Any
 from qeg_nmr_qua.config.config import OPXConfig
@@ -13,7 +15,12 @@ from qeg_nmr_qua.experiment.macros import (
 
 import numpy as np
 from pathlib import Path
-from qm import QuantumMachinesManager, SimulationConfig, QuantumMachine
+from qm import (
+    QuantumMachinesManager,
+    SimulationConfig,
+    QuantumMachine,
+    generate_qua_script,
+)
 from qm.jobs.running_qm_job import RunningQmJob
 from qualang_tools.units import unit
 from qm.qua import play, wait, frame_rotation_2pi, align, amp, for_
@@ -33,7 +40,7 @@ class Experiment:
 
     - ``create_experiment()``: Build the QUA program from stored commands
     - ``validate_experiment()``: Validate settings and command consistency
-    - ``live_data_processing()``: Handle real-time data during hardware execution
+    - ``data_processing()``: Handle real-time data during hardware execution
 
     Typical workflow:
 
@@ -63,6 +70,9 @@ class Experiment:
         Args:
             settings: Experiment-specific parameters (frequencies, pulse lengths, etc.).
             config: OPX configuration. If None, automatically generated from settings.
+            connect (bool): Whether to establish a live connection to the OPX-1000 via
+                ``QuantumMachinesManager``. Set to ``False`` for offline compilation or
+                unit testing. Defaults to ``True``.
 
         Raises:
             ValueError: If readout delay is too short to accommodate switching times.
@@ -108,8 +118,8 @@ class Experiment:
 
         # command parameters
         self._commands = []  # list of commands to build the experiment, FIFO
-        self.use_fixed = False  # whether to use fixed point for looping variables
-        self.var_vec = None  # variable vector for looped experiments
+        self.use_fixed_lst = []  # whether to use fixed point for looping variables
+        self.var_vec_lst = []  # variable vector for looped experiments
         self.start_with_wait = True  # whether to start the experiment with a wait
         self.use_frame_change = False
         self.frame_change_angle = 0.0  # angle for frame change compensation
@@ -133,17 +143,20 @@ class Experiment:
         phase: float = 0.0,
         amplitude: float = 1.0,
         length: int | Iterable | None = None,
+        loop_layer: int = -1,
     ):
         """
         Adds a pulse command to the experiment. Stores the data to control the pulse in the experiment's command list,
         and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).
 
         Args:
-            shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
             element (str): Element to which the pulse is applied. Must be defined in the config.
-            phase (float | Iterable): Phase of the pulse in degrees. Saves as a fraction of 2pi.
-            amplitude (float | Iterable): Amplitude of the pulse. This factor multiplies the waveform's defined amplitude.
-            length (int | Iterable): Length of the pulse in nanoseconds. This overrides the waveform's defined length.
+            shape (str): Shape of the pulse operation, defaults to ``settings.pulse_shape`` if not provided.
+            phase (float | Iterable): Phase of the pulse in degrees. Stored as a fraction of 2π.
+            amplitude (float | Iterable): Amplitude scale factor for the pulse waveform.
+            length (int | Iterable): Length of the pulse in nanoseconds, overriding the waveform default.
+            loop_layer (int): Loop layer (1-based) to associate with the swept parameter.  Use ``-1``
+                (default) to auto-assign to the first available layer.
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
@@ -151,11 +164,14 @@ class Experiment:
         pulse = self.config.elements.elements[element].operations.get(shape, None)
         if shape is None:
             shape = self.pulse_shape
-            pulse = self.config.elements.elements[element].operations.get(self.pulse_shape, None)
+            pulse = self.config.elements.elements[element].operations.get(
+                self.pulse_shape, None
+            )
         elif pulse is None:
-            raise ValueError(f"Pulse shape '{shape}' not recognized in element '{element}'. "
-                             f"Please provide a valid pulse shape key.")
-    
+            raise ValueError(
+                f"Pulse shape '{shape}' not recognized in element '{element}'. "
+                f"Please provide a valid pulse shape key."
+            )
 
         command = {
             "type": "pulse",
@@ -165,13 +181,16 @@ class Experiment:
 
         if isinstance(phase, Iterable):
             command["length"] = (
-                length // 4 # clock cycle = 4ns
+                length // 4  # clock cycle = 4ns
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
             )
             command["amplitude"] = amplitude
-            self.update_loop((np.array(phase) / 360) % 1)
-            self.use_fixed = True
+
+            layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
+            self._update_loop_type(layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         elif isinstance(amplitude, Iterable):
             command["length"] = (
                 length // 4
@@ -179,13 +198,17 @@ class Experiment:
                 else self.config.pulses.pulses[pulse].length // 4
             )
             command["phase"] = (phase / 360) % 1
-            self.update_loop(np.array(amplitude))
-            self.use_fixed = True
+            layer, div = self._update_loop(np.array(amplitude), loop_layer)
+            self._update_loop_type(layer, use_fixed=True)
+            command["layer"] = layer
+            command["scale"] = div
         elif isinstance(length, Iterable):
             command["phase"] = (phase / 360) % 1
             command["amplitude"] = amplitude
-            self.update_loop(np.array(length) // 4)
-            self.use_fixed = False
+            layer, div = self._update_loop(np.array(length) // 4, loop_layer)
+            self._update_loop_type(layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         else:
             command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
@@ -194,23 +217,28 @@ class Experiment:
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
             )
-
+            command["scale"] = 1
         self._commands.append(command)
 
-    def add_delay(self, duration: int | Iterable):
+    def add_delay(self, duration: int | Iterable, loop_layer: int = -1):
         """
         Adds a delay command to the experiment. Stores the data to control the delay in the experiment's command list.
 
         Args:
             duration (int | Iterable): Duration of the delay in nanoseconds.
+            loop_layer (int): Loop layer (1-based) to associate with the swept duration.  Use ``-1``
+                (default) to auto-assign to the first available layer.
         """
         command = {
             "type": "delay",
-            # "duration": duration // 4,  # convert to clock cycles
         }
         if isinstance(duration, Iterable):
-            self.update_loop(np.array(duration) // 4)
-            self.use_fixed = False
+            layer, div = self._update_loop(
+                np.array(duration, dtype=int) // 4, loop_layer
+            )
+            self._update_loop_type(layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         else:
             command["duration"] = duration // 4  # convert to clock cycles
 
@@ -225,7 +253,7 @@ class Experiment:
         """
         if elements is not None:
             for el in elements:
-                if el not in self.config.elements:
+                if el not in self.config.elements.elements:
                     raise ValueError(f"Element {el} not defined in config.")
         command = {
             "type": "align",
@@ -234,42 +262,59 @@ class Experiment:
         self._commands.append(command)
 
     def add_floquet_sequence(
-        self, 
-        phases: list[float], 
-        delays: list[int], 
-        repetitions: int | list[int], 
+        self,
+        phases: list[float],
+        delays: list[int],
+        repetitions: int | list[int],
+        loop_layer: int = -1,
         element: str = None,
-        shape: str = None
+        shape: str = None,
     ):
         """
-        Adds a Floquet sequence to the experiment. This is a predefined sequence of pulses and delays.
+        Adds a Floquet sequence to the experiment. This is a repeating block of
+        evenly-spaced, phase-cycled pulses of the form::
+
+            delay[0] — (R(phase[0]) — delay[1]) — (R(phase[1]) — delay[2]) — … repeated N times
+
+        The number of repetitions can be a fixed integer or a 1-D array, in which case
+        it becomes the swept loop variable for the given ``loop_layer``.
 
         Args:
-            phases (list[float]): List of phases for the pulses in degrees.
-            delays (list[int]): List of delays in nanoseconds.
-            shape (str): Shape of the pulse operation, defaults to settings.pulse_shape if not defined.
+            phases (list[float]): Phase of each pulse in the block, in degrees.
+            delays (list[int]): Inter-pulse delays in nanoseconds.  Must contain
+                exactly ``len(phases) + 1`` entries (one leading delay plus one after
+                each pulse).
+            repetitions (int | Iterable): Number of times the pulse block is repeated.
+                Pass an array to sweep over this parameter.
+            loop_layer (int): Loop layer (1-based) to associate with a swept
+                ``repetitions`` array.  Use ``-1`` (default) to auto-assign.
+            element (str): Element to apply the sequence to.  Defaults to
+                ``settings.res_key`` (the probe channel) when ``None``.
+            shape (str): Pulse shape key, defaults to ``settings.pulse_shape``.
 
         Raises:
-            ValueError: If the number of phases and delays are inconsistent, and if the element or pulse shape are not recognized.
+            ValueError: If ``len(delays) != len(phases) + 1``.
+            ValueError: If ``element`` or ``shape`` are not recognised in the config.
         """
 
         if len(phases) + 1 != len(delays):
             raise ValueError(
                 "There must be one more delay than phase in a Floquet sequence."
             )
-        
+
         if element is None:
             element = self.probe_key
         elif element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
-        
+
         pulse = self.config.elements.elements[element].operations.get(shape, None)
         if shape is None:
             shape = self.pulse_shape
-            #print(f"No shape specified in add_floquet_sequence, Using default settings.pulse_shape: {self.pulse_shape}")
         elif pulse is None:
-            raise ValueError(f"Pulse shape '{shape}' not recognized in element '{element}'. "
-                             f"Please provide a valid pulse shape key.")
+            raise ValueError(
+                f"Pulse shape '{shape}' not recognized in element '{element}'. "
+                f"Please provide a valid pulse shape key."
+            )
 
         command = {
             "type": "sequence",
@@ -279,29 +324,47 @@ class Experiment:
             "delays": np.array(delays, dtype=int) // 4,
         }
         if isinstance(repetitions, Iterable):
-            self.update_loop(np.array(repetitions))
-            self.use_fixed = False
+            layer, div = self._update_loop(np.array(repetitions, dtype=int), loop_layer)
+            self._update_loop_type(layer, use_fixed=False)
+            command["layer"] = layer
+            command["scale"] = div
         else:
             command["repetitions"] = repetitions
 
         self._commands.append(command)
 
-    def add_z_rotation(self, angle: float, element: str):
+    def add_z_rotation(
+        self,
+        angle: float | Iterable,
+        elements: str | Iterable[str],
+        loop_layer: int = -1,
+    ):
         """
         Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.
 
         Args:
-            angle (float): Angle of the Z rotation in degrees.
-            element (str): Element to which the Z rotation is applied. Must be defined in the config.
+            angle (float | Iterable): Angle(s) of the Z rotation in degrees.
+            elements (str | Iterable[str]): Element(s) to which the Z rotation is applied. Must be defined in the config.
+            loop_layer (int): Loop layer (1-based) to associate with a swept
+                ``angle`` array.  Use ``-1`` (default) to auto-assign.
         """
-        if element not in self.config.elements.elements.keys():
-            raise ValueError(f"Element {element} not defined in config.")
+        if isinstance(elements, str):
+            elements = (elements,)
+        for element in elements:
+            if element not in self.config.elements.elements.keys():
+                raise ValueError(f"Element {element} not defined in config.")
 
         command = {
             "type": "z_rotation",
-            "element": element,
-            "phase": (angle / 360) % 1,  # convert to fraction of 2pi
+            "elements": elements,
         }
+        if isinstance(angle, Iterable):
+            layer, div = self._update_loop((np.array(angle) / 360) % 1, loop_layer)
+            self._update_loop_type(layer, use_fixed=True)
+            command["layer"] = layer
+            command["scale"] = div
+        else:
+            command["angle"] = (angle / 360) % 1  # convert to fraction of 2pi
 
         self._commands.append(command)
 
@@ -314,16 +377,16 @@ class Experiment:
 
         Args:
             angle (float): Angle of the frame change in degrees.
-            elements (str): Element(s) to which the frame change is applied. Must be defined in the config.
+            elements (str | Iterable[str]): Element(s) to which the frame change is applied. Must be defined in the config.
         """
-        
+
         if isinstance(elements, str):
             elements = (elements,)
 
         for element in elements:
             if element not in self.config.elements.elements.keys():
                 raise ValueError(f"Element {element} not defined in config.")
-            
+
         self.use_frame_change = True
         self.frame_change_angle = (angle / 360) % 1  # convert to fraction of 2pi
         self.frame_change_elements = elements
@@ -340,60 +403,161 @@ class Experiment:
         """
         self.start_with_wait = not remove
 
-    def update_loop(self, var_vec):
+    def _update_loop_type(self, loop_layer, use_fixed):
         """
-        Updates the variable vector for the experiment. This is used to define the loop
-        that the experiment will run over. If the variable vector is already defined, this
-        function will check that the new vector is consistent with the previous one by determining
-        if the new vector is a constant multiple of the old one.
+        Updates the loop type for a given loop layer. This is used to determine whether to use fixed point variables
+        for the loop control variables in the QUA program. if no loop layer is specified (loop_layer=-1), this function
+        will update the loop type for the first undefined loop layer. If all layers have been identified, it will add a
+        new layer with the specified type. It is best to be verbose with loop layers to ensure the correct number are defined.
+        An class:`Experiment2D` will insist on a single loop layers for the swept variable, and a class:`Experiment3D`
+        similarly insists on two loop layers for the two swept variables.
 
         For internal use only - will have dramatic mutation side effects otherwise.
 
         Args:
-            var_vec (array): Array of values for the variable in the experiment
+            loop_layer (int): The layer of the loop to update the type for.
+            use_fixed (bool): Whether to use fixed point variables for this loop layer.
+        """
+        if self.use_fixed_lst[loop_layer - 1] is None:
+            self.use_fixed_lst[loop_layer - 1] = use_fixed
+        elif self.use_fixed_lst[loop_layer - 1] != use_fixed:
+            raise ValueError(
+                f"Loop layer {loop_layer} has already been assigned a variable vector with use_fixed={self.use_fixed_lst[loop_layer - 1]}, cannot assign a new variable vector with use_fixed={use_fixed}."
+            )
 
+    def _update_loop(self, var_vec, loop_layer):
+        """
+        Updates the variable vector for the specified loop layer in the experiment.
+        This method defines or validates the loop vector that the experiment will iterate over.
+        If a variable vector already exists for this loop layer, it verifies consistency by
+        checking if the new vector is a constant multiple of the existing one.
+
+        Args:
+            var_vec (numpy.ndarray): Array of values for the variable in the experiment.
+            loop_layer (int): The loop layer index (1-indexed) to update.
         Returns:
-            float: The constant multiple of the new vector to the old vector, 1 if this is the first update.
-
+            tuple[int, int | float]: A ``(loop_layer, scale)`` pair where ``loop_layer``
+                is the 1-based layer index that was updated and ``scale`` is the
+                proportionality constant between the new vector and the one already
+                stored (1 if this is the first assignment for this layer).
         Raises:
-            ValueError: Throws an error if the new vector is not a constant multiple of the old one, or if
-                the new vector is all zeros.
+            ValueError: If the variable vector is all zeros.
+            ValueError: If the new vector is not a constant multiple of the existing vector
+                in the specified loop layer.
+        Warns:
+            UserWarning: If the new vector requires division of the existing vector,
+                which may introduce runtime delays.
         """
         if np.all(var_vec == 0):
             raise ValueError("Variable vector cannot be all zeros.")
-        if self.var_vec is None:
-            self.var_vec = var_vec
-            return 1
 
-        two = self.var_vec
-        if np.dot(var_vec, two) * np.dot(two, var_vec) == np.dot(
-            var_vec, var_vec
-        ) * np.dot(two, two):
+        if loop_layer < 0:
+            # Check if a multiple of this var_vec already exists in any layer
+            for idx, existing_vec in enumerate(self.var_vec_lst):
+                if existing_vec is not None:
+                    div = self._list_find_scale_factor(var_vec, existing_vec)
+                    if div >= 1:
+                        # Reuse the existing layer directly
+                        loop_layer = idx + 1
+                        return loop_layer, div
+                    elif div > 0:
+                        # Reuse the existing layer and warn about the division
+                        warnings.warn(
+                            "New swept variable requires division of an existing variable vector, which may introduce run-time delays."
+                        )
+                        loop_layer = idx + 1
+                        return loop_layer, div
+
+            # If not found, assign to first undefined layer
+            for idx, elem in enumerate(self.var_vec_lst):
+                if elem is None:
+                    self.var_vec_lst[idx] = var_vec
+                    loop_layer = idx + 1
+                    return loop_layer, 1
+
+            # If all layers defined, add new layer
+            self.var_vec_lst.append(var_vec)
+            loop_layer = len(self.var_vec_lst) + 1
+            return loop_layer, 1
+
+        elif loop_layer > len(self.var_vec_lst):
+            # extend with undefined layers until the requested loop layer exists
+            self.var_vec_lst.extend([None] * (loop_layer - len(self.var_vec_lst)))
+            self.var_vec_lst[loop_layer - 1] = var_vec
+
+        elif self.var_vec_lst[loop_layer - 1] is None:
+            # the layer exists but has not been defined yet, so define it
+            self.var_vec_lst[loop_layer - 1] = var_vec
+
+        else:
+            # the layer exists and has been defined, so check for consistency and return the divisor between the old and new vectors
+            div = self._list_find_scale_factor(
+                var_vec, self.var_vec_lst[loop_layer - 1]
+            )
+            if div >= 1 and np.allclose(
+                var_vec, div * self.var_vec_lst[loop_layer - 1]
+            ):
+                return loop_layer, div
+            elif div == -1:
+                raise ValueError(
+                    "New swept variable is a not constant multiple of the exisitng list in this dimension."
+                )
+            else:
+                warnings.warn(
+                    "New swept variable requires division, which may introduce run-time delays."
+                )
+                return loop_layer, div
+        return loop_layer, 1
+
+    def _list_find_scale_factor(self, list1, list2):
+        """Find the scalar proportionality constant *k* such that ``list1 ≈ k * list2``.
+
+        Returns the constant if the two arrays are parallel (i.e. one is a scalar
+        multiple of the other), or ``-1`` if they are not.
+        """
+
+        if np.dot(list1, list2) * np.dot(list2, list1) == np.dot(list1, list1) * np.dot(
+            list2, list2
+        ):
             div = -1
             idx = 0
             while div < 0:
-                div = two[idx] / var_vec[idx] if var_vec[idx] != 0 else -1
+                div = list1[idx] / list2[idx] if list2[idx] != 0 else -1
                 idx += 1
             if div > 0:
-                return div
+                if math.isclose(div, round(div)):
+                    div = round(
+                        div
+                    )  # try to save time by using integers in the QUA program when possible
+            return div
+        else:
+            return -1
 
-        raise ValueError("Inconsistent loop variables.")
-
-    def translate_command(
-        self, command: dict, var: Any = None, m: Any = None, l: Any = None
-    ):
+    def translate_command(self, command: dict, vars: Any = None, loop_idx: Any = None):
         """
         Translates a command dictionary into QUA code.
 
         Args:
             command (dict): Command dictionary to translate.
-            var (Any, optional): QUA Variable to use for swept parameters.
-            m (QUAInt, optional): QUA Variable to use for Floquet loops.
-            l (QUAInt, optional): QUA Variable to use for 3D loops.
+            vars (Any, optional): QUA Variables to use for swept parameters.
+            loop_idx (Any, optional): QUA Variable to use for loop index.
 
         Raises:
             ValueError: If the command type is unknown.
         """
+        # Resolve the loop variable for this command once, before branching.
+        # Each swept command stores a 1-based 'layer' key; vars is a tuple/list
+        # of QUA variables indexed by layer-1.
+        var = None
+        layer = command.get("layer", None)
+        scale = command.get("scale", 1)
+
+        if layer is not None and vars is not None:
+            if scale == 1:
+                var = vars[layer - 1]
+            else:
+                var = vars[layer - 1] * scale
+
         if command["type"] == "pulse":
             phase = command.get("phase", var)
             amplitude = command.get("amplitude", var)
@@ -417,7 +581,7 @@ class Experiment:
 
         elif command["type"] == "z_rotation":
             phase = command.get("phase", var)
-            frame_rotation_2pi(phase, command["element"])
+            frame_rotation_2pi(phase, *command["elements"])
 
         elif command["type"] == "align":
 
@@ -429,7 +593,7 @@ class Experiment:
             repetitions = command.get("repetitions", var)
             shape = command.get("shape", None)
 
-            with for_(m, 0, m < repetitions, m + 1):
+            with for_(loop_idx, 0, loop_idx < repetitions, loop_idx + 1):
                 wait(delays[0])
                 for phase, delay in zip(phases, delays[1:]):
                     frame_rotation_2pi(phase, command["element"])
@@ -466,6 +630,34 @@ class Experiment:
         """
         pass  # to be implemented by subclasses
 
+    def compile_to_qua(self, offline: bool = True, save_path: Path = None):
+        """
+        Compiles the experiment to a QUA program, running all python code in order to generate
+        the final QUA program as a string, which is then saved to disk at the specified path. This is useful for
+        inspecting the generated QUA program to verify that the commands are being translated as expected, and can be used
+        for debugging command translation and config interpreation issues without needing to run the experiment on hardware or in the simulator.
+
+        Args:
+            offline (bool): Whether to compile offline, or to use the connected Quantum Machine. Defaults to True for offline compilation.
+            save_path (Path): The path to save the compiled QUA program. If None, saves to the same directory
+                as this file with the name "compiled_experiment.qua".
+        """
+        config = self.config.to_opx_config()
+        prog = self.create_experiment()
+        if offline:
+            QuantumMachinesManager.set_capabilities_offline()
+        else:
+            qm = self.qmm.open_qm(config)
+
+        path = (
+            save_path
+            if save_path is not None
+            else Path(__file__).resolve().parent / "compiled_experiment.qua"
+        )
+        sourceFile = open(path, "w")
+        print(generate_qua_script(prog, config), file=sourceFile)
+        sourceFile.close()
+
     def simulate_experiment(self, sim_length=40_000):
         """
         Simulates the experiment using the configured experiment defined by this class based on the current
@@ -474,7 +666,7 @@ class Experiment:
         on hardware.
 
         Parameters:
-            sim_length (int, optional): The duration of the simulation in ns. Defaults to ``10_000``.
+            sim_length (int, optional): The duration of the simulation in ns. Defaults to ``40_000``.
         """
         self.validate_experiment()
         expt = self.create_experiment()
@@ -496,7 +688,9 @@ class Experiment:
         )
         # return job
 
-    def execute_experiment(self, live: bool = True, wait_on_close: bool = True, title_prefix: str = ""):
+    def execute_experiment(
+        self, live: bool = True, wait_on_close: bool = True, title_prefix: str = ""
+    ):
         """
         Executes the experiment using the configured experiment defined by this class based on the current
         config defined by this instance's `config` attribute. The method handles the execution on hardware,
@@ -518,10 +712,19 @@ class Experiment:
         expt = self.create_experiment()
         qm = self.qmm.open_qm(self.config.to_opx_config(), close_other_machines=True)
         job = qm.execute(expt)
-        self.data_processing(qm, job, live=live, wait_on_close=wait_on_close, title_prefix=title_prefix)
+        self.data_processing(
+            qm, job, live=live, wait_on_close=wait_on_close, title_prefix=title_prefix
+        )
         qm.close()
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool = True, wait_on_close: bool = True, title_prefix: str = ""):
+    def data_processing(
+        self,
+        qm: QuantumMachine,
+        job: RunningQmJob,
+        live: bool = True,
+        wait_on_close: bool = True,
+        title_prefix: str = "",
+    ):
         """
         Grabs the results of the experiment as it is being executed. This method must be
         implemented by subclasses to determine how to fetch and plot the data specific to the experiment.

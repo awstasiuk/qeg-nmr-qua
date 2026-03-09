@@ -12,6 +12,7 @@ from qualang_tools.units import unit
 from qm import QuantumMachine
 from qm.jobs.running_qm_job import RunningQmJob
 from qm.qua import (
+    assign,
     wait,
     measure,
     save,
@@ -20,6 +21,8 @@ from qm.qua import (
     stream_processing,
     declare_stream,
     for_,
+    if_,
+    else_,
     fixed,
     demod,
 )
@@ -48,7 +51,7 @@ class Experiment1D(Experiment):
         Raises:
             ValueError: A looping operation was found in the experiment commands.
         """
-        if self.var_vec is not None:
+        if len(self.var_vec_lst) > 0:
             raise ValueError(
                 "Experiment1D does not support variable vectors. Use Experiment2D, or similar, instead."
             )
@@ -70,6 +73,9 @@ class Experiment1D(Experiment):
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
+            dummy = declare(
+                int, 0
+            )  # dummy variable for loops without a declared variable vector
             I1 = declare(fixed)
             Q1 = declare(fixed)
             I2 = declare(fixed)
@@ -83,6 +89,13 @@ class Experiment1D(Experiment):
                 wait(self.wait_between_scans)
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
+                with if_(dummy > 0):
+                    wait(self.wait_between_scans, self.probe_key)
+                with else_():
+                    assign(dummy, dummy + 1)
+                assign(
+                    dummy, dummy + 1
+                )  # increment dummy variable to track whether we're in the first iteration
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 for command in self._commands:
@@ -121,7 +134,6 @@ class Experiment1D(Experiment):
                 # set to safe mode and allow system to relax
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
                 save(n, n_st)
-                wait(self.wait_between_scans, self.probe_key)
 
             with stream_processing():
                 n_st.save("iteration")
@@ -130,7 +142,14 @@ class Experiment1D(Experiment):
 
         return experiment
 
-    def data_processing(self, qm: QuantumMachine, job: RunningQmJob, live: bool, wait_on_close: bool = True, title_prefix: str = ""):
+    def data_processing(
+        self,
+        qm: QuantumMachine,
+        job: RunningQmJob,
+        live: bool,
+        wait_on_close: bool = True,
+        title_prefix: str = "",
+    ):
         """
         Handles live data processing for a 1D experiment during execution.
 
@@ -173,7 +192,11 @@ class Experiment1D(Experiment):
 
                 if live and fig_live is not None:
                     ax.cla()
-                    title = f"{title_prefix}Scan {iteration+1}/{self.n_avg}" if title_prefix else f"Scan {iteration+1}/{self.n_avg}"
+                    title = (
+                        f"{title_prefix}Scan {iteration+1}/{self.n_avg}"
+                        if title_prefix
+                        else f"Scan {iteration+1}/{self.n_avg}"
+                    )
                     fig_live.suptitle(title)
                     ax.plot(
                         self.tau_sweep / u.us,

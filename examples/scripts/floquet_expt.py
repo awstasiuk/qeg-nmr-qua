@@ -13,20 +13,19 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.1 * u.us,
-    pulse_amplitude=0.463,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=248.27,  # degrees
+    rotation_angle=247.54,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7500 * u.Hz,
+    offset_freq=9250 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path(__file__).parent / "test_results",
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
-
 
 cfg = qnmr.cfg_from_settings(settings)
 
@@ -37,26 +36,29 @@ thlf = (t0 - p1) / 2
 t1 = t0 - p1
 t2 = 2 * t0 - p1
 
-# Pine-8 sequence pattern for engineering DQ
-pine8_phases = np.array([0,0,0,0,180,180,180,180])
-pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])
-
-# evolve for up to 24 periods, 0 to 24
-period_list = np.arange(0,25,1)
-
 # define experiment object
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-expt.add_frame_change(angle=5.58, element=settings.res_key)
+fc_elements = (settings.res_key, settings.helper_key)
+expt.add_frame_change(angle=-4.9, elements=fc_elements)
 
+
+# Pine-8 sequence pattern for engineering H=0
+pine8_phases = np.array([0,0,0,0,180,180,180,180])
+pine8_bw_phases = np.array([90,90,90,90,270,270,270,270])
+pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])
+# evolve for up to 24 periods, 0 to 24
+period_list = np.arange(0,25,1)
 expt.add_floquet_sequence(phases=pine8_phases, delays=pine8_delays, repetitions=period_list)
+# expt.add_floquet_sequence(phases=pine8_bw_phases, delays=pine8_delays, repetitions=period_list)
+expt.update_sweep_label("Pine-8 Periods")
+
 
 expt.add_delay(1*u.ms)
-
 expt.add_pulse(element=settings.res_key)
 
 expt.update_sweep_axis(period_list)
-expt.update_sweep_label("Pine-8 Periods")
+
 expt.execute_experiment()
 # expt.remove_initial_delay()
 # expt.simulate_experiment()

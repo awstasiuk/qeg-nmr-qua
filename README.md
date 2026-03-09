@@ -20,6 +20,34 @@ pip install -e .
 See the docs here: https://awstasiuk.github.io/qeg-nmr-qua/index.html
 
 
+## Building the Docs Locally
+
+Install the documentation dependencies (Sphinx and the theme):
+
+```bash
+pip install sphinx furo
+```
+
+Then build from the `docs/` directory:
+
+```bash
+cd docs
+python -m sphinx . _build/html
+```
+
+Open the result in your browser:
+
+```bash
+# Windows
+Start-Process _build\html\index.html
+
+# macOS / Linux
+open _build/html/index.html
+```
+
+The built HTML is written to `docs/_build/html/`. Re-run the `sphinx` command after
+any changes to `.rst` files or source docstrings to refresh the output.
+
 ## Requirements
 
 - 3.13 > Python >= 3.9
