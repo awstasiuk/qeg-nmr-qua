@@ -4,7 +4,6 @@ using the qeg_nmr_qua package. The experiment applies a series of pulses with
 varying amplitudes to the nuclear spin system and measures the resulting FID signals, in an
 effort to calibrate the pulse amplitude for a pi/2 rotation.
 
-
 """
 
 import qeg_nmr_qua as qnmr

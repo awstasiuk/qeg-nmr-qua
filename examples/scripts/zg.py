@@ -51,8 +51,9 @@ expt.execute_experiment()
 
 fit = True
 if fit:
-    re = np.array(expt.save_data_dict["I_data"]) * 1e6
-    im = np.array(expt.save_data_dict["Q_data"]) * 1e6
+    data_dict = expt.save_data_dict
+    re = np.array(data_dict["I_data"]) * 1e6
+    im = np.array(data_dict["Q_data"]) * 1e6
     ph_ref = np.arctan2(im[0], re[0]) * (180 / np.pi)
     times = np.arange(settings.readout_start,
                       settings.readout_end,
