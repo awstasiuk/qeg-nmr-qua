@@ -188,7 +188,7 @@ class Experiment:
             command["amplitude"] = amplitude
 
             layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
-            self._update_loop_type(layer, use_fixed=False)
+            self._update_loop_type(layer, use_fixed=True)
             command["layer"] = layer
             command["scale"] = div
         elif isinstance(amplitude, Iterable):

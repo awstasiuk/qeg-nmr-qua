@@ -19,14 +19,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
+    pulse_length=1.12 * u.us,
     pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=247.54,  # degrees
+    rotation_angle=249.3,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=9250 * u.Hz,
+    offset_freq=9800 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -41,6 +41,9 @@ expt = qnmr.Experiment1D(
     config=cfg,
     settings=settings,
 )
+
+fc_elements = (settings.res_key, settings.helper_key)
+expt.add_frame_change(angle=-4.0, elements=fc_elements)
 
 expt.add_pulse(element=settings.res_key)
 
