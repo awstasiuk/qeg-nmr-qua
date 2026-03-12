@@ -25,7 +25,9 @@ from qeg_nmr_qua.config.config_from_settings import cfg_from_settings
 from qeg_nmr_qua.experiment.experiment_1d import Experiment1D
 from qeg_nmr_qua.experiment.experiment_2d import Experiment2D
 from qeg_nmr_qua.experiment.experiment_3d import Experiment3D
-from qeg_nmr_qua.analysis.data_saver import DataSaver, QuantumEncoder
+from qeg_nmr_qua.analysis.data_saver import DataSaver
+from qeg_nmr_qua.analysis.encoder import QuantumEncoder
+from qeg_nmr_qua.analysis.visualizer import SequenceVisualizer
 
 __version__ = "0.1.0"
 
@@ -45,7 +47,7 @@ __all__ = [
     "DigitalWaveformConfig",
     "DataSaver",
     "QuantumEncoder",
-    "LivePlotter",
+    "SequenceVisualizer",
     "cfg_from_settings",
     "Experiment1D",
     "Experiment2D",
@@ -58,12 +60,12 @@ def __getattr__(name: str):
     """Lazy-load heavy subcomponents only when accessed.
 
     This keeps `import qeg_nmr_qua` fast while still exposing
-    `DataSaver` and `LivePlotter` as top-level attributes.
+    `DataSaver` and `SequenceVisualizer` as top-level attributes.
     """
     if name == "DataSaver":
         return import_module("qeg_nmr_qua.analysis.data_saver").DataSaver
-    if name == "LivePlotter":
-        return import_module("qeg_nmr_qua.plotting.live_plotter").LivePlotter
+    if name == "SequenceVisualizer":
+        return import_module("qeg_nmr_qua.analysis.visualizer").SequenceVisualizer
     if name == "OPXConfig":
         return OPXConfig
     raise AttributeError(f"module {__name__} has no attribute {name}")
