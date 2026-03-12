@@ -23,7 +23,7 @@ from qm import (
 )
 from qm.jobs.running_qm_job import RunningQmJob
 from qualang_tools.units import unit
-from qm.qua import play, wait, frame_rotation_2pi, align, amp, for_
+from qm.qua import play, wait, frame_rotation_2pi, align, amp, for_, declare, fixed
 
 u = unit(coerce_to_integer=True)
 
@@ -140,14 +140,23 @@ class Experiment:
         self,
         element: str,
         shape: str = None,
-        phase: float = 0.0,
-        amplitude: float = 1.0,
+        phase: float | Iterable = 0.0,
+        amplitude: float | Iterable = 1.0,
         length: int | Iterable | None = None,
+        phase_cycle: list[float] | None = None,
         loop_layer: int = -1,
     ):
         """
         Adds a pulse command to the experiment. Stores the data to control the pulse in the experiment's command list,
         and ensures the command is well defined. Timings are converted from ns and stored in clock cycles (4 ns).
+
+        Each of ``phase``, ``amplitude``, and ``length`` may independently be a scalar or an iterable.
+        When iterable, the parameter is treated as a swept variable and assigned its own loop layer.
+        Multiple parameters may be swept simultaneously in a single call — each will be auto-assigned to
+        its own layer (or a shared layer if the vectors are proportional), enabling multi-dimensional sweeps::
+
+            # All three swept independently → 3 loop layers
+            expt.add_pulse(element, phase=[0, 90, 180], amplitude=[0.9, 1.0, 1.1], length=[1000, 1100, 1200])
 
         Args:
             element (str): Element to which the pulse is applied. Must be defined in the config.
@@ -155,8 +164,10 @@ class Experiment:
             phase (float | Iterable): Phase of the pulse in degrees. Stored as a fraction of 2π.
             amplitude (float | Iterable): Amplitude scale factor for the pulse waveform.
             length (int | Iterable): Length of the pulse in nanoseconds, overriding the waveform default.
-            loop_layer (int): Loop layer (1-based) to associate with the swept parameter.  Use ``-1``
-                (default) to auto-assign to the first available layer.
+            phase_cycle (bool): Whether to vary the phase in the averaging loop for phase cycling.
+            loop_layer (int): Loop layer (1-based) to associate with all swept parameters in this call.
+                Use ``-1`` (default) to auto-assign each swept parameter to the first available layer
+                (or reuse an existing layer if the vector is proportional to one already stored).
         """
         if element not in self.config.elements.elements.keys():
             raise ValueError(f"Element {element} not defined in config.")
@@ -179,45 +190,44 @@ class Experiment:
             "element": element,
         }
 
-        if isinstance(phase, Iterable):
-            command["length"] = (
-                length // 4  # clock cycle = 4ns
-                if length is not None
-                else self.config.pulses.pulses[pulse].length // 4
-            )
-            command["amplitude"] = amplitude
+        # Handle phase -- swept, phase-cycled, or constant
+        if phase_cycle:
+            if isinstance(phase, Iterable):
+                command["phase_cycle"] = (np.array(phase) / 360) % 1
+            else:
+                raise ValueError(
+                    "Phase cycling requires an iterable of phases, found a scalar instead."
+                )
+        else:
+            if isinstance(phase, Iterable):
+                layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
+                self._update_loop_type(layer, use_fixed=False)
+                command["phase_layer"] = layer
+                command["phase_scale"] = div
+            else:
+                command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
 
-            layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
-            self._update_loop_type(layer, use_fixed=False)
-            command["layer"] = layer
-            command["scale"] = div
-        elif isinstance(amplitude, Iterable):
-            command["length"] = (
-                length // 4
-                if length is not None
-                else self.config.pulses.pulses[pulse].length // 4
-            )
-            command["phase"] = (phase / 360) % 1
+        # Handle amplitude -- swept or fixed
+        if isinstance(amplitude, Iterable):
             layer, div = self._update_loop(np.array(amplitude), loop_layer)
             self._update_loop_type(layer, use_fixed=True)
-            command["layer"] = layer
-            command["scale"] = div
-        elif isinstance(length, Iterable):
-            command["phase"] = (phase / 360) % 1
-            command["amplitude"] = amplitude
-            layer, div = self._update_loop(np.array(length) // 4, loop_layer)
-            self._update_loop_type(layer, use_fixed=False)
-            command["layer"] = layer
-            command["scale"] = div
+            command["amplitude_layer"] = layer
+            command["amplitude_scale"] = div
         else:
-            command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
             command["amplitude"] = amplitude
+
+        # Handle length -- swept or fixed
+        if isinstance(length, Iterable):
+            layer, div = self._update_loop(np.array(length, dtype=int) // 4, loop_layer)
+            self._update_loop_type(layer, use_fixed=False)
+            command["length_layer"] = layer
+            command["length_scale"] = div
+        else:
             command["length"] = (
                 length // 4
                 if length is not None
                 else self.config.pulses.pulses[pulse].length // 4
             )
-            command["scale"] = 1
         self._commands.append(command)
 
     def add_delay(self, duration: int | Iterable, loop_layer: int = -1):
@@ -533,7 +543,13 @@ class Experiment:
         else:
             return -1
 
-    def translate_command(self, command: dict, vars: Any = None, loop_idx: Any = None):
+    def translate_command(
+        self,
+        n: Any,
+        command: dict,
+        vars: Any = None,
+        loop_idx: Any = None,
+    ):
         """
         Translates a command dictionary into QUA code.
 
@@ -559,9 +575,42 @@ class Experiment:
                 var = vars[layer - 1] * scale
 
         if command["type"] == "pulse":
-            phase = command.get("phase", var)
-            amplitude = command.get("amplitude", var)
-            length = command.get("length", var)
+
+            # Resolve phase: swept (per-field layer) or fixed
+            if "phase_layer" in command:
+                ph_var = vars[command["phase_layer"] - 1]
+                phase = (
+                    ph_var * command["phase_scale"]
+                    if command["phase_scale"] != 1
+                    else ph_var
+                )
+            elif "phase_cycle" in command:
+                pc_var = declare(fixed, value=command["phase_cycle"])
+                phase = pc_var[n]
+            else:
+                phase = command["phase"]
+
+            # Resolve amplitude: swept (per-field layer) or fixed
+            if "amplitude_layer" in command:
+                amp_var = vars[command["amplitude_layer"] - 1]
+                amplitude = (
+                    amp_var * command["amplitude_scale"]
+                    if command["amplitude_scale"] != 1
+                    else amp_var
+                )
+            else:
+                amplitude = command["amplitude"]
+
+            # Resolve length: swept (per-field layer) or fixed
+            if "length_layer" in command:
+                len_var = vars[command["length_layer"] - 1]
+                length = (
+                    len_var * command["length_scale"]
+                    if command["length_scale"] != 1
+                    else len_var
+                )
+            else:
+                length = command["length"]
 
             frame_rotation_2pi(phase, command["element"])
             play(
@@ -576,7 +625,6 @@ class Experiment:
 
         elif command["type"] == "delay":
             duration = command.get("duration", var)
-
             wait(duration)
 
         elif command["type"] == "z_rotation":
@@ -584,7 +632,6 @@ class Experiment:
             frame_rotation_2pi(phase, *command["elements"])
 
         elif command["type"] == "align":
-
             align(*command["elements"]) if command["elements"] is not None else align()
 
         elif command["type"] == "sequence":

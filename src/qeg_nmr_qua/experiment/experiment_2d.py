@@ -137,14 +137,11 @@ class Experiment2D(Experiment):
 
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
 
-                with for_(
-                    *from_array(var, self.var_vec_lst[0])
-                ):  # inner loop over variable vector
+                with for_(*from_array(var, self.var_vec_lst[0])):  # inner loop
                     with if_(dummy > 0):
                         wait(self.wait_between_scans, self.probe_key)
-                    with else_():
                         assign(dummy, dummy + 1)
-                    assign(dummy, dummy + 1)
+
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:

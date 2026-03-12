@@ -73,9 +73,8 @@ class Experiment1D(Experiment):
             # define the variables and datastreams
             n = declare(int)  # QUA variable for the averaging loop
             n_st = declare_stream()  # Stream for the averaging iteration 'n'
-            dummy = declare(
-                int, 0
-            )  # dummy variable for loops without a declared variable vector
+            dummy = declare(int, 0)  # dummy variable for loops
+            loop_idx = declare(int)  # QUA variable for floquet loops
             I1 = declare(fixed)
             Q1 = declare(fixed)
             I2 = declare(fixed)
@@ -96,7 +95,7 @@ class Experiment1D(Experiment):
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                 for command in self._commands:
-                    self.translate_command(command)
+                    self.translate_command(n, command, loop_idx)
 
                 # wait for ringdown to decay, blank amplifier, set to receive mode
                 safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
