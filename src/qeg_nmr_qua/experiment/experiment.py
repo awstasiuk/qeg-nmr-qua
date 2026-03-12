@@ -143,7 +143,7 @@ class Experiment:
         phase: float | Iterable = 0.0,
         amplitude: float | Iterable = 1.0,
         length: int | Iterable | None = None,
-        phase_cycle: list[float] | None = None,
+        phase_cycle: bool = False,
         loop_layer: int = -1,
     ):
         """
@@ -201,7 +201,7 @@ class Experiment:
         else:
             if isinstance(phase, Iterable):
                 layer, div = self._update_loop((np.array(phase) / 360) % 1, loop_layer)
-                self._update_loop_type(layer, use_fixed=False)
+                self._update_loop_type(layer, use_fixed=True)
                 command["phase_layer"] = layer
                 command["phase_scale"] = div
             else:
@@ -348,6 +348,7 @@ class Experiment:
         angle: float | Iterable,
         elements: str | Iterable[str],
         loop_layer: int = -1,
+        phase_cycle: bool = False,
     ):
         """
         Adds a virtual Z rotation to the experiment. This is implemented as a frame rotation in QUA.
@@ -357,6 +358,12 @@ class Experiment:
             elements (str | Iterable[str]): Element(s) to which the Z rotation is applied. Must be defined in the config.
             loop_layer (int): Loop layer (1-based) to associate with a swept
                 ``angle`` array.  Use ``-1`` (default) to auto-assign.
+            phase_cycle (bool): Whether to vary the angle in the averaging loop for phase cycling. If True, ``angle``
+                must be an iterable of angles to cycle through.
+
+        Raises:
+            ValueError: If ``elements`` is not defined in the config.
+            ValueError: If ``phase_cycle`` is True but ``angle`` is not an iterable of angles.
         """
         if isinstance(elements, str):
             elements = (elements,)
@@ -368,13 +375,21 @@ class Experiment:
             "type": "z_rotation",
             "elements": elements,
         }
-        if isinstance(angle, Iterable):
-            layer, div = self._update_loop((np.array(angle) / 360) % 1, loop_layer)
-            self._update_loop_type(layer, use_fixed=True)
-            command["layer"] = layer
-            command["scale"] = div
+        if phase_cycle:
+            if isinstance(angle, Iterable):
+                command["phase_cycle"] = (np.array(angle) / 360) % 1
+            else:
+                raise ValueError(
+                    "Phase cycling requires an iterable of angles, found a scalar instead."
+                )
         else:
-            command["angle"] = (angle / 360) % 1  # convert to fraction of 2pi
+            if isinstance(angle, Iterable):
+                layer, div = self._update_loop((np.array(angle) / 360) % 1, loop_layer)
+                self._update_loop_type(layer, use_fixed=True)
+                command["layer"] = layer
+                command["scale"] = div
+            else:
+                command["angle"] = (angle / 360) % 1  # convert to fraction of 2pi
 
         self._commands.append(command)
 
@@ -388,6 +403,9 @@ class Experiment:
         Args:
             angle (float): Angle of the frame change in degrees.
             elements (str | Iterable[str]): Element(s) to which the frame change is applied. Must be defined in the config.
+
+        Raises:
+            ValueError: If ``elements`` is not defined in the config.
         """
 
         if isinstance(elements, str):
@@ -548,7 +566,6 @@ class Experiment:
         n: Any,
         command: dict,
         vars: Any = None,
-        loop_idx: Any = None,
     ):
         """
         Translates a command dictionary into QUA code.
@@ -628,7 +645,11 @@ class Experiment:
             wait(duration)
 
         elif command["type"] == "z_rotation":
-            phase = command.get("phase", var)
+            if "phase_cycle" in command:
+                pc_var = declare(fixed, value=command["phase_cycle"])
+                phase = pc_var[n]
+            else:
+                phase = command.get("phase", var)
             frame_rotation_2pi(phase, *command["elements"])
 
         elif command["type"] == "align":
@@ -639,6 +660,7 @@ class Experiment:
             delays = command.get("delays", None)
             repetitions = command.get("repetitions", var)
             shape = command.get("shape", None)
+            loop_idx = declare(int, value=0)
 
             with for_(loop_idx, 0, loop_idx < repetitions, loop_idx + 1):
                 wait(delays[0])
