@@ -419,6 +419,62 @@ class Experiment:
         self.frame_change_angle = (angle / 360) % 1  # convert to fraction of 2pi
         self.frame_change_elements = elements
 
+    def add_measurement(
+        self,
+        angle: float,
+        probe_element: str,
+        helper_element: str,
+        phase_cycle: bool = False,
+    ):
+        """
+        Sets a measurement phase, which is implemented as a frame rotation before the measurement block in the QUA program.
+        This is useful for setting the measurement axis in the rotating frame, for example to measure along the Y axis instead of X.
+
+        Args:
+            angle (float): Angle of the measurement phase in degrees.
+            probe_element (str): The probe element to which the measurement phase is applied. Must be defined in the config.
+            helper_element (str): The helper element to which the measurement phase is applied. Must be defined in the config.
+            phase_cycle (bool): Whether to vary the angle in the averaging loop for phase cycling. If True, ``angle``
+                must be an iterable of angles to cycle through.
+
+        Raises:
+            ValueError: If ``probe_element`` or ``helper_element`` is not defined in the config.
+            ValueError: If ``phase_cycle`` is True but ``angle`` is not an iterable of angles.
+        """
+        command = {
+            "type": "measurement",
+        }
+
+        if not isinstance(probe_element, str):
+            raise TypeError("probe_element must be a string.")
+
+        if not isinstance(helper_element, str):
+            raise TypeError("helper_element must be a string.")
+
+        if probe_element not in self.config.elements.elements.keys():
+            raise ValueError(f"Probe element {probe_element} not defined in config.")
+
+        if helper_element not in self.config.elements.elements.keys():
+            raise ValueError(f"Helper element {helper_element} not defined in config.")
+
+        command["probe_element"] = probe_element
+        command["helper_element"] = helper_element
+
+        if phase_cycle:
+            if not isinstance(angle, Iterable):
+                raise ValueError(
+                    "Phase cycling requires an iterable of angles, found a scalar instead."
+                )
+            else:
+                command["phase_cycle"] = (np.array(angle) / 360) % 1
+        else:
+            if isinstance(angle, Iterable):
+                raise ValueError(
+                    "Non-phase-cycling measurement phase requires a scalar angle, found an iterable instead."
+                )
+            else:
+                command["phase"] = (angle / 360) % 1  # convert to fraction of 2pi
+
     def remove_initial_delay(self, remove: bool = True):
         """
         Removes the 5 T1 delay from the start of the sequence. Useful for testing with the
@@ -695,9 +751,21 @@ class Experiment:
         """
         Function to be implemented by subclasses to validate that the commands and settings for
         the experiment are consistent and valid. Running this function should return helpful error messages
-        if the experiment is not properly defined.
+        if the experiment is not properly defined. Subclasses implementations should call ``super().validate_experiment()`` to
+        check for general command consistency, and then add any experiment-specific checks as needed.
         """
-        pass  # to be implemented by subclasses
+        if self._commands is None or len(self._commands) == 0:
+            raise ValueError("No commands have been added to the experiment.")
+
+        for command in self._commands[:-1]:
+            if command["type"] == "measurement":
+                raise ValueError(
+                    "Measurement commands must be the last command in the experiment. No mid-sequence measurements are currently supported."
+                )
+        if self._commands[-1]["type"] != "measurement":
+            raise ValueError(
+                "The last command in the experiment must be a measurement command."
+            )
 
     def compile_to_qua(self, offline: bool = True, save_path: Path = None):
         """

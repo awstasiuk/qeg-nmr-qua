@@ -196,13 +196,13 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     )
     # Lowpass-approximated square pi/2 pulse
     lowpass_square = ControlPulse(
-        length=settings.pulse_length, # 2x longer to account for preshoot/overshoot
+        length=settings.pulse_length,  # 2x longer to account for preshoot/overshoot
         waveform="lowpass_square_wf",
         digital_marker="ON",
     )
     # Tukey window pi/2 pulse
     tukey = ControlPulse(
-        length=settings.pulse_length, # 2x longer to account for preshoot/overshoot
+        length=settings.pulse_length,  # 2x longer to account for preshoot/overshoot
         waveform="tukey_wf",
         digital_marker="ON",
     )
@@ -239,30 +239,41 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     cfg.add_waveform("readout_wf", waveform=settings.readout_amp)
     cfg.add_waveform("excitation_wf", waveform=settings.excitation_amp)
     cfg.add_waveform("square_wf", waveform=settings.pulse_amplitude)
-    
+
     # Gaussian waveform samples for shaped pi/2 pulse out to 3 stddev
     gaussian_awg = settings.pulse_amplitude * np.exp(
-        -0.5 * (np.linspace(-3, 3, settings.pulse_length) ** 2))
+        -0.5 * (np.linspace(-3, 3, settings.pulse_length) ** 2)
+    )
     cfg.add_waveform("gaussian_wf", waveform=gaussian_awg.tolist())
-    
+
     # Gaussian square waveform samples for shaped pi/2 pulse out to 3 stddev
     gaussian_square_width = int(settings.pulse_length * settings.pulse_rise_fall / 2)
-    gaussian_square_awg = settings.pulse_amplitude * np.r_[
-        np.exp(-0.5 * np.linspace(-3, 0, gaussian_square_width)**2),
-        np.ones(int(settings.pulse_length*(1 - settings.pulse_rise_fall))),
-        np.exp(-0.5 * np.linspace(0, -3, gaussian_square_width)**2)
-    ]
+    gaussian_square_awg = (
+        settings.pulse_amplitude
+        * np.r_[
+            np.exp(-0.5 * np.linspace(-3, 0, gaussian_square_width) ** 2),
+            np.ones(int(settings.pulse_length * (1 - settings.pulse_rise_fall))),
+            np.exp(-0.5 * np.linspace(0, -3, gaussian_square_width) ** 2),
+        ]
+    )
     cfg.add_waveform("gaussian_square_wf", waveform=gaussian_square_awg.tolist())
 
     # Low-pass (Butterworth-filtered) square pulse for shaped pi/2 pulse
-    n_harmonics   = 30 # number of harmonics to approximate square wave
-    lowpass_order  = 10 # order of oscillations
-    lowpass_t = np.linspace(-.5, 1.5, settings.pulse_length) # plots the pulse from t=-0.5 to 1.5
+    n_harmonics = 30  # number of harmonics to approximate square wave
+    lowpass_order = 10  # order of oscillations
+    lowpass_t = np.linspace(
+        -0.5, 1.5, settings.pulse_length
+    )  # plots the pulse from t=-0.5 to 1.5
     lowpass_square_awg = settings.pulse_amplitude * (
-        0.5+(2/np.pi) * sum(
-            np.sin((2*k-1)*np.pi*lowpass_t) /
-            ((2*k-1) * np.sqrt(1 + ((2*k-1)/n_harmonics)**(2*lowpass_order)))
-            for k in range(1, n_harmonics+1)
+        0.5
+        + (2 / np.pi)
+        * sum(
+            np.sin((2 * k - 1) * np.pi * lowpass_t)
+            / (
+                (2 * k - 1)
+                * np.sqrt(1 + ((2 * k - 1) / n_harmonics) ** (2 * lowpass_order))
+            )
+            for k in range(1, n_harmonics + 1)
         )
     )
     lowpass_square_awg = np.clip(lowpass_square_awg, -0.5, 0.5)
@@ -271,10 +282,20 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
     # Tukey windowed waveform samples for shaped pi/2 pulse
     tukey_x = np.linspace(-1, 1, settings.pulse_length)
     tukey_awg = settings.pulse_amplitude * (
-        np.ones(settings.pulse_length) if settings.pulse_rise_fall == 0 else np.where(
+        np.ones(settings.pulse_length)
+        if settings.pulse_rise_fall == 0
+        else np.where(
             np.abs(tukey_x) < 1 - settings.pulse_rise_fall,
             1.0,
-            0.5 * (1 + np.cos(np.pi * (np.abs(tukey_x) - 1 + settings.pulse_rise_fall) / settings.pulse_rise_fall))
+            0.5
+            * (
+                1
+                + np.cos(
+                    np.pi
+                    * (np.abs(tukey_x) - 1 + settings.pulse_rise_fall)
+                    / settings.pulse_rise_fall
+                )
+            ),
         )
     )
     cfg.add_waveform("tukey_wf", waveform=tukey_awg.tolist())
@@ -302,42 +323,26 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         real_weight=0.0,
         imag_weight=-1.0,
     )
-    cfg.add_integration_weight(
-        name="rotated_cosine_weights",
-        length=settings.dwell_time,
-        real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
-    )
-    cfg.add_integration_weight(
-        name="rotated_sine_weights",
-        length=settings.dwell_time,
-        real_weight=-np.sin(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
-    )
-    cfg.add_integration_weight(
-        name="rotated_minus_sine_weights",
-        length=settings.dwell_time,
-        real_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
-    )
-    # these are placeholder for potential future loaded optimizations? seems not useful
-    cfg.add_integration_weight(
-        name="opt_cosine_weights",
-        length=settings.dwell_time,
-        real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
-    )
-    cfg.add_integration_weight(
-        name="opt_sine_weights",
-        length=settings.dwell_time,
-        real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
-    )
-    cfg.add_integration_weight(
-        name="opt_minus_sine_weights",
-        length=settings.dwell_time,
-        real_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
-        imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
-    )
+
+    phases = {"x": 0, "y": 90, "-x": 180, "-y": 270}
+    for name, angle in phases.items():
+        cfg.add_integration_weight(
+            name=f"rotated_cosine_{name}_weights",
+            length=settings.dwell_time,
+            real_weight=np.cos(np.pi * (settings.rotation_angle + angle / 180)),
+            imag_weight=np.sin(np.pi * (settings.rotation_angle + angle / 180)),
+        )
+        cfg.add_integration_weight(
+            name=f"rotated_sine_{name}_weights",
+            length=settings.dwell_time,
+            real_weight=-np.sin(np.pi * (settings.rotation_angle + angle / 180)),
+            imag_weight=np.cos(np.pi * (settings.rotation_angle + angle / 180)),
+        )
+        cfg.add_integration_weight(
+            name=f"rotated_minus_sine_{name}_weights",
+            length=settings.dwell_time,
+            real_weight=np.sin(np.pi * (settings.rotation_angle + angle / 180)),
+            imag_weight=-np.cos(np.pi * (settings.rotation_angle + angle / 180)),
+        )
 
     return cfg

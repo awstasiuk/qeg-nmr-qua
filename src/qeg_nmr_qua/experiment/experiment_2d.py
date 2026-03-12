@@ -93,6 +93,7 @@ class Experiment2D(Experiment):
         Raises:
             ValueError: No variable vector was found in the experiment commands.
         """
+        super().validate_experiment()
         if self.var_vec_lst[0] is None:
             raise ValueError(
                 "Experiment2D requires variable vectors. Use Experiment1D, or similar, instead."

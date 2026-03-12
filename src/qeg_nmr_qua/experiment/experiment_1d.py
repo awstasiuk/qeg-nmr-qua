@@ -51,6 +51,7 @@ class Experiment1D(Experiment):
         Raises:
             ValueError: A looping operation was found in the experiment commands.
         """
+        super().validate_experiment()
         if len(self.var_vec_lst) > 0:
             raise ValueError(
                 "Experiment1D does not support variable vectors. Use Experiment2D, or similar, instead."
