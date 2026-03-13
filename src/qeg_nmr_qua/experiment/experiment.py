@@ -193,7 +193,7 @@ class Experiment:
         # Handle phase -- swept, phase-cycled, or constant
         if phase_cycle:
             if isinstance(phase, Iterable):
-                command["phase_cycle"] = (np.array(phase) / 360) % 1
+                command["phase_cycle"] = self._format_phase_cycle(phase)
             else:
                 raise ValueError(
                     "Phase cycling requires an iterable of phases, found a scalar instead."
@@ -377,7 +377,7 @@ class Experiment:
         }
         if phase_cycle:
             if isinstance(angle, Iterable):
-                command["phase_cycle"] = (np.array(angle) / 360) % 1
+                command["phase_cycle"] = self._format_phase_cycle(angle)
             else:
                 raise ValueError(
                     "Phase cycling requires an iterable of angles, found a scalar instead."
@@ -421,7 +421,7 @@ class Experiment:
 
     def add_measurement(
         self,
-        angle: float,
+        phase: float,
         probe_element: str,
         helper_element: str,
         phase_cycle: bool = False,
@@ -431,15 +431,15 @@ class Experiment:
         This is useful for setting the measurement axis in the rotating frame, for example to measure along the Y axis instead of X.
 
         Args:
-            angle (float): Angle of the measurement phase in degrees.
+            phase (float): Phase of the measurement phase in degrees.
             probe_element (str): The probe element to which the measurement phase is applied. Must be defined in the config.
             helper_element (str): The helper element to which the measurement phase is applied. Must be defined in the config.
-            phase_cycle (bool): Whether to vary the angle in the averaging loop for phase cycling. If True, ``angle``
-                must be an iterable of angles to cycle through.
+            phase_cycle (bool): Whether to vary the phase in the averaging loop for phase cycling. If True, ``phase``
+                must be an iterable of phases to cycle through.
 
         Raises:
             ValueError: If ``probe_element`` or ``helper_element`` is not defined in the config.
-            ValueError: If ``phase_cycle`` is True but ``angle`` is not an iterable of angles.
+            ValueError: If ``phase_cycle`` is True but ``phase`` is not an iterable of phases.
         """
         command = {
             "type": "measurement",
@@ -461,19 +461,32 @@ class Experiment:
         command["helper_element"] = helper_element
 
         if phase_cycle:
-            if not isinstance(angle, Iterable):
+            if not isinstance(phase, Iterable):
                 raise ValueError(
-                    "Phase cycling requires an iterable of angles, found a scalar instead."
+                    "Phase cycling requires an iterable of phases, found a scalar instead."
                 )
             else:
-                command["phase_cycle"] = (np.array(angle) / 360) % 1
+                command["phase_cycle"] = self._format_phase_cycle(phase)
         else:
-            if isinstance(angle, Iterable):
+            if isinstance(phase, Iterable):
                 raise ValueError(
-                    "Non-phase-cycling measurement phase requires a scalar angle, found an iterable instead."
+                    "Non-phase-cycling measurement phase requires a scalar phase, found an iterable instead."
                 )
             else:
-                command["phase"] = (angle / 360) % 1  # convert to fraction of 2pi
+                command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
+
+    def _format_phase_cycle(self, phases):
+        """
+        Helper function to format a list of phases for phase cycling. Converts from degrees to a fraction of 2π
+        and ensures the result matches the expected number of averages to avoid indexing out of bounds during the experiment.
+
+        Args:
+            phases (list[float]): List of phases in degrees.
+
+        """
+        copies = math.ceil(self.n_avg / len(phases))
+        raw_phases = phases * copies
+        return np.array(raw_phases / 360) % 1
 
     def remove_initial_delay(self, remove: bool = True):
         """
@@ -732,6 +745,16 @@ class Experiment:
                             self.frame_change_angle, *self.frame_change_elements
                         )
                     wait(delay)
+
+        elif command["type"] == "measurement":
+            if "phase_cycle" in command:
+                pc_var = declare(fixed, value=command["phase_cycle"])
+                phase = pc_var[n]
+            else:
+                phase = command.get("phase", None)
+                if phase is not None:
+                    frame_rotation_2pi(phase, command["probe_element"])
+                    frame_rotation_2pi(phase, command["helper_element"])
 
         else:
             raise ValueError(f"Unknown command type: {command['type']}")

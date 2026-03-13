@@ -31,7 +31,7 @@ settings = qnmr.ExperimentSettings(
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem,
 )
 
 cfg = qnmr.cfg_from_settings(settings)
@@ -42,8 +42,17 @@ expt = qnmr.Experiment1D(
     settings=settings,
 )
 
-expt.add_pulse(element=settings.res_key)
+# add a single pi/2 pulse along +/- y with phase cycling
+expt.add_pulse(element=settings.res_key, phase=[90, 270], phase_cycle=True)
 
+# measure the FID about +/- x with phase cycling. If calibrated correctly, the FID should be entirely
+# in the I channel. Adjust the measurement phase if there is a significant signal in the Q channel
+expt.add_measurement(
+    phase=[0, 180],
+    probe_element=settings.res_key,
+    helper_element=settings.helper_key,
+    phase_cycle=True,
+)
 expt.execute_experiment()
 
 # expt.remove_initial_delay()
@@ -55,22 +64,25 @@ if fit:
     re = np.array(data_dict["I_data"]) * 1e6
     im = np.array(data_dict["Q_data"]) * 1e6
     ph_ref = np.arctan2(im[0], re[0]) * (180 / np.pi)
-    times = np.arange(settings.readout_start,
-                      settings.readout_end,
-                      settings.dwell_time) / u.us # convert to us for plotting
+    times = (
+        np.arange(settings.readout_start, settings.readout_end, settings.dwell_time)
+        / u.us
+    )  # convert to us for plotting
 
     if abs(ph_ref) > 0.1:
-        print(f"Increment phase reference by {ph_ref:.2f} degrees to {(settings.rotation_angle+ph_ref):.2f}" )
+        print(
+            f"Increment phase reference by {ph_ref:.2f} degrees to {(settings.rotation_angle+ph_ref):.2f}"
+        )
 
     sig = im
 
     # --- Autocorrelation ---
-    autocorr = acf(sig, nlags=len(sig)-1, fft=True)
+    autocorr = acf(sig, nlags=len(sig) - 1, fft=True)
 
     # --- Fourier transform of autocorrelation ---
     fft_vals = np.fft.fft(autocorr)
     dt = settings.dwell_time
-    freqs = np.fft.fftfreq(len(autocorr), d=dt / u.ms) # convert to kHz (1/ms)
+    freqs = np.fft.fftfreq(len(autocorr), d=dt / u.ms)  # convert to kHz (1/ms)
 
     # Shift zero frequency to center
     fft_vals_shifted = np.fft.fftshift(fft_vals)
@@ -84,12 +96,18 @@ if fit:
     confidence_99 = 2.58 / np.sqrt(len(sig))
 
     # Autocorrelation plot
-    axs[0].axhline(y=confidence_95, color='red', linestyle='--', label='95% Confidence Level')
-    axs[0].axhline(y=-confidence_95, color='red', linestyle='--')
-    axs[0].axhline(y=confidence_99, color='black', linestyle='--', label='99% Confidence Level')
-    axs[0].axhline(y=-confidence_99, color='black', linestyle='--')
+    axs[0].axhline(
+        y=confidence_95, color="red", linestyle="--", label="95% Confidence Level"
+    )
+    axs[0].axhline(y=-confidence_95, color="red", linestyle="--")
+    axs[0].axhline(
+        y=confidence_99, color="black", linestyle="--", label="99% Confidence Level"
+    )
+    axs[0].axhline(y=-confidence_99, color="black", linestyle="--")
 
-    axs[0].stem(times[:len(autocorr)], autocorr, basefmt=" ", markerfmt="o", linefmt="-")
+    axs[0].stem(
+        times[: len(autocorr)], autocorr, basefmt=" ", markerfmt="o", linefmt="-"
+    )
     axs[0].set_title("Autocorrelation of the Imaginary Component")
     axs[0].set_xlabel("Lag (µs)")
     axs[0].set_ylabel("Autocorrelation")

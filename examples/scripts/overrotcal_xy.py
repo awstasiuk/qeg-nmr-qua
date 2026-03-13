@@ -37,18 +37,25 @@ settings = qnmr.ExperimentSettings(
 
 cfg = qnmr.cfg_from_settings(settings)
 
-overrot_ang = np.arange(-8,3,1)
+overrot_ang = np.arange(-8, 3, 1)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-corrected_y = 90-overrot_ang
+corrected_y = 90 - overrot_ang
 expt.add_pulse(element=settings.res_key, phase=corrected_y)
-expt.add_delay(4*u.us)
+expt.add_delay(4 * u.us)
 expt.add_pulse(element=settings.res_key, phase=180)
 
-#T1 filter
-expt.add_delay(1*u.ms)
+# T1 filter
+expt.add_delay(1 * u.ms)
 
-expt.add_pulse(element=settings.res_key)
+expt.add_pulse(element=settings.res_key, phase=[90, 270], phase_cycle=True)
+
+expt.add_measurement(
+    phase=[0, 180],
+    probe_element=settings.res_key,
+    helper_element=settings.helper_key,
+    phase_cycle=True,
+)
 
 expt.update_sweep_axis(overrot_ang)
 expt.update_sweep_label("Over-rotation Angle (deg)")
@@ -59,7 +66,7 @@ fit = True
 if fit:
     fig, ax = plt.subplots()
     re = np.array(expt.save_data_dict["I_data"])
-    sig = re[:,0]
+    sig = re[:, 0]
     ang = np.array(expt.save_data_dict["sweep_axis"])
     ax.scatter(ang, sig, label="Data Points")
 
@@ -70,7 +77,12 @@ if fit:
 
     # Calculate and indicate the zero crossing
     zero_crossing = -coeffs[1] / coeffs[0]
-    ax.axvline(zero_crossing, color="red", linestyle="--", label=f"Zero Crossing: {zero_crossing:.2f} deg")
+    ax.axvline(
+        zero_crossing,
+        color="red",
+        linestyle="--",
+        label=f"Zero Crossing: {zero_crossing:.2f} deg",
+    )
     ax.legend()
 
     ax.set_xlabel("Over-rotation Angle (deg)")

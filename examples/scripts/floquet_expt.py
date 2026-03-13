@@ -24,13 +24,13 @@ settings = qnmr.ExperimentSettings(
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem,
 )
 
 cfg = qnmr.cfg_from_settings(settings)
 
 # sequence time constants
-t0 = 5*u.us
+t0 = 5 * u.us
 p1 = settings.pulse_length
 thlf = (t0 - p1) / 2
 t1 = t0 - p1
@@ -42,20 +42,31 @@ expt = qnmr.Experiment2D(settings=settings, config=cfg)
 fc_elements = (settings.res_key, settings.helper_key)
 expt.add_frame_change(angle=-4.9, elements=fc_elements)
 
-
-# Pine-8 sequence pattern for engineering H=0
-pine8_phases = np.array([0,0,0,0,180,180,180,180])
-pine8_bw_phases = np.array([90,90,90,90,270,270,270,270])
+# Pine-8 sequence pattern for engineering H=DQ
+pine8_phases = np.array([0, 0, 0, 0, 180, 180, 180, 180])
+pine8_bw_phases = np.array([90, 90, 90, 90, 270, 270, 270, 270])
 pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])
 # evolve for up to 24 periods, 0 to 24
-period_list = np.arange(0,25,1)
-expt.add_floquet_sequence(phases=pine8_phases, delays=pine8_delays, repetitions=period_list)
+period_list = np.arange(0, 25, 1)
+
+expt.add_floquet_sequence(
+    phases=pine8_phases, delays=pine8_delays, repetitions=period_list
+)
 # expt.add_floquet_sequence(phases=pine8_bw_phases, delays=pine8_delays, repetitions=period_list)
 expt.update_sweep_label("Pine-8 Periods")
 
+# T1 filter
+expt.add_delay(1 * u.ms)
 
-expt.add_delay(1*u.ms)
-expt.add_pulse(element=settings.res_key)
+expt.add_pulse(element=settings.res_key, phase=[90, 270], phase_cycle=True)
+
+expt.add_measurement(
+    phase=[0, 180],
+    probe_element=settings.res_key,
+    helper_element=settings.helper_key,
+    phase_cycle=True,
+)
+
 
 expt.update_sweep_axis(period_list)
 
@@ -66,16 +77,21 @@ expt.execute_experiment()
 fit = True
 if fit:
     fig = plt.figure()
-    re = np.array(expt.save_data_dict["I_data"])*1e6
-    signal = re[:,0]/re[0,0]  # normalize to first point
+    re = np.array(expt.save_data_dict["I_data"]) * 1e6
+    signal = re[:, 0] / re[0, 0]  # normalize to first point
     periods = np.array(expt.save_data_dict["sweep_axis"])
 
     def damped_bessel(x, A, k, tau, b):
         return A * jn(0, k * x) * np.exp(-(x / tau)) + b
-    
+
     # Fit the signal to the Bessel function; expected values listed in p0
-    popt, pcov = curve_fit(damped_bessel, periods, signal, p0=[1, 1.4, 12, 0], 
-                           bounds = ([0.5, 0.5, 1.0, -0.5], [2.0, 3.0, 30.0, 0.5]) )
+    popt, pcov = curve_fit(
+        damped_bessel,
+        periods,
+        signal,
+        p0=[1, 1.4, 12, 0],
+        bounds=([0.5, 0.5, 1.0, -0.5], [2.0, 3.0, 30.0, 0.5]),
+    )
 
     # Extract the fitted parameters
     amplitude_fit, scale_fit, tau_fit, b_fit = popt
@@ -85,14 +101,12 @@ if fit:
     y_fit = damped_bessel(x_fit, *popt)
 
     # Plot the fitted Bessel function
-    plt.scatter(periods, signal, label='Data Points')
-    plt.plot(x_fit, y_fit, color='red', label='Fitted Bessel Function')
+    plt.scatter(periods, signal, label="Data Points")
+    plt.plot(x_fit, y_fit, color="red", label="Fitted Bessel Function")
     plt.legend()
 
     plt.show()
 
-    print(f"Fitted parameters: amplitude = {amplitude_fit:.3f}, scale = {scale_fit:.3f}, tau = {tau_fit:.3f}")
-
-
-    
-    
+    print(
+        f"Fitted parameters: amplitude = {amplitude_fit:.3f}, scale = {scale_fit:.3f}, tau = {tau_fit:.3f}"
+    )
