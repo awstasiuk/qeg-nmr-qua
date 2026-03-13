@@ -52,8 +52,6 @@ expt.add_pulse(element=settings.res_key, phase=[90, 270], phase_cycle=True)
 
 expt.add_measurement(
     phase=[0, 180],
-    probe_element=settings.res_key,
-    helper_element=settings.helper_key,
     phase_cycle=True,
 )
 

@@ -422,8 +422,6 @@ class Experiment:
     def add_measurement(
         self,
         phase: float,
-        probe_element: str,
-        helper_element: str,
         phase_cycle: bool = False,
     ):
         """
@@ -432,8 +430,6 @@ class Experiment:
 
         Args:
             phase (float): Phase of the measurement phase in degrees.
-            probe_element (str): The probe element to which the measurement phase is applied. Must be defined in the config.
-            helper_element (str): The helper element to which the measurement phase is applied. Must be defined in the config.
             phase_cycle (bool): Whether to vary the phase in the averaging loop for phase cycling. If True, ``phase``
                 must be an iterable of phases to cycle through.
 
@@ -444,21 +440,6 @@ class Experiment:
         command = {
             "type": "measurement",
         }
-
-        if not isinstance(probe_element, str):
-            raise TypeError("probe_element must be a string.")
-
-        if not isinstance(helper_element, str):
-            raise TypeError("helper_element must be a string.")
-
-        if probe_element not in self.config.elements.elements.keys():
-            raise ValueError(f"Probe element {probe_element} not defined in config.")
-
-        if helper_element not in self.config.elements.elements.keys():
-            raise ValueError(f"Helper element {helper_element} not defined in config.")
-
-        command["probe_element"] = probe_element
-        command["helper_element"] = helper_element
 
         if phase_cycle:
             if not isinstance(phase, Iterable):
@@ -607,7 +588,7 @@ class Experiment:
         return loop_layer, 1
 
     def _list_find_scale_factor(self, list1, list2):
-        """Find the scalar proportionality constant *k* such that ``list1 ≈ k * list2``.
+        """Find the scalar proportionality constant *k* such that ``list1 = k * list2``.
 
         Returns the constant if the two arrays are parallel (i.e. one is a scalar
         multiple of the other), or ``-1`` if they are not.

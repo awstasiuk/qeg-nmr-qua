@@ -49,7 +49,7 @@ helper to express them in physical units.
 Building a Pulse Sequence
 --------------------------
 
-Experiments are constructed by appending **commands** to an experiment object.  Four
+Experiments are constructed by appending **commands** to an experiment object.  Six
 command types are available:
 
 .. list-table::
@@ -66,9 +66,15 @@ command types are available:
      - Align one or more elements in time
    * - ``add_floquet_sequence(...)``
      - Repeating multi-pulse / delay block
+   * - ``add_z_rotation(...)``
+     - Frame change (virtual Z rotation) on one or more elements
+   * - ``add_measurement(...)``
+     - Acquisition command for phase control and phase cycling while averaging
 
 Commands are translated into QUA code in FIFO order when
-:meth:`~qeg_nmr_qua.experiment.experiment.Experiment.create_experiment` is called.
+:meth:`~qeg_nmr_qua.experiment.experiment.Experiment.create_experiment` is called. Every 
+experiment must end with a measurement command to be valid, and must not contain more
+than one measurement command per readout scan.
 
 
 1D Experiment — Free Induction Decay
@@ -82,8 +88,11 @@ scalar (non-iterable) arguments.
 
    expt = qnmr.Experiment1D(settings=settings, config=cfg)
 
-   # A single π/2 pulse on the resonator element
-   expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+   # A single π/2 pulse about y on the resonator element
+   expt.add_pulse(name=settings.pi_half_key, element=settings.res_key, phase=90)
+
+   # measure the FID along the x axis (phase=0) for maximal signal in the I channel
+   expt.add_measurement(phase=0, phase_cycle=False)
 
    expt.execute_experiment()
 
@@ -129,7 +138,14 @@ Example: pulse-amplitude calibration
        name=settings.pi_half_key,
        element=settings.res_key,
        amplitude=amp_list,
+       phase=[90,270],
+       phase_cycle=True,
    )
+
+   # Add a measurement with phase cycling to see the effect of the pulse amplitude on the FID
+   # while reducing systematic errors. Phase cycling accumulates during the averaging loop, and does
+   # not affect the loop variable assignment since it is a separate iterable argument.
+   expt.add_measurement(phase=[0, 180], phase_cycle=True)
 
    # Optionally convert the raw rescaling factor to physical units for plots
    expt.update_sweep_axis(amp_list * settings.pulse_amplitude)  # volts
@@ -167,7 +183,9 @@ Example: Floquet (Hamiltonian-engineering) sweep
        repetitions=period_list,           # iterable → sweep variable
    )
    expt.add_delay(1 * u.ms)              # T1 filter
-   expt.add_pulse(name=settings.pi_half_key, element=settings.res_key)
+   expt.add_pulse(name=settings.pi_half_key, element=settings.res_key, phase=[90, 270], phase_cycle=True)
+
+   expt.add_measurement(phase=[0,180], phase_cycle=True)
 
    expt.update_sweep_axis(period_list)
    expt.update_sweep_label("Pine-8 Periods")
@@ -270,6 +288,8 @@ Example: joint amplitude + delay sweep
        amplitude=amp_list,
        loop_layer=2,
    )
+
+   expt.add_measurement(phase=90, phase_cycle=False)
 
    expt.update_sweep_axis_outer(delay_list / u.us)
    expt.update_sweep_label_outer("Delay (µs)")

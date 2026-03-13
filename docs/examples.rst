@@ -57,7 +57,7 @@ Step 3: Calibrate the Over Rotation Error
 Our pulses are not perfectly accurate: e.g. a square pulse has a different leading and trailing edge. 
 
 .. math::
-   \int{d?(φ_{lead} - φ_{trail})} ≈ 10°
+   \int{dt(φ_{lead} - φ_{trail})} ≈ 10°
 
 This leads to a Y component from our pulse, an "over rotation" which must be corrected with a frame change.
 

@@ -112,6 +112,7 @@ of each other — they all map to the *same* QUA variable.
        element=settings.res_key,
        amplitude=2 * amp_list,   # scalar-multiple of existing vector — OK
    )
+   expt.add_measurement(phase=0, phase_cycle=False) 
    expt.update_sweep_axis(amp_list * settings.pulse_amplitude)
    expt.update_sweep_label("Pulse Amplitude (Vpp)")
    expt.execute_experiment()
@@ -160,6 +161,8 @@ Rule summary
        amplitude=amp_list,
        loop_layer=2,
    )
+
+   expt.add_measurement(phase=270)
 
    expt.update_sweep_axis_outer(delay_list / u.us)
    expt.update_sweep_label_outer("Delay (µs)")
