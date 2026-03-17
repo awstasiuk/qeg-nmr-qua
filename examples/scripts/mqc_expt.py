@@ -15,7 +15,7 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
+    pulse_length=1.12 * u.us,
     pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
@@ -33,10 +33,10 @@ settings = qnmr.ExperimentSettings(
 cfg = qnmr.cfg_from_settings(settings)
 
 execute = True # whether to execute a new experiment or load from previous JSON file
-if not execute: data_path = settings.save_dir / "experiment_0009/data.json"
+if not execute: data_path = settings.save_dir / "experiment_0005/data.json"
 
-rho0 = "Y" # evolve either X,Y,Z operator under DQ (& measure corresponding observable)
-kick_axis = "X" # apply X,Y,Z kick to the system, observe MQC intensities from function of kick angle
+rho0 = "Z" # evolve either X,Y,Z operator under DQ (& measure corresponding observable)
+kick_axis = "Z" # apply X,Y,Z kick to the system, observe MQC intensities from function of kick angle
 mqc_plot = True # whether to plot MQC intensities at the end
 remove_echo_decay = True # For observing operator spreading |Cₘ(t)|² / Σₘ|Cₘ(t)|²
 
@@ -52,7 +52,7 @@ pine8_phases = np.array([0, 0, 0, 0, 180, 180, 180, 180])
 pine8_bwd_phases = np.array([90, 90, 90, 90, 270, 270, 270, 270])
 pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])
 
-M = 10  # number of coherences
+M = 2  # number of coherences
 kick_angles = np.arange(0, 360, 180 / M)  # degrees, from 0 to 360 in steps of 180/M
 
 # evolve for up to 24 periods, 0 to 24
@@ -133,8 +133,7 @@ if mqc_plot:
 
     # error bars from standard deviation of im tail
     n_tail = min(20, im.shape[2])
-    im_tail = im[:, :, -n_tail:]
-    noise_floor = np.std(im_tail, axis=2)  # shape (period, phi)
+    noise_floor = np.std(im[:, :, -n_tail:], axis=2)  # shape (period, phi)
     std = np.mean(noise_floor, axis=1)  # shape (period,)
     std_mqc = std[:, None] / np.sqrt(n_phi) # Propagate noise to MQC intensities (magnitude of FFT)
 
@@ -153,6 +152,12 @@ if mqc_plot:
     mqc_intensity = np.abs(mqc)
     coherence_orders = np.fft.fftshift(np.fft.fftfreq(n_phi, d=dphi/(2*np.pi))) # Frequency axis (coherence order)
 
+    # second moment
+    allowed = np.isin(coherence_orders, [0, -2, 2])
+    I_sel = mqc_intensity[:, allowed]
+    m_sel = coherence_orders[allowed]
+    m2_restricted = np.sum((m_sel**2) * I_sel, axis=1) / np.sum(I_sel, axis=1)
+
     # 3D Plot
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -161,7 +166,7 @@ if mqc_plot:
     sort_idx = np.argsort(coherence_orders)[::-1]
     for j in sort_idx:
         # gray out lines where MQC intensity < 3σ stddev to de-emphasize noise floor
-        if np.average(mqc_intensity[10:, j] / (2*std_mqc[10:, 0])) < 5 :
+        if np.mean(mqc_intensity[:-10, j] / (std_mqc[10:, 0])) < 3 :
             color = 'darkgray'
         else: color = None
 
@@ -176,4 +181,11 @@ if mqc_plot:
 
     plt.title("MQC Intensities" + (" (Normalized Echo Decay)" if remove_echo_decay else ""))
     plt.tight_layout()
+    plt.show()
+
+    plt.figure()
+    plt.plot(periods, m2_restricted, 'o-')
+    plt.xlabel("Floquet Periods")
+    plt.ylabel("⟨$m^2$⟩")
+    plt.title("MQC Second Moment")
     plt.show()

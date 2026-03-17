@@ -45,7 +45,7 @@ expt = qnmr.Experiment2D(settings=settings, config=cfg)
 fc_elements = (settings.res_key, settings.helper_key)
 expt.add_frame_change(angle=-4.0, elements=fc_elements)
 
-n_wraps = 3
+n_wraps = 2
 
 if zero_cross: 
     expt.add_pulse(element=settings.res_key, amplitude=amp_list)

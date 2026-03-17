@@ -20,7 +20,7 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.12 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.475,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
     rotation_angle=249.3,  # degrees
