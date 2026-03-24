@@ -16,13 +16,13 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.12 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.483,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=252.21,  # degrees
+    rotation_angle=249.5,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=9650 * u.Hz,
+    offset_freq=10450 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -32,11 +32,11 @@ settings = qnmr.ExperimentSettings(
 
 cfg = qnmr.cfg_from_settings(settings)
 
-execute = True # whether to execute a new experiment or load from previous JSON file
-if not execute: data_path = settings.save_dir / "experiment_0005/data.json"
+execute = False # whether to execute a new experiment or load from previous JSON file
+if not execute: data_path = settings.save_dir / "experiment_0011/data.json"
 
-rho0 = "Z" # evolve either X,Y,Z operator under DQ (& measure corresponding observable)
-kick_axis = "Z" # apply X,Y,Z kick to the system, observe MQC intensities from function of kick angle
+rho0 = "Y" # evolve either X,Y,Z operator under DQ (& measure corresponding observable)
+kick_axis = "Y" # apply X,Y,Z kick to the system, observe MQC intensities from function of kick angle
 mqc_plot = True # whether to plot MQC intensities at the end
 remove_echo_decay = True # For observing operator spreading |Cₘ(t)|² / Σₘ|Cₘ(t)|²
 
@@ -60,6 +60,9 @@ period_list = np.arange(0, 25, 1)
 
 # define experiment object
 expt = qnmr.Experiment3D(settings=settings, config=cfg)
+
+fc_elements = (settings.res_key, settings.helper_key)
+expt.add_frame_change(angle=-2.75, elements=fc_elements)
 
 # rotate to evolve X, Y, or Z state operator under DQ
 if rho0 == "X": expt.add_pulse(phase=90, element=settings.res_key)
@@ -151,6 +154,10 @@ if mqc_plot:
     mqc = np.fft.fftshift(mqc, axes=1)
     mqc_intensity = np.abs(mqc)
     coherence_orders = np.fft.fftshift(np.fft.fftfreq(n_phi, d=dphi/(2*np.pi))) # Frequency axis (coherence order)
+    # deal with the fact that we test kicks [0, 360) 
+    idx_min = np.argmin(coherence_orders)  # Duplicate minimum coherence at max + 1
+    coherence_orders = np.append(coherence_orders, np.max(coherence_orders) + 1)
+    mqc_intensity = np.column_stack([mqc_intensity, mqc_intensity[:, idx_min]])
 
     # second moment
     allowed = np.isin(coherence_orders, [0, -2, 2])
@@ -166,23 +173,35 @@ if mqc_plot:
     sort_idx = np.argsort(coherence_orders)[::-1]
     for j in sort_idx:
         # gray out lines where MQC intensity < 3σ stddev to de-emphasize noise floor
-        if np.mean(mqc_intensity[:-10, j] / (std_mqc[10:, 0])) < 3 :
+        if np.mean(mqc_intensity[:-10, j]) < 0.05 :
             color = 'darkgray'
         else: color = None
+        
+        # Fit the signal to the Bessel^2 function
+        if j==2:
+            def damped_bessel2(x, A, k, tau, b, x0):
+                return (A * (jn(0, k * x - x0))**2 + b) * np.exp(- (x / tau))
+            popt, pcov = curve_fit(damped_bessel2, periods, mqc_intensity[:,j], bounds=([0, 0, 0.0, 0, -2], [2, 2, 9999, 1, 2]) )
+            amplitude_fit, scale_fit, tau_fit, b_fit, x0_fit = popt
+            x_fit = np.linspace(min(periods), max(periods), 500)
+            y_fit = damped_bessel2(x_fit, *popt)
 
         ax.plot(periods, np.full_like(periods, coherence_orders[j]), 
-                mqc_intensity[:, j], color=color, zorder=999)
+                (mqc_intensity[:, j]), color=color, zorder=999)
+        if j==2: ax.plot(x_fit, np.full_like(x_fit, coherence_orders[j]), 
+                (y_fit), color=color, zorder=999)
         ax.errorbar(periods, np.full_like(periods, coherence_orders[j]), mqc_intensity[:, j], 
                 zerr=2*std_mqc[:, 0], fmt='none', ecolor='darkgray', alpha=0.5, zorder=1)
 
     ax.set_xlabel("Floquet Periods"); ax.set_xlim(0, periods.max())
-    ax.set_ylabel("Coherence Order"); ax.set_yticks(np.arange(coherence_orders.min(), coherence_orders.max(), step=2))
+    ax.set_ylabel("Coherence Order"); ax.set_yticks(np.arange(coherence_orders.min(), coherence_orders.max()+1, step=2))
     ax.set_zlabel("MQC Intensity"); ax.set_zlim(0, mqc_intensity.max())
 
     plt.title("MQC Intensities" + (" (Normalized Echo Decay)" if remove_echo_decay else ""))
     plt.tight_layout()
     plt.show()
 
+    print(f"Fitted parameters for m=2 Bessel decay: amplitude = {amplitude_fit:.3f}, scale = {scale_fit:.3f}, tau = {tau_fit:.3f}, baseline = {b_fit:.3f}, x0 = {x0_fit:.3f}")
     plt.figure()
     plt.plot(periods, m2_restricted, 'o-')
     plt.xlabel("Floquet Periods")

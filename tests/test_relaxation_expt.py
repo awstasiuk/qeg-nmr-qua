@@ -11,6 +11,7 @@ Andrew, et al., Journal of Magnetic Resonance 362 (2024): 107688.
 
 import qeg_nmr_qua as qnmr
 
+import json
 from qualang_tools.units import unit
 from pathlib import Path
 import numpy as np
@@ -23,14 +24,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
-    pulse_amplitude=0.485,  # amplitude is 0.5*Vpp
+    pulse_length=1.12 * u.us,
+    pulse_amplitude=0.483,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=251.0,  # degrees
+    rotation_angle=249.05,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=8425 * u.Hz,
+    offset_freq=10600 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -39,7 +40,9 @@ settings = qnmr.ExperimentSettings(
 )
 
 cfg = qnmr.cfg_from_settings(settings)
-execute_peng24 = True # whether to execute the peng-24 or angle-12 sequence
+execute_peng24 = False # whether to execute the peng-24 or angle-12 sequence
+execute = False # whether to execute a new experiment or load from previous JSON file
+if not execute: data_path = Path.home() / "Dropbox/QEG/NMR/RawData" / "test_peng24_expt/experiment_0012/data.json"
 
 # sequence time constants
 t0 = 5*u.us
@@ -52,7 +55,7 @@ t2 = 2 * t0 - p1
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
 fc_elements = (settings.res_key, settings.helper_key)
-expt.add_frame_change(angle=-4.9, elements=fc_elements)
+expt.add_frame_change(angle=-2.6, elements=fc_elements)
 
 expt.add_pulse(element=settings.res_key)
 expt.add_delay(thlf)
@@ -87,12 +90,19 @@ expt.add_pulse(element=settings.res_key)
 
 expt.update_sweep_axis(period_list)
 
-expt.execute_experiment()
+if execute:
+    expt.execute_experiment()
 
 fit = True
 if fit:
-    re = np.array(expt.save_data_dict["I_data"])*1e6
-    periods = np.array(expt.save_data_dict["sweep_axis"])
+    if execute: data_dict = expt.save_data_dict
+    else:
+        # Load JSON file from a previous experiment if not executing current one
+        with open(data_path, "r") as f:
+            data_dict = json.load(f)
+
+    re = np.array(data_dict["I_data"]) * 1e6
+    periods = np.array(data_dict["sweep_axis"])
     signal = re[:,0]/re[0,0]  # normalize to first point
 
     # Log transform; only positive values
@@ -115,8 +125,7 @@ if fit:
 
     # Linear plot
     ax_lin.scatter(periods, signal, label='Data')
-    ax_lin.plot(x_fit, y_fit, 'r',
-                label=f'A={amplitude_fit:.2f}, τ={tau_fit:.2f}, β={beta_fit:.2f}')
+    ax_lin.plot(x_fit, y_fit, 'r', label=f'A={amplitude_fit:.2f}, τ={tau_fit:.2f}, β={beta_fit:.2f}')
     ax_lin.set_title("Linear scale")
     ax_lin.set_xlabel("Periods")
     ax_lin.set_ylabel("Signal")
