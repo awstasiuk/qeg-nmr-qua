@@ -91,6 +91,7 @@ class Experiment1D(Experiment):
             with for_(n, 0, n < self.n_avg, n + 1):  # averaging loop
                 with if_(dummy > 0):
                     wait(self.wait_between_scans, self.probe_key)
+                with else_():
                     assign(dummy, dummy + 1)
 
                 drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)

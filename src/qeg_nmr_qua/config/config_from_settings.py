@@ -324,25 +324,25 @@ def cfg_from_settings(settings: ExperimentSettings) -> OPXConfig:
         imag_weight=-1.0,
     )
 
-    phases = {"x": 0, "y": 90, "-x": 180, "-y": 270}
-    for name, angle in phases.items():
-        cfg.add_integration_weight(
-            name=f"rotated_cosine_{name}_weights",
-            length=settings.dwell_time,
-            real_weight=np.cos(np.pi * (settings.rotation_angle + angle / 180)),
-            imag_weight=np.sin(np.pi * (settings.rotation_angle + angle / 180)),
-        )
-        cfg.add_integration_weight(
-            name=f"rotated_sine_{name}_weights",
-            length=settings.dwell_time,
-            real_weight=-np.sin(np.pi * (settings.rotation_angle + angle / 180)),
-            imag_weight=np.cos(np.pi * (settings.rotation_angle + angle / 180)),
-        )
-        cfg.add_integration_weight(
-            name=f"rotated_minus_sine_{name}_weights",
-            length=settings.dwell_time,
-            real_weight=np.sin(np.pi * (settings.rotation_angle + angle / 180)),
-            imag_weight=-np.cos(np.pi * (settings.rotation_angle + angle / 180)),
-        )
+    
+    
+    cfg.add_integration_weight(
+        name=f"rotated_cosine_weights",
+        length=settings.dwell_time,
+        real_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
+    )
+    cfg.add_integration_weight(
+        name=f"rotated_sine_weights",
+        length=settings.dwell_time,
+        real_weight=-np.sin(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=np.cos(np.pi * (settings.rotation_angle / 180)),
+    )
+    cfg.add_integration_weight(
+        name=f"rotated_minus_sine_weights",
+        length=settings.dwell_time,
+        real_weight=np.sin(np.pi * (settings.rotation_angle / 180)),
+        imag_weight=-np.cos(np.pi * (settings.rotation_angle / 180)),
+    )
 
     return cfg

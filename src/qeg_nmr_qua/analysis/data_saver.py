@@ -435,7 +435,7 @@ class DataSaver:
         if not filepath.exists():
             raise FileNotFoundError(f"Settings file not found: {filepath}")
 
-        return self._load_json(filepath)
+        return ExperimentSettings.from_dict(self._load_json(filepath))
 
     def list_saved_settings(self) -> list[str]:
         """Return list of saved settings names (without .json extension)."""

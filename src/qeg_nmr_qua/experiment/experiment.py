@@ -456,6 +456,8 @@ class Experiment:
             else:
                 command["phase"] = (phase / 360) % 1  # convert to fraction of 2pi
 
+        self._commands.append(command)        
+
     def _format_phase_cycle(self, phases):
         """
         Helper function to format a list of phases for phase cycling. Converts from degrees to a fraction of 2π
@@ -465,9 +467,10 @@ class Experiment:
             phases (list[float]): List of phases in degrees.
 
         """
+        assert isinstance(phases, list)
         copies = math.ceil(self.n_avg / len(phases))
-        raw_phases = phases * copies
-        return np.array(raw_phases / 360) % 1
+        raw_phases = np.array(phases * copies)
+        return (raw_phases / 360) % 1
 
     def remove_initial_delay(self, remove: bool = True):
         """
@@ -733,9 +736,9 @@ class Experiment:
                 phase = pc_var[n]
             else:
                 phase = command.get("phase", None)
-                if phase is not None:
-                    frame_rotation_2pi(phase, command["probe_element"])
-                    frame_rotation_2pi(phase, command["helper_element"])
+            if phase is not None:
+                frame_rotation_2pi(phase, *(self.settings.res_key, self.settings.helper_key))
+                
 
         else:
             raise ValueError(f"Unknown command type: {command['type']}")

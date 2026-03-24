@@ -138,12 +138,13 @@ class Experiment2D(Experiment):
                 with for_(*from_array(var, self.var_vec_lst[0])):  # inner loop
                     with if_(dummy > 0):
                         wait(self.wait_between_scans, self.probe_key)
+                    with else_():
                         assign(dummy, dummy + 1)
 
                     drive_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
 
                     for command in self._commands:
-                        self.translate_command(command, (var,))
+                        self.translate_command(n, command, (var,))
 
                     # wait for ringdown to decay, blank amplifier, set to receive mode
                     safe_mode(switch=self.rx_switch_key, amplifier=self.amplifier_key)
