@@ -12,14 +12,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.12 * u.us,
-    pulse_amplitude=0.483,  # amplitude is 0.5*Vpp
+    pulse_length=1.14 * u.us,
+    pulse_amplitude=0.478,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=249.05,  # degrees
+    rotation_angle=250.2,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=10600 * u.Hz,
+    offset_freq=11475 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -27,11 +27,11 @@ settings = qnmr.ExperimentSettings(
     save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
 
-loschmidt_expt = False # whether to execute Loschmidt echo or just forward evolution
+loschmidt_expt = True # whether to execute Loschmidt echo or just forward evolution
 cfg = qnmr.cfg_from_settings(settings)
 
 # sequence time constants
-t0 = 5*u.us
+t0 = 4.5*u.us
 p1 = settings.pulse_length
 thlf = (t0 - p1) / 2
 t1 = t0 - p1
@@ -41,10 +41,10 @@ t2 = 2 * t0 - p1
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
 fc_elements = (settings.res_key, settings.helper_key)
-expt.add_frame_change(angle=-4.9, elements=fc_elements)
+expt.add_frame_change(angle=-4.0, elements=fc_elements)
 
 
-# Pine-8 sequence pattern for engineering H=0
+# Pine-8 sequence pattern for engineering DQ
 pine8_phases = np.array([0,0,0,0,180,180,180,180])
 pine8_bw_phases = np.array([90,90,90,90,270,270,270,270])
 pine8_delays = np.array([thlf, t2, t1, t2, t1, t2, t1, t2, thlf])

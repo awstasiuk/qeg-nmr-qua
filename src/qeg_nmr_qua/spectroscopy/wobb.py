@@ -41,15 +41,15 @@ settings = ExperimentSettings(
     pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=243.10,  # degrees
+    rotation_angle=248.6,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=7500 * u.Hz,
+    offset_freq=13125 * u.Hz, 
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path(__file__).parent / "test_results",
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
 cfg = cfg_from_settings(settings)
 config = cfg.to_opx_config()
@@ -70,7 +70,7 @@ res_spec_df = 10 * u.kHz
 res_spec_sweep_dfs = np.arange(-res_spec_span, res_spec_span + res_spec_df, res_spec_df)
 res_spec_frequency = res_spec_sweep_dfs + res_frequency
 
-window_max = 80  # expected max signal with default settings in microvolts
+window_max = 220  # expected max signal with default settings in microvolts
 
 # ---- Data to save ---- #
 save_data_dict = {

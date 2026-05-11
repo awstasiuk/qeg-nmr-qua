@@ -18,14 +18,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.12 * u.us,
+    pulse_length=1.24 * u.us,
     pulse_amplitude=0.475,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=249.3,  # degrees
+    rotation_angle=240,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=9800 * u.Hz,
+    offset_freq=14900 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -34,23 +34,26 @@ settings = qnmr.ExperimentSettings(
 )
 
 cfg = qnmr.cfg_from_settings(settings)
-zero_cross = True # whether to find zero crossing or fit to parabola
+zero_cross = False # whether to find zero crossing or fit to parabola
 fit = True
 
 # amp_list = np.arange(.93,1.05,.0125)
-amp_list = np.arange(.975,1.025,.005)
-# amp_list = np.arange(0.55, 1.1, .05)
+# amp_list = np.arange(.95,1.05,.0125)
+amp_list = np.arange(0.90, 1.05, .025)
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
-fc_elements = (settings.res_key, settings.helper_key)
-expt.add_frame_change(angle=-4.0, elements=fc_elements)
+# fc_elements = (settings.res_key, settings.helper_key)
+# expt.add_frame_change(angle=-4.0, elements=fc_elements)
 
 n_wraps = 2
 
-if zero_cross: 
+expt.add_pulse(element=settings.res_key, amplitude=amp_list)
+
+for i in range(n_wraps*4):
+    expt.add_delay(2*u.us)
     expt.add_pulse(element=settings.res_key, amplitude=amp_list)
 
-for i in range(n_wraps*4+1):
+if zero_cross:
     expt.add_delay(2*u.us)
     expt.add_pulse(element=settings.res_key, amplitude=amp_list)
 

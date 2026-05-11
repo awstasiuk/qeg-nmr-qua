@@ -16,13 +16,13 @@ u = unit(coerce_to_integer=True)
 settings = qnmr.ExperimentSettings(
     n_avg=4,
     pulse_length=1.12 * u.us,
-    pulse_amplitude=0.483,  # amplitude is 0.5*Vpp
+    pulse_amplitude=0.481,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=249.5,  # degrees
+    rotation_angle=250.51,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=10450 * u.Hz,
+    offset_freq=11150 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -32,11 +32,11 @@ settings = qnmr.ExperimentSettings(
 
 cfg = qnmr.cfg_from_settings(settings)
 
-execute = False # whether to execute a new experiment or load from previous JSON file
+execute = True # whether to execute a new experiment or load from previous JSON file
 if not execute: data_path = settings.save_dir / "experiment_0011/data.json"
 
-rho0 = "Y" # evolve either X,Y,Z operator under DQ (& measure corresponding observable)
-kick_axis = "Y" # apply X,Y,Z kick to the system, observe MQC intensities from function of kick angle
+rho0 = "Z" # evolve either X,Y,Z operator under DQ (& measure corresponding observable)
+kick_axis = "Z" # apply X,Y,Z kick to the system, observe MQC intensities from function of kick angle
 mqc_plot = True # whether to plot MQC intensities at the end
 remove_echo_decay = True # For observing operator spreading |Cₘ(t)|² / Σₘ|Cₘ(t)|²
 
@@ -103,7 +103,6 @@ expt.add_delay(2.5*u.us)
 if rho0 == "X": expt.add_pulse(phase=270, element=settings.res_key)
 elif rho0 == "Y": expt.add_pulse(phase=180, element=settings.res_key)
 elif rho0 == "Z": pass
-else: raise ValueError("Invalid operator choice. Must be 'X', 'Y', or 'Z'.")
 
 # filter transients and measure
 expt.add_delay(1 * u.ms)

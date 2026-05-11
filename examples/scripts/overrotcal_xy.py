@@ -18,16 +18,17 @@ import matplotlib.pyplot as plt
 u = unit(coerce_to_integer=True)
 
 # create base settings object for experiments
+# create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.12 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_length=1.24 * u.us,
+    pulse_amplitude=0.485,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=249.3,  # degrees
+    rotation_angle=240,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=9800 * u.Hz,
+    offset_freq=14900 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,

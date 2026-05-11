@@ -24,14 +24,14 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.12 * u.us,
-    pulse_amplitude=0.483,  # amplitude is 0.5*Vpp
+    pulse_length=1.14 * u.us,
+    pulse_amplitude=0.478,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=249.05,  # degrees
+    rotation_angle=250.2,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=10600 * u.Hz,
+    offset_freq=11475 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
@@ -40,8 +40,8 @@ settings = qnmr.ExperimentSettings(
 )
 
 cfg = qnmr.cfg_from_settings(settings)
-execute_peng24 = False # whether to execute the peng-24 or angle-12 sequence
-execute = False # whether to execute a new experiment or load from previous JSON file
+execute_peng24 = True # whether to execute the peng-24 or angle-12 sequence
+execute = True # whether to execute a new experiment or load from previous JSON file
 if not execute: data_path = Path.home() / "Dropbox/QEG/NMR/RawData" / "test_peng24_expt/experiment_0012/data.json"
 
 # sequence time constants
@@ -55,7 +55,7 @@ t2 = 2 * t0 - p1
 expt = qnmr.Experiment2D(settings=settings, config=cfg)
 
 fc_elements = (settings.res_key, settings.helper_key)
-expt.add_frame_change(angle=-2.6, elements=fc_elements)
+expt.add_frame_change(angle=-3.9, elements=fc_elements)
 
 expt.add_pulse(element=settings.res_key)
 expt.add_delay(thlf)
