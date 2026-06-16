@@ -162,6 +162,7 @@ class DataSaver:
         # Determine next available experiment folder name for this prefix
         experiment_name = self._next_experiment_name(experiment_prefix)
         experiment_folder = self.root_data_folder / experiment_name
+        self.experiment_folder = experiment_folder
 
         experiment_folder.mkdir(parents=True, exist_ok=False)
 

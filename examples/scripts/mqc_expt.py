@@ -65,11 +65,9 @@ expt = qnmr.Experiment3D(settings=settings, config=cfg)
 
 # rotate to evolve X, Y, or Z state operator under DQ
 if rho0 == "X":
-    expt.add_pulse(
-        phase=90, element=settings.res_key, phase=[90, 270], phase_cycle=True
-    )
+    expt.add_pulse(element=settings.res_key, phase=[90, 270], phase_cycle=True)
 elif rho0 == "Y":
-    expt.add_pulse(phase=0, element=settings.res_key, phase=[180, 0], phase_cycle=True)
+    expt.add_pulse(element=settings.res_key, phase=[180, 0], phase_cycle=True)
 elif rho0 == "Z":
     pass
 else:

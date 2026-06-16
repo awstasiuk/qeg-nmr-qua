@@ -19,28 +19,28 @@ u = unit(coerce_to_integer=True)
 # create base settings object for experiments
 settings = qnmr.ExperimentSettings(
     n_avg=4,
-    pulse_length=1.1 * u.us,
-    pulse_amplitude=0.48,  # amplitude is 0.5*Vpp
+    pulse_length=1.24 * u.us,
+    pulse_amplitude=0.47,  # amplitude is 0.5*Vpp
     pulse_shape="square",
     pulse_rise_fall=0.0,  # 0% rise/fall time
-    rotation_angle=247.54,  # degrees
+    rotation_angle=144.4,  # degrees
     thermal_reset=4 * u.s,
     center_freq=282.1901 * u.MHz,
-    offset_freq=9250 * u.Hz,
+    offset_freq=17950 * u.Hz,
     readout_delay=20 * u.us,
     dwell_time=4 * u.us,
     readout_start=0 * u.us,
     readout_end=256 * u.us,
-    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem,
+    save_dir=Path.home() / "Dropbox/QEG/NMR/RawData" / Path(__file__).stem
 )
 
 cfg = qnmr.cfg_from_settings(settings)
 
 # write an experiment which measures a basic FID signal
-expt = qnmr.Experiment1D(
-    config=cfg,
-    settings=settings,
-)
+expt = qnmr.Experiment1D(config=cfg, settings=settings,)
+
+fc_elements = (settings.res_key, settings.helper_key)
+expt.add_frame_change(angle=-3.75, elements=fc_elements)
 
 # add a single pi/2 pulse along +/- y with phase cycling
 expt.add_pulse(element=settings.res_key, phase=[90, 270], phase_cycle=True)
@@ -62,51 +62,29 @@ if fit:
     re = np.array(data_dict["I_data"]) * 1e6
     im = np.array(data_dict["Q_data"]) * 1e6
     ph_ref = np.arctan2(im[0], re[0]) * (180 / np.pi)
-    times = (
-        np.arange(settings.readout_start, settings.readout_end, settings.dwell_time)
-        / u.us
-    )  # convert to us for plotting
+    times = (np.arange(settings.readout_start, settings.readout_end, settings.dwell_time) / u.us)  # convert to us for plotting
 
     if abs(ph_ref) > 0.1:
-        print(
-            f"Increment phase reference by {ph_ref:.2f} degrees to {(settings.rotation_angle+ph_ref):.2f}"
-        )
-
-    sig = im
+        print(f"Increment phase reference by {ph_ref:.2f} degrees to {(settings.rotation_angle+ph_ref):.2f}")
 
     # --- Autocorrelation ---
-    autocorr = acf(sig, nlags=len(sig) - 1, fft=True)
-
-    # --- Fourier transform of autocorrelation ---
+    autocorr = acf(im, nlags=len(im) - 1, fft=True)
     fft_vals = np.fft.fft(autocorr)
-    dt = settings.dwell_time
-    freqs = np.fft.fftfreq(len(autocorr), d=dt / u.ms)  # convert to kHz (1/ms)
-
-    # Shift zero frequency to center
-    fft_vals_shifted = np.fft.fftshift(fft_vals)
-    freqs_shifted = np.fft.fftshift(freqs)
+    freqs = np.fft.fftfreq(len(autocorr), d=settings.dwell_time / u.ms)  # convert to kHz (1/ms)
+    fft_vals_shifted = np.fft.fftshift(fft_vals); freqs_shifted = np.fft.fftshift(freqs)
 
     # --- Plotting ---
-    fig, axs = plt.subplots(1, 2, figsize=(14, 5))
+    fig, axs = plt.subplots(1, 2, figsize=(12, 5))
 
     # Confidence bounds
-    confidence_95 = 1.96 / np.sqrt(len(sig))
-    confidence_99 = 2.58 / np.sqrt(len(sig))
+    confidence_95 = 1.96 / np.sqrt(len(im))
+    confidence_99 = 2.58 / np.sqrt(len(im))
 
     # Autocorrelation plot
-    axs[0].axhline(
-        y=confidence_95, color="red", linestyle="--", label="95% Confidence Level"
-    )
-    axs[0].axhline(y=-confidence_95, color="red", linestyle="--")
-    axs[0].axhline(
-        y=confidence_99, color="black", linestyle="--", label="99% Confidence Level"
-    )
-    axs[0].axhline(y=-confidence_99, color="black", linestyle="--")
-
-    axs[0].stem(
-        times[: len(autocorr)], autocorr, basefmt=" ", markerfmt="o", linefmt="-"
-    )
-    axs[0].set_title("Autocorrelation of the Imaginary Component")
+    axs[0].axhline(y=confidence_95, c='r', ls="--", label="95% Confidence Level"); axs[0].axhline(y=-confidence_95, c='r', ls="--")
+    axs[0].axhline(y=confidence_99, c='k', ls="--", label="99% Confidence Level"); axs[0].axhline(y=-confidence_99, c='k', ls="--")
+    axs[0].stem(times[: len(autocorr)], autocorr, basefmt=" ", markerfmt="o", linefmt="-")
+    axs[0].set_title("Autocorrelation of I")
     axs[0].set_xlabel("Lag (µs)")
     axs[0].set_ylabel("Autocorrelation")
     axs[0].legend()
@@ -121,4 +99,5 @@ if fit:
     axs[1].grid()
 
     plt.tight_layout()
+    plt.savefig(expt.data_saver.experiment_folder / "fit.png")
     plt.show()
